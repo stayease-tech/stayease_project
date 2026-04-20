@@ -1,6 +1,6 @@
 # StayEase — Property Management System
 
-A full-stack property management platform for co-living and PG operators. Includes a **public-facing website**, **5 internal staff portals**, a **partner portal** for property owners, and a **cross-platform mobile app**.
+A full-stack property management platform for co-living and PG operators. Includes a **public-facing website**, **5 internal staff portals**, a **partner portal** for property owners, a **tenant portal** for residents, and a **cross-platform mobile app**.
 
 ---
 
@@ -35,6 +35,7 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 | **Accounts** | Track expenses, vendor payments, owner payouts (fixed expenses), liabilities (deposit refunds), bank rawdata reconciliation |
 | **Operations** | Move-in/move-out checklists, property complaints, service requests, vendor assignments |
 | **Partners** | Owner-facing portal — view earnings, deductions, property occupancy, profile info |
+| **Tenant** | Tenant-facing portal — profile, KYC documents, rent history, complaints, lease agreements |
 | **Admin** | Superuser dashboard with cross-portal visibility |
 
 ---
@@ -62,9 +63,10 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 └─────────────────────────────────────────────────────┘
 ```
 
-- **Web frontend** communicates via **session-based auth** (cookies + CSRF)
+- **Staff web portals** communicate via **session-based auth** (cookies + CSRF)
+- **Tenant portal** communicates via **JWT bearer tokens** (access + refresh)
 - **Mobile app** communicates via **JWT bearer tokens** (access + refresh)
-- Both share the same Django REST backend and PostgreSQL database
+- All clients share the same Django REST backend and PostgreSQL database
 
 ---
 
@@ -78,6 +80,7 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 | **Sales** | Username + Password | Beds, tenants, rent, leads |
 | **Supply** | Username + Password | Owners, properties, rooms, beds |
 | **Partners** | Phone + OTP | Own properties, earnings, deductions (read-only) |
+| **Tenant** | Phone + Password | Profile, KYC upload, rent history, complaints, lease |
 
 ---
 
@@ -143,6 +146,7 @@ PMS_Stayease/
 │   ├── stayease_sales/           # Sales module (tenants, rent, leads)
 │   ├── stayease_supply/          # Supply module (owners, properties, rooms)
 │   ├── stayease_partners/        # Partners module (owner portal)
+│   ├── stayease_tenant/          # Tenant portal (dashboard, KYC, rent, complaints, lease)
 │   ├── stayease_app/             # Website & catch-all routes
 │   ├── property_details/         # Property contracts
 │   └── tenant_details/           # Tenant contracts
@@ -161,6 +165,7 @@ PMS_Stayease/
 │       ├── sales/                # Sales portal components
 │       ├── supply/               # Supply portal components
 │       ├── partners/             # Partners portal components
+│       ├── tenant/              # Tenant portal components
 │       └── website/              # Public website components
 │
 └── _legacy/                      # Previous separate React apps (archived)
@@ -197,14 +202,15 @@ StayEase-Mobile/                  # /Users/swamy/Project/StayEase-Mobile/
     │   ├── AppNavigator.js       # Root: auth check → role routing
     │   ├── AuthStack.js          # Login screens
     │   └── RoleNavigators.js     # Tab + stack navigators per role
-    └── screens/                  # 44 screens total
-        ├── auth/                 # StaffLogin, PartnerLogin
+    └── screens/                  # 53 screens total
+        ├── auth/                 # StaffLogin, PartnerLogin, TenantLogin
         ├── admin/                # AdminDashboard
         ├── accounts/             # 13 screens
         ├── operations/           # 7 screens
         ├── sales/                # 7 screens
         ├── supply/               # 10 screens
-        └── partners/             # 4 screens
+        ├── partners/             # 4 screens
+        └── tenant/              # 8 screens
 ```
 
 ---
@@ -338,6 +344,7 @@ cd backend && python manage.py collectstatic --noinput
 | `/api/token/` | POST | None | Staff login (JWT, mobile) |
 | `/api/token/refresh/` | POST | None | Refresh JWT access token |
 | `/api/partner-login/` | POST | None | Partner OTP login (JWT, mobile) |
+| `/api/tenant-login/` | POST | None | Tenant login (phone + password, JWT) |
 | `/partners/send-otp/` | POST | None | Send OTP to partner phone |
 | `/partners/verify-otp/` | POST | None | Verify OTP (session-based, web) |
 
@@ -384,6 +391,9 @@ cd backend && python manage.py collectstatic --noinput
 | `/operations/operations-form-update/<id>/` | PUT | Update complaint category |
 | `/operations/feedback-form-submit/` | POST | Submit complaint feedback |
 | `/operations/get-room-data/` | GET | Rooms & beds data |
+| `/operations/kyc-pending/` | GET | List tenants by KYC status |
+| `/operations/kyc-approve/<id>/` | POST | Approve tenant KYC |
+| `/operations/kyc-reject/<id>/` | POST | Reject tenant KYC (with reason) |
 
 ### Sales (`/sales/`)
 
@@ -424,6 +434,24 @@ cd backend && python manage.py collectstatic --noinput
 | `/partners/get-overall-data/?phone=` | GET | Owner's portfolio overview |
 | `/partners/get-owner-data/?phone=` | GET | Owner profile + financials |
 | `/partners/get-property-data/?phone=` | GET | Owner's properties + occupancy |
+
+### Tenant Portal (`/tenant-portal/`)
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/tenant-portal/dashboard/` | GET | JWT | Tenant dashboard (stats, property info) |
+| `/tenant-portal/profile/` | GET | JWT | Tenant profile details |
+| `/tenant-portal/profile/update/` | POST | JWT | Update tenant profile |
+| `/tenant-portal/change-password/` | POST | JWT | Change tenant password |
+| `/tenant-portal/kyc/upload/` | POST | JWT | Upload KYC documents (multipart) |
+| `/tenant-portal/kyc/status/` | GET | JWT | Get KYC approval status |
+| `/tenant-portal/rent-history/` | GET | JWT | Rent payment records |
+| `/tenant-portal/invoices/<id>/` | GET | JWT | Single invoice detail |
+| `/tenant-portal/complaints/` | GET | JWT | List tenant complaints |
+| `/tenant-portal/complaints/submit/` | POST | JWT | Submit new complaint |
+| `/tenant-portal/complaints/<id>/` | GET | JWT | Complaint detail with timeline |
+| `/tenant-portal/lease/` | GET | JWT | Lease documents (Zoho e-sign) |
+| `/tenant-portal/register-push-token/` | POST | JWT | Register push notification token |
 
 ### Contracts
 
@@ -497,6 +525,10 @@ The brand uses a gold-on-black theme across all surfaces — sidebar, navbar, ta
 | supply | Stayease@123 | Supply |
 
 Partners login with phone number + OTP (no password).
+
+Tenant accounts are auto-created when a tenant is onboarded through the Sales portal. The login credentials (phone + generated password) are returned at creation time.
+
+**Default Tenant password formula:** First 4 characters of the last word of the tenant's name (as-is casing) + `@` + last 4 digits of their phone number. Example: "Ravi Kumar" with phone 9876547890 → `Kuma@7890`
 
 ---
 
