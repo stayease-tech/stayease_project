@@ -1,0 +1,260 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    background-color: #000000;
+    margin: 0;
+}
+
+/* Header styles */
+header {
+    height: 15vh;
+    width: 100%;
+    background-color: #000000;
+    border-bottom: 1px solid #eba312;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+}
+
+/* Header image styles */
+header .imgContainer img {
+    height: 100%;
+    max-height: 60px;
+}
+
+/* Form styles */
+.form-container {
+    background-color: #21222d;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px;
+    font-size: 16px;
+    margin: 3rem auto;
+}
+
+label {
+    display: block;
+    color: #eba312;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Field styles */
+.fieldset {
+    display: flex;
+    justify-content: space-between;
+}
+
+.item1,
+.item2 {
+    width: 48%;
+}
+
+.item3,
+.item4,
+.item5 {
+    width: 31%;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-button {
+    margin-top: 1rem;
+}
+
+#dropdown-toggle {
+    text-align: left;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="date"],
+select,
+#dropdown-toggle {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: #fff;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="date"]:focus,
+select:focus,
+#dropdown-toggle:focus {
+    border-color: #eba312;
+    outline: none;
+}
+
+.custom-dropdown {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+#dropdown-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-options.hidden {
+    display: none;
+}
+
+.custom-file-input {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-file-input label {
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.custom-file-input input {
+    font-size: 14px;
+}
+
+.custom-file-input:last-child {
+    border-bottom: none;
+}
+
+.error {
+    font-size: 14px;
+    margin-top: 0.5rem;
+}
+
+#data-error {
+    text-align: center;
+}
+
+/* Button styles */
+button[type="submit"] {
+    background-color: #eba312;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button[type="submit"]:hover {
+    background-color: #333;
+    color: #eba312;
+}
+
+button[type="submit"]:disabled {
+    background-color: #333;
+    cursor: not-allowed;
+}
+
+/* footer {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+} */
+
+/* Data submission success message styles */
+.popup {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #eba312;
+    white-space: nowrap;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    font-size: 17px;
+    text-align: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.fa-check-circle {
+    background-color: #eba312;
+    color: white;
+}
+
+.popup.show {
+    opacity: 1;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Small screen styles */
+@media (max-width: 930px) {
+    .form-container {
+        width: 100%;
+        background-color: #000000;
+        margin: 1rem auto;
+    }
+
+    .fieldset {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .item1,
+    .item2 {
+        width: 100%;
+    }
+
+    .item3,
+    .item4,
+    .item5 {
+        width: 100%;
+    }
+
+    .popup {
+        font-size: 15px;
+        padding: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    label {
+        font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    select,
+    #dropdown-toggle,
+    button {
+        font-size: 14px;
+    }
+}

@@ -1,0 +1,334 @@
+import React, { useState } from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import Sidebar from '../Sidebar';
+import Navbar from '../Navbar';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+
+function LeadDetails({ isExpanded, setIsExpanded }) {
+    const navigate = useNavigate();
+    const [dataEditView, setDataEditView] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const location = useLocation();
+    const leadData = location.state?.leadData;
+    const { id } = useParams();
+
+    const [leadDetails, setLeadDetails] = useState({
+        leadDate: leadData?.leadDate || "",
+        leadSource: leadData?.leadSource || "",
+        name: leadData?.name || "",
+        contact: leadData?.contact || "",
+        email: leadData?.email || "",
+        leadResult: leadData?.leadResult || "",
+        notConvertedReason: leadData?.notConvertedReason || ""
+    });
+
+    const [originalData, setOriginalData] = useState(leadData || {});
+
+    const editHandle = () => {
+        setDataEditView(!dataEditView)
+    };
+
+    const leadHandleChange = (e) => {
+        const { name, value } = e.target;
+
+        setLeadDetails((prevState) => ({
+            ...prevState,
+            [name]: value,
+        }));
+    }
+
+    const getChangedData = () => {
+        const changedData = {};
+
+        Object.keys(leadDetails).forEach(key => {
+            const originalValue = originalData[key] || '';
+            const currentValue = leadDetails[key] || '';
+
+            if (currentValue !== originalValue) {
+                changedData[key] = currentValue;
+            }
+        });
+
+        return changedData;
+    };
+
+    const getCSRFToken = () => {
+        return Cookies.get('csrftoken');
+    }
+
+    axios.defaults.headers.common['X-CSRFToken'] = getCSRFToken();
+
+    const handleLeadUpdate = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+
+        const changedData = getChangedData();
+
+        if (Object.keys(changedData).length === 0) {
+            alert('No data is updated!');
+            setIsSaving(false);
+            return;
+        }
+
+        setIsSaving(true);
+
+        try {
+            const response = await axios.put(
+                `/sales/leads-data-update/${id}/`,
+                changedData,
+                {
+                    withCredentials: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            setOriginalData(prev => ({ ...prev, ...changedData }));
+
+            if (response.data.success) {
+                alert(response.data.message);
+
+                navigate(`/sales/sales-leads-table`);
+            }
+        } catch (err) {
+            console.error('Error updating form:', err);
+            alert('There was an error updating the form. Please try again!');
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    const handleLeadDelete = async (e) => {
+        e.preventDefault();
+        setIsDeleting(true);
+
+        const confirmDelete = window.confirm("Are you sure you want to delete this item?");
+        if (!confirmDelete) return;
+
+        try {
+            const response = await axios.delete(`/sales/leads-data-delete/${id}/`, {
+                withCredentials: true,
+            });
+
+            alert(response.data.message);
+
+            if (response.data.success) {
+                navigate('/sales/sales-leads-table');
+            }
+        } catch (err) {
+            console.error('Error deleting form:', err);
+            alert('There was an error deleting the form. Please try again!');
+        } finally {
+            setIsDeleting(false);
+        }
+    }
+
+    return (
+        <div>
+            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
+
+            <div className="flex-1 duration-300">
+                <Navbar isExpanded={isExpanded} />
+
+                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={handleLeadUpdate}>
+                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LEADS DATA</h1>
+
+                        <div className="sm:flex justify-between">
+                            <button
+                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/sales/sales-leads-table`)}
+                                type="button">Prev</button>
+
+                            <div className="flex justify-between sm:justify-end mb-5">
+                                <button
+                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
+
+                                <button
+                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving || isDeleting}
+                                    type={dataEditView ? "submit" : "button"}
+                                    onClick={!dataEditView ? handleLeadDelete : null}
+                                >
+                                    {dataEditView ? (isSaving ? "Saving Details..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="w-full overflow-x-auto">
+                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
+                                <tbody>
+                                    <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Lead Date</th>
+                                        {!dataEditView ? <>
+                                            <td className="py-1 px-2">{leadDetails?.leadDate}</td>
+                                        </> : <>
+                                            <td className="flex">
+                                                <span className="py-1 px-2 w-full">
+                                                    <input
+                                                        type="date"
+                                                        value={leadDetails.leadDate}
+                                                        onChange={(e) => leadHandleChange(e)}
+                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
+                                                        name="leadDate"
+                                                    />
+                                                </span>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Lead Source</th>
+                                        {!dataEditView ? <>
+                                            <td className="py-1 px-2">{leadDetails?.leadSource}</td>
+                                        </> : <>
+                                            <td className="flex">
+                                                <span className="py-1 px-2 w-full">
+                                                    <select id="leadSource" value={leadDetails.leadSource} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="leadSource" required>
+                                                        <option value="" disabled>Select the Lead Source here</option>
+                                                        <option value="Transfer">Transfer</option>
+                                                        <option value="New">New</option>
+                                                        <option value="Referal">Referal</option>
+                                                        <option value="Walkin">Walkin</option>
+                                                        <option value="Instagram">Instagram</option>
+                                                        <option value="Facebook">Facebook</option>
+                                                        <option value="Whatsapp">Whatsapp</option>
+                                                        <option value="Inbound">Inbound</option>
+                                                        <option value="Google">Google</option>
+                                                        <option value="Website">Website</option>
+                                                        <option value="LinkedIn">LinkedIn</option>
+                                                        <option value="Pamphlet">Pamphlet</option>
+                                                    </select>
+                                                </span>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Name</th>
+                                        {!dataEditView ? <>
+                                            <td className="py-1 px-2">{leadDetails?.name}</td>
+                                        </> : <>
+                                            <td className="flex">
+                                                <span className="py-1 px-2 w-full">
+                                                    <input
+                                                        type="text"
+                                                        value={leadDetails.name}
+                                                        onChange={(e) => leadHandleChange(e)}
+                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
+                                                        placeholder="Enter the Name here"
+                                                        name="name"
+                                                        required
+                                                    />
+                                                </span>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Contact</th>
+                                        {!dataEditView ? <>
+                                            <td className="py-1 px-2">{leadDetails?.contact}</td>
+                                        </> : <>
+                                            <td className="flex">
+                                                <span className="py-1 px-2 w-full">
+                                                    <input
+                                                        type="text"
+                                                        value={leadDetails.contact}
+                                                        onChange={(e) => leadHandleChange(e)}
+                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
+                                                        placeholder="Enter the Contact Number here"
+                                                        name="contact"
+                                                        required
+                                                    />
+                                                </span>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Email</th>
+                                        {!dataEditView ? <>
+                                            <td className="py-1 px-2">{leadDetails?.email}</td>
+                                        </> : <>
+                                            <td className="flex">
+                                                <span className="py-1 px-2 w-full">
+                                                    <input
+                                                        type="email"
+                                                        value={leadDetails.email}
+                                                        onChange={(e) => leadHandleChange(e)}
+                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
+                                                        placeholder="Enter the Name here"
+                                                        name="email"
+                                                        required
+                                                    />
+                                                </span>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Lead Status</th>
+                                        {!dataEditView ? <>
+                                            <td className="py-1 px-2">{leadDetails?.leadResult}</td>
+                                        </> : <>
+                                            <td className="flex">
+                                                <span className="py-1 px-2 w-full">
+                                                    <select id="leadResult" value={leadDetails.leadResult} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="leadResult" required>
+                                                        <option value="" disabled>Select the Lead Status here</option>
+                                                        <option value="Not Converted">Not Converted</option>
+                                                        <option value="Converted - Visit">Converted - Visit</option>
+                                                        <option value="Followup">Followup</option>
+                                                        <option value="Contacted">Contacted</option>
+                                                        <option value="Not Contacted">Not Contacted</option>
+                                                        <option value="Converted - Closed">Converted - Closed</option>
+                                                    </select>
+                                                </span>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    {leadDetails.leadResult === "Not Converted" && <>
+                                        <tr className="border-b border-white">
+                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Reason for Not Converted</th>
+                                            {!dataEditView ? <>
+                                                <td className="py-1 px-2">{leadDetails?.notConvertedReason}</td>
+                                            </> : <>
+                                                <td className="flex">
+                                                    <span className="py-1 px-2 w-full">
+                                                        <select id="notConvertedReason" value={leadDetails.notConvertedReason} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="notConvertedReason" required>
+                                                            <option value="" disabled>Select the Reason here</option>
+                                                            <option value="Price">Price</option>
+                                                            <option value="Availability">Availability</option>
+                                                            <option value="Location">Location</option>
+                                                            <option value="Food">Food</option>
+                                                            <option value="Directly disconnected">Directly disconnected</option>
+                                                            <option value="Number not reachable">Number not reachable</option>
+                                                            <option value="Wrong number">Wrong number</option>
+                                                            <option value="No call availability on this number">No call availability on this number</option>
+                                                            <option value="Not looking for any colive space">Not looking for any colive space</option>
+                                                            <option value="Yet to confirm">Yet to confirm</option>
+                                                            <option value="Called multiple times no response">Called multiple times no response</option>
+                                                            <option value="Shortstay">Shortstay</option>
+                                                            <option value="Longstay">Longstay</option>
+                                                            <option value="Shift to another property">Shift to another property</option>
+                                                            <option value="Not responded">Not responded</option>
+                                                        </select>
+                                                    </span>
+                                                </td>
+                                            </>}
+                                        </tr>
+                                    </>}
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+export default LeadDetails

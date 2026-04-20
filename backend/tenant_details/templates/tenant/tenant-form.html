@@ -1,0 +1,156 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{% static 'tenant/images/icon/stayEase_icon.png' %}" />
+    <title>Stayease Tenant form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{% static 'tenant/css/tenant-form.css' %}">
+</head>
+
+<body>
+    <!-- Header section -->
+    <header id="header">
+        <div class="imgContainer">
+            <img src="{% static '/tenant/images/brand-logo/stayEase-Logo.webp' %}" alt="Company_Logo" />
+        </div>
+    </header>
+
+    <!-- Main section -->
+    <main class="form-container">
+        <!-- Form to submit user details -->
+        <form class="user-form" method="POST" enctype="multipart/form-data" onsubmit="return validateForm(event)">
+            {% csrf_token %}
+            <div class="fieldset">
+                <!-- uniqueId -->
+                <input type="text" name="uniqueId" id="uniqueId" value="{{ property_contract.uniqueId }}" hidden>
+
+                <!-- Firstname -->
+                <div class="form-group item1">
+                    <label for="fname">First Name:</label>
+                    <input type="text" id="fname" name="fname" placeholder="Enter your first name" required>
+                    <p id="fname-error" class="error"></p>
+                </div>
+
+                <!-- Lastname -->
+                <div class="form-group item2">
+                    <label for="lname">Last Name:</label>
+                    <input type="text" id="lname" name="lname" placeholder="Enter your last name" required>
+                    <p id="lname-error" class="error"></p>
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <!-- Phone -->
+                <div class="form-group item1">
+                    <label for="phone">Phone:</label>
+                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required>
+                    <p id="phone-error" class="error"></p>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group item2">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    <p id="email-error" class="error"></p>
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" name="address" placeholder="Enter your address" required>
+                <p id="address-error" class="error"></p>
+            </div>
+
+            <div class="fieldset">
+                <!-- DOB -->
+                <div class="form-group item1">
+                    <label for="dob">Date of Birth:</label>
+                    <input type="date" id="dob" name="dob" required>
+                    <p id="dob-error" class="error"></p>
+                </div>
+
+                <!-- Gender -->
+                <div class="form-group item2">
+                    <label for="gender">Gender:</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Select your gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="fieldset">
+                <!-- Identity Type -->
+                <div class="form-group item3">
+                    <label for="identity-type">Identity Type:</label>
+                    <select id="identity-type" name="identity-type" required>
+                        <option value="" disabled selected>Select your Identity type</option>
+                        <option value="aadhar">Aadhar</option>
+                        <option value="pan-card">Pan Card</option>
+                        <option value="driver-license">Driver License</option>
+                        <option value="passport">Passport</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <!-- Identity Number -->
+                <div class="form-group item4">
+                    <label for="identity-number">Identity Number:</label>
+                    <input type="text" id="identity-number" name="identity-number"
+                        placeholder="Enter your identity number" required>
+                    <p id="identity-number-error" class="error"></p>
+                </div>
+
+                <!-- Upload Identity -->
+                <div class="form-group item5">
+                    <label>Upload Identity:</label>
+
+                    <div class="custom-dropdown">
+                        <button id="dropdown-toggle" onclick="toggleDropdown()" type="button">
+                            <i class="fa fa-upload"></i>&nbsp; Upload your Document here
+                        </button>
+                        <div id="dropdown-options" class="dropdown-options hidden">
+                            <!-- Front Copy -->
+                            <div class="custom-file-input">
+                                <label for="front-copy">Upload Front Copy</label>
+                                <input type="file" id="front-copy" name="front-copy" accept="image/*, .pdf">
+                            </div>
+
+                            <!-- Back Copy -->
+                            <div class="custom-file-input">
+                                <label for="back-copy">Upload Back Copy</label>
+                                <input type="file" id="back-copy" name="back-copy" accept="image/*, .pdf">
+                            </div>
+                        </div>
+                    </div>
+
+                    <p id="identity-document-error" class="error"></p>
+                </div>
+            </div>
+
+            <p id="data-error" class="error"></p>
+
+            <!-- Data submission button -->
+            <div class="form-button">
+                <button type="submit" id="submitBtn">Submit</button>
+            </div>
+        </form>
+    </main>
+
+    <!-- <footer id="footer"></footer> -->
+
+    <!-- Data submission success message -->
+    <!-- <div id="popup-message" class="popup hidden"></div> -->
+
+    <script src="{% static 'tenant/js/tenant-form-v14.js' %}"></script>
+</body>
+
+</html>
