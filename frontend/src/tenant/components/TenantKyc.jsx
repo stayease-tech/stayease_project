@@ -3,12 +3,12 @@ import tenantApi from "../tenantApi";
 import Navbar from "../../shared/Navbar";
 import TenantSidebar from "./Sidebar";
 import { ShieldCheck, Upload, AlertCircle, CheckCircle } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function TenantKyc({ isExpanded, setIsExpanded }) {
     const [kyc, setKyc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [msg, setMsg] = useState({ text: "", type: "" });
 
     const fetchKyc = () => {
         tenantApi.get("/kyc/status/")
@@ -22,21 +22,21 @@ export default function TenantKyc({ isExpanded, setIsExpanded }) {
     const handleUpload = async (e) => {
         e.preventDefault();
         setUploading(true);
-        setMsg({ text: "", type: "" });
 
         const formData = new FormData(e.target);
         try {
             const res = await tenantApi.post("/kyc/upload/", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
+                skipGlobalErrorToast: true,
             });
             if (res.data.success) {
-                setMsg({ text: "Documents uploaded successfully!", type: "success" });
+                toast.success("Documents uploaded successfully!");
                 fetchKyc();
             } else {
-                setMsg({ text: res.data.message, type: "error" });
+                toast.error(res.data.message || "Upload failed.");
             }
         } catch (err) {
-            setMsg({ text: err.response?.data?.message || "Upload failed.", type: "error" });
+            toast.error(err.response?.data?.message || "Upload failed.");
         }
         setUploading(false);
     };
@@ -59,12 +59,6 @@ export default function TenantKyc({ isExpanded, setIsExpanded }) {
                 <div className="page-header">
                     <div><h1>KYC Verification</h1><p>Upload and manage your identity documents</p></div>
                 </div>
-
-                {msg.text && (
-                    <div className={`mb-4 p-3 rounded-lg text-sm border ${msg.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-                        {msg.text}
-                    </div>
-                )}
 
                 {loading ? (
                     <div className="loading-center"><div className="spinner"></div></div>
@@ -92,9 +86,8 @@ export default function TenantKyc({ isExpanded, setIsExpanded }) {
                             </div>
                         </div>
 
-                        {/* Upload Form (only if not approved) */}
-                        {kyc?.kycApprovalStatus !== "Approved" && (
-                            <div className="card">
+                        {/* Upload Form */}
+                        <div className="card">
                                 <div className="card-header"><h3>Upload Documents</h3></div>
                                 <div className="card-body">
                                     <form onSubmit={handleUpload} className="space-y-6">
@@ -134,6 +127,12 @@ export default function TenantKyc({ isExpanded, setIsExpanded }) {
                                             </div>
                                         </fieldset>
 
+                                        <div className="flex items-center gap-3 my-2">
+                                            <div className="flex-1 border-t border-gray-200" />
+                                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">OR</span>
+                                            <div className="flex-1 border-t border-gray-200" />
+                                        </div>
+
                                         <fieldset className="border border-gray-200 rounded-lg p-4">
                                             <legend className="text-sm font-semibold text-gray-700 px-2">Student/Employee ID (Optional)</legend>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -163,7 +162,7 @@ export default function TenantKyc({ isExpanded, setIsExpanded }) {
                                     </form>
                                 </div>
                             </div>
-                        )}
+
                     </>
                 )}
             </div>

@@ -4,6 +4,8 @@ import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import OwnerData from "../owner-details-components/OwnerData";
 import OwnerKyc from "../owner-details-components/OwnerKyc";
 
@@ -76,11 +78,34 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
     const ownerHandleChange = (e) => {
         const { name, value, type, files } = e.target;
 
+        let nextValue = value;
+        if (name === "ownerPhone") nextValue = formatIndianPhone(value);
+        if (name === "aadharNumber") nextValue = value.replace(/\D/g, "").slice(0, 12);
+        if (name === "panNumber") nextValue = value.toUpperCase().replace(/\s/g, "").slice(0, 10);
+        if (name === "ifscCode") nextValue = value.toUpperCase().replace(/\s/g, "").slice(0, 11);
+        if (name === "accountNumber") nextValue = value.replace(/\D/g, "").slice(0, 18);
+
         setOwnerDetails((prevState) => ({
             ...prevState,
-            [name]: type === "file" ? files[0] : value,
+            [name]: type === "file" ? files[0] : nextValue,
         }));
     }
+
+    const validateOwnerData = () => {
+        if (!ownerDetails.ownerName?.trim() || !/^[A-Za-z ]{2,}$/.test(ownerDetails.ownerName.trim())) return "Please enter a valid owner name.";
+        if (!ownerDetails.memberSince) return "Member since is required.";
+        if (!isValidIndianPhone(ownerDetails.ownerPhone)) return "Owner phone must be exactly 10 digits.";
+        if (!ownerDetails.ownerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerDetails.ownerEmail)) return "Please enter a valid owner email.";
+        if (!ownerDetails.ownerAddress?.trim()) return "Owner address is required.";
+        if (!ownerDetails.ownerDob) return "Date of birth is required.";
+        if (new Date(ownerDetails.ownerDob) > new Date()) return "Date of birth cannot be in the future.";
+        if (!ownerDetails.ownerGender) return "Owner gender is required.";
+        if (!/^\d{12}$/.test(ownerDetails.aadharNumber || "")) return "Aadhaar number must be 12 digits.";
+        if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(ownerDetails.panNumber || "")) return "PAN must follow format: ABCDE1234F.";
+        if (!/^\d{9,18}$/.test(ownerDetails.accountNumber || "")) return "Account number must be 9 to 18 digits.";
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ownerDetails.ifscCode || "")) return "IFSC must follow format: ABCD0XXXXXX.";
+        return null;
+    };
 
     const getCSRFToken = () => {
         return Cookies.get('csrftoken');
@@ -90,6 +115,11 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
+        const validationError = validateOwnerData();
+        if (validationError) {
+            toast.error(validationError);
+            return;
+        }
         setIsSaving(true);
 
         const formData = new FormData();
@@ -104,7 +134,11 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
             }
 
             if (ownerDetails[key] !== ownerData[key] && ownerDetails[key] !== undefined && ownerDetails[key] !== null && key !== "aadharFrontCopy" && key !== "aadharBackCopy" && key !== "panFrontCopy" && key !== "panBackCopy" && key !== "chequeCopy") {
-                formData.append(key, ownerDetails[key]);
+                if (key === "ownerPhone") {
+                    formData.append(key, normalizePhoneDigits(ownerDetails[key]));
+                } else {
+                    formData.append(key, ownerDetails[key]);
+                }
             }
         });
 
@@ -117,6 +151,7 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
         try {
             const response = await axios.put(`/supply/owner-form-update/${id}/`, formData, {
                 withCredentials: true,
+                skipGlobalErrorToast: true,
             });
 
             if (response.data.success) {

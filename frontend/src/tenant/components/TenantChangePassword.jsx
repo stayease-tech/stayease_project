@@ -3,20 +3,19 @@ import tenantApi from "../tenantApi";
 import Navbar from "../../shared/Navbar";
 import TenantSidebar from "./Sidebar";
 import { Lock } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function TenantChangePassword({ isExpanded, setIsExpanded }) {
     const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
     const [submitting, setSubmitting] = useState(false);
-    const [msg, setMsg] = useState({ text: "", type: "" });
     const [showCurrent, setShowCurrent] = useState(false);
     const [showNew, setShowNew] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMsg({ text: "", type: "" });
 
         if (form.newPassword !== form.confirmPassword) {
-            setMsg({ text: "New passwords do not match.", type: "error" });
+            toast.error("New passwords do not match.");
             return;
         }
 
@@ -25,15 +24,15 @@ export default function TenantChangePassword({ isExpanded, setIsExpanded }) {
             const res = await tenantApi.post("/change-password/", {
                 currentPassword: form.currentPassword,
                 newPassword: form.newPassword,
-            });
+            }, { skipGlobalErrorToast: true });
             if (res.data.success) {
-                setMsg({ text: "Password changed successfully!", type: "success" });
+                toast.success("Password changed successfully!");
                 setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
             } else {
-                setMsg({ text: res.data.message, type: "error" });
+                toast.error(res.data.message || "Failed to change password.");
             }
         } catch (err) {
-            setMsg({ text: err.response?.data?.message || "Failed to change password.", type: "error" });
+            toast.error(err.response?.data?.message || "Failed to change password.");
         }
         setSubmitting(false);
     };
@@ -46,12 +45,6 @@ export default function TenantChangePassword({ isExpanded, setIsExpanded }) {
                 <div className="page-header">
                     <div><h1>Change Password</h1><p>Update your login password</p></div>
                 </div>
-
-                {msg.text && (
-                    <div className={`mb-4 p-3 rounded-lg text-sm border ${msg.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-                        {msg.text}
-                    </div>
-                )}
 
                 <div className="card max-w-md">
                     <div className="card-body">

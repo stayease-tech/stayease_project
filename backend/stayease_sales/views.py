@@ -23,6 +23,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
+DATE_MIN = date(1900, 1, 1)
+DATE_MAX = date(2099, 12, 31)
+
 # Create your views here.
 @login_required
 def auth_check(request):
@@ -59,16 +62,20 @@ def login_view(request):
     return JsonResponse({"success": False, "message": "Invalid credentials"}, status=400)
 
 def logout_view(request):
-    data = json.loads(request.body)
-    login_id = data.get("loginId")
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Invalid request method. POST expected."}, status=405)
 
-    login_instance = User_Login_Data.objects.get(
-        id=login_id
-    )
-                
-    if login_instance:
-        login_instance.logout_time = timezone.now()
-        login_instance.save()
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        data = {}
+
+    login_id = data.get("loginId")
+    if login_id:
+        login_instance = User_Login_Data.objects.filter(id=login_id).first()
+        if login_instance and not login_instance.logout_time:
+            login_instance.logout_time = timezone.now()
+            login_instance.save(update_fields=["logout_time"])
 
     logout(request)
     return JsonResponse({"success": True})
@@ -600,57 +607,123 @@ def validate_tenant_dates(new_checkIn, new_checkOut, bed_instance, tenant_instan
     
     return True
 
+
+def parse_and_validate_iso_date(date_str, field_label, required=False):
+    raw = str(date_str or '').strip()
+    if not raw:
+        if required:
+            return None, None, f'{field_label} is required.'
+        return '', None, None
+
+    try:
+        parsed = datetime.strptime(raw, '%Y-%m-%d').date()
+    except ValueError:
+        return None, None, f'{field_label} must be in YYYY-MM-DD format.'
+
+    if parsed < DATE_MIN or parsed > DATE_MAX:
+        return None, None, f'{field_label} must be between 1900-01-01 and 2099-12-31.'
+
+    return raw, parsed, None
+
 @csrf_exempt
 def tenant_form_submit(request):
     if request.method == 'POST':
         try:
             tenant_data = json.loads(request.body)
 
-            bed_data_instance = Bed_Data.objects.get(id = tenant_data['bedId'])
+            bed_id = tenant_data.get('bedId')
+            if not bed_id:
+                return JsonResponse({'success': False, 'message': 'Bed selection is required.'})
+
+            bed_data_instance = Bed_Data.objects.get(id=bed_id)
+
+            check_in_value, check_in_date, check_in_error = parse_and_validate_iso_date(
+                tenant_data.get('checkIn'),
+                'Check-in date',
+                required=True,
+            )
+            if check_in_error:
+                return JsonResponse({'success': False, 'message': check_in_error})
+
+            check_out_value, check_out_date, check_out_error = parse_and_validate_iso_date(
+                tenant_data.get('checkOut'),
+                'Check-out date',
+                required=False,
+            )
+            if check_out_error:
+                return JsonResponse({'success': False, 'message': check_out_error})
+
+            if check_in_date and check_out_date and check_out_date < check_in_date:
+                return JsonResponse({'success': False, 'message': 'Check-out date cannot be before check-in date.'})
+
+            phone_raw = str(tenant_data.get('phoneNumber', '')).strip()
+            phone_digits = ''.join(ch for ch in phone_raw if ch.isdigit())
+            if len(phone_digits) != 10:
+                return JsonResponse({'success': False, 'message': 'Phone number must be exactly 10 digits.'})
+
+            # A tenant portal user is keyed by phone number (username). Re-using the same
+            # phone across multiple tenants causes a one-to-one collision on tenantUser.
+            existing_phone_tenant = Tenant_Data.objects.filter(
+                phoneNumber=phone_digits,
+                tenantUser__isnull=False,
+            ).first()
+            if existing_phone_tenant:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'A resident with this phone number already exists. Please use a different phone number.',
+                })
+
+            total_deposit = str(tenant_data.get('totalDepositPaid', '')).strip() or '0'
 
             tenant_instance = Tenant_Data(
                 bed_data_instance = bed_data_instance,
-                propertyManager = tenant_data['propertyManager'],
-                salesManager = tenant_data['salesManager'],
-                comfortClass = tenant_data['comfortClass'],
-                mealType = tenant_data['mealType'],
-                residentsName = tenant_data['residentsName'],
-                phoneNumber = tenant_data['phoneNumber'],
-                email = tenant_data['email'],
-                permanentAddress = tenant_data['permanentAddress'],
-                kycType = tenant_data['kycType'],
-                aadharNumber = tenant_data['aadharNumber'],
-                aadharFrontCopy = tenant_data['aadharFrontCopy'],
-                aadharBackCopy = tenant_data['aadharBackCopy'],
-                aadharStatus = tenant_data['aadharStatus'],
-                panNumber = tenant_data['panNumber'],
-                panFrontCopy = tenant_data['panFrontCopy'],
-                panBackCopy = tenant_data['panBackCopy'],
-                panStatus = tenant_data['panStatus'],
-                checkIn = tenant_data['checkIn'],
-                checkOut = tenant_data['checkOut'],
-                totalDepositPaid = tenant_data['totalDepositPaid'],
-                rentPerMonth = tenant_data['rentPerMonth'],
+                propertyManager = tenant_data.get('propertyManager', ''),
+                salesManager = tenant_data.get('salesManager', ''),
+                comfortClass = tenant_data.get('comfortClass', ''),
+                mealType = tenant_data.get('mealType', ''),
+                residentsName = tenant_data.get('residentsName', ''),
+                phoneNumber = phone_digits,
+                email = tenant_data.get('email', ''),
+                permanentAddress = tenant_data.get('permanentAddress', ''),
+                kycType = tenant_data.get('kycType', ''),
+                aadharNumber = tenant_data.get('aadharNumber', ''),
+                aadharFrontCopy = tenant_data.get('aadharFrontCopy', ''),
+                aadharBackCopy = tenant_data.get('aadharBackCopy', ''),
+                aadharStatus = tenant_data.get('aadharStatus', ''),
+                panNumber = tenant_data.get('panNumber', ''),
+                panFrontCopy = tenant_data.get('panFrontCopy', ''),
+                panBackCopy = tenant_data.get('panBackCopy', ''),
+                panStatus = tenant_data.get('panStatus', ''),
+                checkIn = check_in_value,
+                checkOut = check_out_value,
+                totalDepositPaid = total_deposit,
+                rentPerMonth = tenant_data.get('rentPerMonth', ''),
             )
 
-            if validate_tenant_dates(tenant_data['checkIn'], tenant_data['checkOut'], bed_data_instance) == False:
+            if validate_tenant_dates(check_in_value, check_out_value, bed_data_instance) == False:
                 return JsonResponse({'success': False, 'message': 'Check-In or Check-Out dates are within existing Check-Ins and Check-Outs!'})
-            
-            if tenant_data['checkOut'] and check_out_date <= today:
-                check_out_date = datetime.strptime(tenant_data['checkOut'], '%Y-%m-%d').date()
-                bed_data_instance.salesStatus = 'Pending'
-                tenant_instance.tenantStatus = 'Inactive'
-            else:
-                bed_data_instance.salesStatus = 'Completed'
-                tenant_instance.tenantStatus = 'Active'
-                calculate_rent_with_delay_charges_new_tenant(tenant_data['checkIn'], tenant_instance)
-            
-            tenant_instance.save()
-            bed_data_instance.save()
 
-            # Create Django auth user for tenant portal access
-            from stayease_tenant.utils import create_tenant_user
-            user, plain_password = create_tenant_user(tenant_instance)
+            with transaction.atomic():
+                today = date.today()
+                if check_out_date:
+                    if check_out_date <= today:
+                        bed_data_instance.salesStatus = 'Pending'
+                        tenant_instance.tenantStatus = 'Inactive'
+                    else:
+                        bed_data_instance.salesStatus = 'Completed'
+                        tenant_instance.tenantStatus = 'Active'
+                        calculate_rent_with_delay_charges_new_tenant(check_in_value, tenant_instance)
+                else:
+                    bed_data_instance.salesStatus = 'Completed'
+                    tenant_instance.tenantStatus = 'Active'
+                    calculate_rent_with_delay_charges_new_tenant(check_in_value, tenant_instance)
+
+                tenant_instance.save()
+                bed_data_instance.save()
+
+                # Create Django auth user for tenant portal access
+                from stayease_tenant.utils import create_tenant_user
+                user, plain_password = create_tenant_user(tenant_instance)
 
             return JsonResponse({
                 'success': True,
@@ -695,6 +768,28 @@ def tenant_data_update(request, id):
                         setattr(tenant_instance, field, new_value)
                         updated_fields.append(field)
 
+            check_in_value, check_in_date, check_in_error = parse_and_validate_iso_date(
+                tenant_instance.checkIn,
+                'Check-in date',
+                required=False,
+            )
+            if check_in_error:
+                return JsonResponse({'success': False, 'message': check_in_error})
+
+            check_out_value, check_out_date, check_out_error = parse_and_validate_iso_date(
+                tenant_instance.checkOut,
+                'Check-out date',
+                required=False,
+            )
+            if check_out_error:
+                return JsonResponse({'success': False, 'message': check_out_error})
+
+            if check_in_date and check_out_date and check_out_date < check_in_date:
+                return JsonResponse({'success': False, 'message': 'Check-out date cannot be before check-in date.'})
+
+            tenant_instance.checkIn = check_in_value
+            tenant_instance.checkOut = check_out_value
+
             if uploaded_files:
                 for field, new_file in uploaded_files.items():
                     if hasattr(tenant_instance, field):
@@ -715,9 +810,9 @@ def tenant_data_update(request, id):
             if validate_tenant_dates(tenant_instance.checkIn, tenant_instance.checkOut, bed_data_instance, tenant_instance) == False:
                 return JsonResponse({'success': False, 'message': 'Check-In or Check-Out dates are within existing Check-Ins and Check-Outs!'})
 
+            today = date.today()
             if 'checkOut' in updated_fields:
                 if tenant_instance.checkOut:
-                    check_out_date = datetime.strptime(tenant_instance.checkOut, '%Y-%m-%d').date()
                     if check_out_date <= today:
                         bed_data_instance.salesStatus = 'Pending'
                         tenant_instance.tenantStatus = 'Inactive'

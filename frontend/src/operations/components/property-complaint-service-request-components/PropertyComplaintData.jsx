@@ -189,7 +189,7 @@ function PropertyComplaintData({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={propertyComplaintHandleUpdate}>
+                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={propertyComplaintHandleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">PROPERTY COMPLAINT DATA</h1>
 
                         <div className="sm:flex justify-between">

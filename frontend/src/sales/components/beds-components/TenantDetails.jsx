@@ -6,6 +6,9 @@ import { Link } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
+import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../shared/dateInput";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 
 function TenantDetails({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
@@ -24,7 +27,7 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
         comfortClass: bedData?.tenant_data?.comfortClass || '',
         mealType: bedData?.tenant_data?.mealType || '',
         residentsName: bedData?.tenant_data?.residentsName || '',
-        phoneNumber: bedData?.tenant_data?.phoneNumber || '',
+        phoneNumber: formatIndianPhone(bedData?.tenant_data?.phoneNumber || ''),
         email: bedData?.tenant_data?.email || '',
         permanentAddress: bedData?.tenant_data?.permanentAddress || '',
         kycType: bedData?.tenant_data?.kycType || '',
@@ -63,9 +66,14 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
     const bedsHandleChange = (e) => {
         const { name, value, type, files } = e.target;
 
+        let nextValue = value;
+        if (name === "phoneNumber") nextValue = formatIndianPhone(value);
+        if (name === "aadharNumber") nextValue = value.replace(/\D/g, "").slice(0, 12);
+        if (name === "panNumber") nextValue = value.toUpperCase().replace(/\s/g, "").slice(0, 10);
+
         setTenantDetails((prevState) => ({
             ...prevState,
-            [name]: type === "file" ? files[0] : value,
+            [name]: type === "file" ? files[0] : nextValue,
         }));
 
         if (name === 'checkIn' && tenantDetails.checkOut && value > tenantDetails.checkOut) {
@@ -84,6 +92,29 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
             }));
         }
     }
+
+    const validateTenantDetails = () => {
+        if (!tenantDetails.residentsName?.trim() || !/^[A-Za-z ]{2,}$/.test(tenantDetails.residentsName.trim())) return "Please enter a valid resident name.";
+        if (!isValidIndianPhone(tenantDetails.phoneNumber)) return "Phone number must be exactly 10 digits.";
+        if (tenantDetails.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tenantDetails.email)) return "Please enter a valid email address.";
+        if (tenantDetails.checkIn && !isValidIsoDateInRange(tenantDetails.checkIn, DATE_INPUT_MIN, DATE_INPUT_MAX)) return "Check-in date must be between 1900-01-01 and 2099-12-31.";
+        if (tenantDetails.checkOut && !isValidIsoDateInRange(tenantDetails.checkOut, DATE_INPUT_MIN, DATE_INPUT_MAX)) return "Check-out date must be between 1900-01-01 and 2099-12-31.";
+        if (tenantDetails.checkOut && tenantDetails.checkIn && tenantDetails.checkOut < tenantDetails.checkIn) return "Check-out date cannot be before check-in date.";
+        if (tenantDetails.totalDepositPaid && Number(tenantDetails.totalDepositPaid) < 0) return "Total deposit paid cannot be negative.";
+        if (tenantDetails.rentPerMonth && Number(tenantDetails.rentPerMonth) <= 0) return "Rent per month must be greater than 0.";
+
+        if (tenantDetails.kycType === "Aadhar") {
+            if (!/^\d{12}$/.test(tenantDetails.aadharNumber || "")) return "Aadhaar number must be 12 digits.";
+            if (!tenantDetails.aadharStatus) return "Aadhaar status is required.";
+        }
+
+        if (tenantDetails.kycType === "PAN") {
+            if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(tenantDetails.panNumber || "")) return "PAN must follow format: ABCDE1234F.";
+            if (!tenantDetails.panStatus) return "PAN status is required.";
+        }
+
+        return null;
+    };
 
     const editHandle = () => {
         setDataEditView(!dataEditView)
@@ -117,6 +148,12 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
     const bedsHandleUpdate = async (e) => {
         e.preventDefault();
 
+        const validationError = validateTenantDetails();
+        if (validationError) {
+            toast.error(validationError);
+            return;
+        }
+
         const changedData = getChangedData();
 
         if (Object.keys(changedData).length === 0) {
@@ -140,6 +177,10 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
                 formData.append(key, changedData[key]);
             }
         });
+
+        if (changedData.phoneNumber) {
+            formData.set('phoneNumber', normalizePhoneDigits(changedData.phoneNumber));
+        }
 
         formData.append('bedId', bedData?.id)
 
@@ -175,7 +216,7 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={bedsHandleUpdate}>
+                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={bedsHandleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA</h1>
 
                         <div className="sm:flex justify-between">
@@ -322,7 +363,9 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
                                                         value={tenantDetails.phoneNumber}
                                                         onChange={(e) => bedsHandleChange(e)}
                                                         className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Phone Number here"
+                                                        placeholder="98765 43210"
+                                                        inputMode="numeric"
+                                                        maxLength={11}
                                                         name="phoneNumber"
                                                     />
                                                 </span>
@@ -624,6 +667,8 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
                                                         onChange={(e) => bedsHandleChange(e)}
                                                         className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
                                                         name="checkIn"
+                                                        min={DATE_INPUT_MIN}
+                                                        max={DATE_INPUT_MAX}
                                                     />
                                                 </span>
                                             </td>
@@ -643,7 +688,8 @@ function TenantDetails({ isExpanded, setIsExpanded }) {
                                                         onChange={(e) => bedsHandleChange(e)}
                                                         className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
                                                         name="checkOut"
-                                                        min={tenantDetails.checkIn}
+                                                        min={tenantDetails.checkIn || DATE_INPUT_MIN}
+                                                        max={DATE_INPUT_MAX}
                                                     />
                                                 </span>
                                             </td>

@@ -5,6 +5,7 @@ import Navbar from '../Navbar';
 import { FaEdit } from "react-icons/fa";
 import axios from 'axios';
 import { UseCSVDownload } from '../UseCSVDownload';
+import { formatIndianPhone } from "../../../shared/phone";
 
 function LeadTable({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
@@ -66,7 +67,7 @@ function LeadTable({ isExpanded, setIsExpanded }) {
         'Lead Date': data.leadDate,
         'Lead Source': data.leadSource,
         'Name': data.name,
-        'Contact': data.contact,
+        'Contact': formatIndianPhone(data.contact),
         'Email': data.email,
         'Lead Status': data.leadResult,
         'Not Converted Reason': data.notConvertedReason,
@@ -86,7 +87,7 @@ function LeadTable({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+                    <div className="max-w-6xl mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LEADS DATA TABLE</h1>
 
                         <div className="sm:flex justify-between">
@@ -136,7 +137,7 @@ function LeadTable({ isExpanded, setIsExpanded }) {
                                             <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.leadDate}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.leadSource}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.name}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.contact}</td>
+                                            <td className="border border-gray-300 px-4 py-2 text-center">{formatIndianPhone(leadData?.contact)}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.email}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.leadResult}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{leadData?.notConvertedReason || '-'}</td>

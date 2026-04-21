@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const tenantApi = axios.create({
     baseURL: "/tenant-portal",
@@ -37,6 +38,13 @@ tenantApi.interceptors.response.use(
                 }
             }
         }
+
+        const skipGlobalErrorToast = error?.config?.skipGlobalErrorToast;
+        if (!skipGlobalErrorToast) {
+            const apiMessage = error?.response?.data?.message;
+            toast.error(apiMessage || "Request failed. Please try again.");
+        }
+
         return Promise.reject(error);
     }
 );

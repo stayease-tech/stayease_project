@@ -1,4 +1,5 @@
 import React from 'react'
+import { formatIndianPhone } from "../../../shared/phone";
 
 function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
     return (
@@ -56,7 +57,7 @@ function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
 
                             <td className="flex">
                                 {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.ownerPhone}</span>
+                                    <span className="py-1 px-2 w-full">{formatIndianPhone(ownerDetails.ownerPhone)}</span>
                                 </> : <>
                                     <span className="py-1 px-2 w-full">
                                         <input
@@ -66,7 +67,9 @@ function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
                                             onChange={ownerHandleChange}
                                             className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
                                             name="ownerPhone"
-                                            placeholder="Enter the Owner Phone Number here"
+                                            placeholder="98765 43210"
+                                            inputMode="numeric"
+                                            maxLength={11}
                                             required />
                                     </span>
                                 </>}

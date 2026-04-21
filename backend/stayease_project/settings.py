@@ -222,3 +222,11 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': False,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+PAYU_CONFIG = {
+    'merchant_key': os.getenv('PAYU_MERCHANT_KEY', ''),
+    'merchant_salt': os.getenv('PAYU_MERCHANT_SALT', ''),
+    'base_url': os.getenv('PAYU_BASE_URL', 'https://test.payu.in/_payment'),
+    'success_url': os.getenv('PAYU_SUCCESS_URL', 'https://localhost/payu/success'),
+    'failure_url': os.getenv('PAYU_FAILURE_URL', 'https://localhost/payu/failure'),
+}

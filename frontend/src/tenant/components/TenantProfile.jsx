@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import tenantApi from "../tenantApi";
 import Navbar from "../../shared/Navbar";
 import TenantSidebar from "./Sidebar";
+import { toast } from "react-toastify";
+import { formatIndianPhone } from "../../shared/phone";
 
 export default function TenantProfile({ isExpanded, setIsExpanded }) {
     const [profile, setProfile] = useState(null);
@@ -9,7 +11,6 @@ export default function TenantProfile({ isExpanded, setIsExpanded }) {
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({});
     const [saving, setSaving] = useState(false);
-    const [msg, setMsg] = useState("");
 
     useEffect(() => {
         tenantApi.get("/profile/")
@@ -25,16 +26,17 @@ export default function TenantProfile({ isExpanded, setIsExpanded }) {
 
     const handleSave = async () => {
         setSaving(true);
-        setMsg("");
         try {
-            const res = await tenantApi.put("/profile/update/", form);
+            const res = await tenantApi.put("/profile/update/", form, { skipGlobalErrorToast: true });
             if (res.data.success) {
                 setProfile((p) => ({ ...p, ...form }));
                 setEditing(false);
-                setMsg("Profile updated successfully.");
+                toast.success("Profile updated successfully.");
+            } else {
+                toast.error(res.data.message || "Failed to update profile.");
             }
         } catch {
-            setMsg("Failed to update profile.");
+            toast.error("Failed to update profile.");
         }
         setSaving(false);
     };
@@ -57,8 +59,6 @@ export default function TenantProfile({ isExpanded, setIsExpanded }) {
                         <button className="btn btn-primary" onClick={() => setEditing(true)}>Edit Profile</button>
                     )}
                 </div>
-
-                {msg && <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{msg}</div>}
 
                 {loading ? (
                     <div className="loading-center"><div className="spinner"></div></div>
@@ -91,7 +91,7 @@ export default function TenantProfile({ isExpanded, setIsExpanded }) {
                                 ) : (
                                     <>
                                         <Field label="Name" value={profile?.residentsName} />
-                                        <Field label="Phone" value={profile?.phoneNumber} />
+                                        <Field label="Phone" value={formatIndianPhone(profile?.phoneNumber) || "—"} />
                                         <Field label="Email" value={profile?.email} />
                                         <Field label="Address" value={profile?.permanentAddress} />
                                     </>

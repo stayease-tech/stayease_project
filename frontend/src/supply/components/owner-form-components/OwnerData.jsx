@@ -29,13 +29,15 @@ function OwnerData({ ownerData, ownerHandleChange }) {
 
             <label htmlFor="ownerPhone" className="text-[#D4A017] max-sm:text-sm"><strong>Phone:</strong></label>
             <input
-                type="phone"
+                type="text"
                 id="ownerPhone"
                 value={ownerData.ownerPhone}
                 onChange={ownerHandleChange}
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name="ownerPhone"
-                placeholder="Enter the Owner Phone Number here"
+                placeholder="98765 43210"
+                inputMode="numeric"
+                maxLength={11}
                 required />
 
             <label htmlFor="ownerEmail" className="text-[#D4A017] max-sm:text-sm"><strong>Email:</strong></label>

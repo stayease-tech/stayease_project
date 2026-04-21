@@ -29,14 +29,14 @@ export default function TenantComplaintDetail({ isExpanded, setIsExpanded }) {
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">
-                    <div><h1>Complaint #{id}</h1><p>Complaint details and timeline</p></div>
-                    <button className="btn btn-outline" onClick={() => navigate("/tenant/tenant-complaints")}>Back</button>
+                    <div><h1>Maintenance Request #{id}</h1><p>Maintenance request details and timeline</p></div>
+                    <button className="btn btn-outline" onClick={() => navigate("/tenant/complaints")}>Back</button>
                 </div>
 
                 {loading ? (
                     <div className="loading-center"><div className="spinner"></div></div>
                 ) : !complaint ? (
-                    <div className="card"><div className="card-body text-center text-gray-500 py-12">Complaint not found.</div></div>
+                    <div className="card"><div className="card-body text-center text-gray-500 py-12">Maintenance request not found.</div></div>
                 ) : (
                     <>
                         <div className="card mb-6">

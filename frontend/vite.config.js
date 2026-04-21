@@ -6,12 +6,17 @@ import tailwindcss from '@tailwindcss/vite'
 // e.g. /accounts/dashboard, /accounts/accounts-vendor-table
 const frontendRoutes = [
   'dashboard',
-  'accounts-', 'operations-', 'sales-', 'supply-', 'partners-', 'tenant-',
+  'accounts-', 'operations-', 'sales-', 'supply-', 'partners-',
   'user-activity',
 ];
 
 /** Only proxy to Django if the path looks like an API call, not a frontend route */
-function shouldProxy(pathname) {
+function shouldProxy(pathname, modulePrefix) {
+  // These prefixes are backend-only and should never be treated as SPA routes.
+  if (modulePrefix === '/api' || modulePrefix === '/tenant-portal') {
+    return true;
+  }
+
   const secondSegment = pathname.split('/').filter(Boolean)[1] || '';
   return !frontendRoutes.some((prefix) => secondSegment.startsWith(prefix));
 }
@@ -23,7 +28,7 @@ for (const mod of modules) {
   proxy[mod] = {
     target: djangoTarget,
     bypass(req) {
-      if (!shouldProxy(req.url)) return req.url; // serve from Vite (SPA)
+      if (!shouldProxy(req.url, mod)) return req.url; // serve from Vite (SPA)
     },
   };
 }

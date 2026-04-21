@@ -18,6 +18,7 @@ const WebMainAbout = lazy(() => import("./website/components/pages/MainAbout"));
 const WebProperties = lazy(() => import("./website/components/pages/Properties"));
 const WebBlog = lazy(() => import("./website/components/pages/Blog"));
 const WebContact = lazy(() => import("./website/components/pages/Contact"));
+const WebTenantLogin = lazy(() => import("./website/components/pages/TenantLogin"));
 const WebPrivacyPolicy = lazy(() => import("./website/components/pages/PrivacyPolicyPage"));
 const WebTermsConditions = lazy(() => import("./website/components/pages/TermsConditionsPage"));
 const WebNotFound = lazy(() => import("./website/components/pages/NotFound"));
@@ -91,6 +92,7 @@ const SalesLeadDetails = lazy(() => import("./sales/components/lead-components/L
 const SalesExpenseForm = lazy(() => import("./sales/components/expense-components/ExpenseForm"));
 const SalesExpenseTable = lazy(() => import("./sales/components/expense-components/ExpenseTable"));
 const SalesVendorForm = lazy(() => import("./sales/components/expense-components/VendorForm"));
+const SalesKycManagement = lazy(() => import("./sales/components/kyc-components/KycManagement"));
 
 // === SUPPLY - lazy loaded ===
 const SupActivityStats = lazy(() => import("./supply/components/activity-components/ActivityStats"));
@@ -180,6 +182,7 @@ function Routing() {
                 <Route path="/blog/why-co-living-best-for-young-professionals" element={<PublicLayout><Blog7 /></PublicLayout>} />
                 <Route path="/blog/top-amenities-in-modern-co-living" element={<PublicLayout><Blog8 /></PublicLayout>} />
                 <Route path="/contact" element={<PublicLayout><WebContact /></PublicLayout>} />
+                <Route path="/tenant-login" element={<PublicLayout><WebTenantLogin /></PublicLayout>} />
                 <Route path="/privacy-policy" element={<PublicLayout><WebPrivacyPolicy /></PublicLayout>} />
                 <Route path="/Terms-conditions" element={<PublicLayout><WebTermsConditions /></PublicLayout>} />
 
@@ -246,6 +249,7 @@ function Routing() {
                 <Route path="/sales/sales-expense-form" element={<Protected type="sales"><SalesExpenseForm {...sp} /></Protected>} />
                 <Route path="/sales/sales-expense-table" element={<Protected type="sales"><SalesExpenseTable {...sp} /></Protected>} />
                 <Route path="/sales/sales-vendor-form" element={<Protected type="sales"><SalesVendorForm {...sp} /></Protected>} />
+                <Route path="/sales/sales-kyc-management" element={<Protected type="sales"><SalesKycManagement {...sp} /></Protected>} />
 
                 {/* ========== SUPPLY (PROTECTED) ========== */}
                 <Route path="/supply/supply-user-activity-data" element={<Protected type="supply"><SupActivityStats {...sp} /></Protected>} />

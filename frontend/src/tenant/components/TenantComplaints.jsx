@@ -4,6 +4,7 @@ import tenantApi from "../tenantApi";
 import Navbar from "../../shared/Navbar";
 import TenantSidebar from "./Sidebar";
 import { MessageSquare, Plus, ChevronRight } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function TenantComplaints({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
@@ -12,7 +13,6 @@ export default function TenantComplaints({ isExpanded, setIsExpanded }) {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ issueDesc: "", preferredTime: "" });
     const [submitting, setSubmitting] = useState(false);
-    const [msg, setMsg] = useState({ text: "", type: "" });
 
     const fetchComplaints = () => {
         tenantApi.get("/complaints/")
@@ -26,19 +26,18 @@ export default function TenantComplaints({ isExpanded, setIsExpanded }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
-        setMsg({ text: "", type: "" });
         try {
-            const res = await tenantApi.post("/complaints/submit/", form);
+            const res = await tenantApi.post("/complaints/submit/", form, { skipGlobalErrorToast: true });
             if (res.data.success) {
-                setMsg({ text: "Complaint submitted!", type: "success" });
+                toast.success("Maintenance Request submitted!");
                 setShowForm(false);
                 setForm({ issueDesc: "", preferredTime: "" });
                 fetchComplaints();
             } else {
-                setMsg({ text: res.data.message, type: "error" });
+                toast.error(res.data.message || "Failed to submit.");
             }
         } catch (err) {
-            setMsg({ text: err.response?.data?.message || "Failed to submit.", type: "error" });
+            toast.error(err.response?.data?.message || "Failed to submit.");
         }
         setSubmitting(false);
     };
@@ -55,21 +54,15 @@ export default function TenantComplaints({ isExpanded, setIsExpanded }) {
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">
-                    <div><h1>Complaints</h1><p>Raise and track your complaints</p></div>
+                    <div><h1>Maintenance Requests</h1><p>Raise and track your maintenance requests</p></div>
                     <button className="btn btn-primary flex items-center gap-2" onClick={() => setShowForm(!showForm)}>
-                        <Plus size={16} /> {showForm ? "Cancel" : "Raise Complaint"}
+                        <Plus size={16} /> {showForm ? "Cancel" : "New Maintenance Request"}
                     </button>
                 </div>
 
-                {msg.text && (
-                    <div className={`mb-4 p-3 rounded-lg text-sm border ${msg.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-                        {msg.text}
-                    </div>
-                )}
-
                 {showForm && (
                     <div className="card mb-6">
-                        <div className="card-header"><h3>New Complaint</h3></div>
+                        <div className="card-header"><h3>New Maintenance Request</h3></div>
                         <div className="card-body">
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
@@ -93,7 +86,7 @@ export default function TenantComplaints({ isExpanded, setIsExpanded }) {
                                     />
                                 </div>
                                 <button className="btn btn-primary" type="submit" disabled={submitting}>
-                                    {submitting ? "Submitting..." : "Submit Complaint"}
+                                    {submitting ? "Submitting..." : "Submit Maintenance Request"}
                                 </button>
                             </form>
                         </div>
@@ -106,7 +99,7 @@ export default function TenantComplaints({ isExpanded, setIsExpanded }) {
                     <div className="card">
                         <div className="card-body text-center py-12 text-gray-500">
                             <MessageSquare size={48} className="mx-auto mb-3 text-gray-300" />
-                            <p>No complaints raised yet.</p>
+                            <p>No maintenance requests raised yet.</p>
                         </div>
                     </div>
                 ) : (
@@ -115,7 +108,7 @@ export default function TenantComplaints({ isExpanded, setIsExpanded }) {
                             <div
                                 key={c.id}
                                 className="card cursor-pointer hover:shadow-md transition-shadow"
-                                onClick={() => navigate(`/tenant/tenant-complaint/${c.id}`)}
+                                onClick={() => navigate(`/tenant/complaint/${c.id}`)}
                             >
                                 <div className="card-body flex items-center justify-between">
                                     <div className="flex-1">

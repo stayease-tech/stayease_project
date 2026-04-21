@@ -4,6 +4,8 @@ import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 
 function LeadDetails({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
@@ -19,7 +21,7 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
         leadDate: leadData?.leadDate || "",
         leadSource: leadData?.leadSource || "",
         name: leadData?.name || "",
-        contact: leadData?.contact || "",
+        contact: formatIndianPhone(leadData?.contact || ""),
         email: leadData?.email || "",
         leadResult: leadData?.leadResult || "",
         notConvertedReason: leadData?.notConvertedReason || ""
@@ -36,9 +38,20 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
 
         setLeadDetails((prevState) => ({
             ...prevState,
-            [name]: value,
+            [name]: name === "contact" ? formatIndianPhone(value) : value,
         }));
     }
+
+    const validateLeadData = () => {
+        if (!leadDetails.leadDate) return "Lead date is required.";
+        if (!leadDetails.leadSource) return "Lead source is required.";
+        if (!leadDetails.name?.trim() || !/^[A-Za-z ]{2,}$/.test(leadDetails.name.trim())) return "Please enter a valid lead name.";
+        if (!isValidIndianPhone(leadDetails.contact)) return "Contact number must be exactly 10 digits.";
+        if (!leadDetails.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadDetails.email)) return "Please enter a valid email address.";
+        if (!leadDetails.leadResult) return "Lead status is required.";
+        if (leadDetails.leadResult === "Not Converted" && !leadDetails.notConvertedReason) return "Please select reason for not converted.";
+        return null;
+    };
 
     const getChangedData = () => {
         const changedData = {};
@@ -63,6 +76,11 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
 
     const handleLeadUpdate = async (e) => {
         e.preventDefault();
+        const validationError = validateLeadData();
+        if (validationError) {
+            toast.error(validationError);
+            return;
+        }
         setIsSaving(true);
 
         const changedData = getChangedData();
@@ -76,11 +94,16 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
         setIsSaving(true);
 
         try {
+            if (changedData.contact) {
+                changedData.contact = normalizePhoneDigits(changedData.contact);
+            }
+
             const response = await axios.put(
                 `/sales/leads-data-update/${id}/`,
                 changedData,
                 {
                     withCredentials: true,
+                    skipGlobalErrorToast: true,
                     headers: {
                         'Content-Type': 'application/json',
                     }
@@ -135,7 +158,7 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={handleLeadUpdate}>
+                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={handleLeadUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LEADS DATA</h1>
 
                         <div className="sm:flex justify-between">
@@ -230,7 +253,7 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Contact</th>
                                         {!dataEditView ? <>
-                                            <td className="py-1 px-2">{leadDetails?.contact}</td>
+                                            <td className="py-1 px-2">{formatIndianPhone(leadDetails?.contact)}</td>
                                         </> : <>
                                             <td className="flex">
                                                 <span className="py-1 px-2 w-full">
@@ -239,7 +262,9 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                                                         value={leadDetails.contact}
                                                         onChange={(e) => leadHandleChange(e)}
                                                         className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Contact Number here"
+                                                        placeholder="98765 43210"
+                                                        inputMode="numeric"
+                                                        maxLength={11}
                                                         name="contact"
                                                         required
                                                     />

@@ -51,16 +51,20 @@ def login_view(request):
     return JsonResponse({"success": False, "message": "Invalid credentials"}, status=400)
 
 def logout_view(request):
-    data = json.loads(request.body)
-    login_id = data.get("loginId")
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Invalid request method. POST expected."}, status=405)
 
-    login_instance = User_Login_Data.objects.get(
-        id=login_id
-    )
-                
-    if login_instance:
-        login_instance.logout_time = timezone.now()
-        login_instance.save()
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        data = {}
+
+    login_id = data.get("loginId")
+    if login_id:
+        login_instance = User_Login_Data.objects.filter(id=login_id).first()
+        if login_instance and not login_instance.logout_time:
+            login_instance.logout_time = timezone.now()
+            login_instance.save(update_fields=["logout_time"])
 
     logout(request)
     return JsonResponse({"success": True})

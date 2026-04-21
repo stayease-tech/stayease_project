@@ -4,6 +4,8 @@ import Navbar from '../Navbar';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 
 function LeadForm({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
@@ -32,9 +34,21 @@ function LeadForm({ isExpanded, setIsExpanded }) {
 
         setLeadData((prevState) => ({
             ...prevState,
-            [name]: value,
+            [name]: name === "contact" ? formatIndianPhone(value) : value,
         }));
     }
+
+    const validateLeadForm = () => {
+        if (!leadData.leadDate) return "Lead date is required.";
+        if (!leadData.leadSource) return "Lead source is required.";
+        if (!leadData.name?.trim()) return "Lead name is required.";
+        if (!/^[A-Za-z ]{2,}$/.test(leadData.name.trim())) return "Lead name must contain only letters and spaces.";
+        if (!isValidIndianPhone(leadData.contact)) return "Contact number must be exactly 10 digits.";
+        if (!leadData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(leadData.email)) return "Please enter a valid email address.";
+        if (!leadData.leadResult) return "Lead status is required.";
+        if (leadData.leadResult === "Not Converted" && !leadData.notConvertedReason) return "Please select reason for not converted.";
+        return null;
+    };
 
     const getCSRFToken = () => {
         return Cookies.get('csrftoken');
@@ -44,11 +58,24 @@ function LeadForm({ isExpanded, setIsExpanded }) {
 
     const leadHandleSubmit = async (e) => {
         e.preventDefault();
+
+        const error = validateLeadForm();
+        if (error) {
+            toast.error(error);
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
-            const response = await axios.post('/sales/leads-form-submit/', leadData, {
+            const payload = {
+                ...leadData,
+                contact: normalizePhoneDigits(leadData.contact),
+            };
+
+            const response = await axios.post('/sales/leads-form-submit/', payload, {
                 withCredentials: true,
+                skipGlobalErrorToast: true,
             });
 
             alert(response.data.message);
@@ -82,7 +109,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-[1rem]`}>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800"
+                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800"
                         onSubmit={leadHandleSubmit} method='POST'>
 
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-stone-400">ADD LEAD DATA</h1>
@@ -139,7 +166,9 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             onChange={leadHandleChange}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                             name="contact"
-                            placeholder="Enter the Contact Number here"
+                            placeholder="98765 43210"
+                            inputMode="numeric"
+                            maxLength={11}
                             required />
 
                         <label htmlFor="email" className="text-[#D4A017] max-sm:text-sm"><strong>Email:</strong></label>

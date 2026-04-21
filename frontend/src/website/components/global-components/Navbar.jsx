@@ -10,6 +10,7 @@ const navigation = [
     { name: 'Properties', to: '/properties' },
     { name: 'Blog', to: '/blog' },
     { name: 'Contact', to: '/contact' },
+    { name: 'Tenant Login', to: '/tenant-login' },
 ]
 
 // Memoized social links component - only re-renders when isMobile prop changes

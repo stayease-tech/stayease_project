@@ -67,7 +67,7 @@ export default function TenantRentHistory({ isExpanded, setIsExpanded }) {
                                     </thead>
                                     <tbody>
                                         {records.map((r) => (
-                                            <tr key={r.id} className="cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/tenant/tenant-invoice/${r.id}`)}>
+                                            <tr key={r.id} className="cursor-pointer hover:bg-gray-50" onClick={() => navigate(`/tenant/invoice/${r.id}`)}>
                                                 <td className="font-medium">{r.month}</td>
                                                 <td>₹{r.rent}</td>
                                                 <td>{r.delayCharges ? `₹${r.delayCharges}` : "—"}</td>

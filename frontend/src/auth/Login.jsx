@@ -20,8 +20,6 @@ function Login() {
     // Partner login state
     const [partnerData, setPartnerData] = useState({ phone: "", otp: "" });
 
-    // Tenant login state
-    const [tenantData, setTenantData] = useState({ phone: "", password: "" });
 
     // If already logged in, redirect to dashboard
     if (auth.user && auth.userType) {
@@ -36,11 +34,6 @@ function Login() {
     const handlePartnerChange = (e) => {
         const { name, value } = e.target;
         setPartnerData((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleTenantChange = (e) => {
-        const { name, value } = e.target;
-        setTenantData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleStaffSubmit = async (e) => {
@@ -81,21 +74,6 @@ function Login() {
         setError("");
 
         const result = await auth.loginPartner(partnerData.phone, partnerData.otp);
-
-        if (result.success) {
-            navigate(result.redirect);
-        } else {
-            setError(result.message);
-        }
-        setIsSubmitting(false);
-    };
-
-    const handleTenantSubmit = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError("");
-
-        const result = await auth.loginTenant(tenantData.phone, tenantData.password);
 
         if (result.success) {
             navigate(result.redirect);
@@ -186,17 +164,6 @@ function Login() {
                                 onClick={() => { setActiveTab("partner"); setError(""); setOtpSent(false); }}
                             >
                                 Partner Login
-                            </button>
-                            <button
-                                type="button"
-                                className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
-                                    activeTab === "tenant"
-                                        ? "bg-white text-[#D4A017] shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
-                                }`}
-                                onClick={() => { setActiveTab("tenant"); setError(""); }}
-                            >
-                                Tenant Login
                             </button>
                         </div>
 
@@ -330,60 +297,6 @@ function Login() {
                             </form>
                         )}
 
-                        {/* Tenant Login Form */}
-                        {activeTab === "tenant" && (
-                            <form className="p-8" onSubmit={handleTenantSubmit} onKeyDown={(e) => { if (e.key === "Enter" && !isSubmitting) { e.preventDefault(); handleTenantSubmit(e); } }}>
-                                <div className="mb-5">
-                                    <label htmlFor="tenantPhone" className="block text-sm font-medium text-gray-600 mb-1.5">
-                                        Phone Number
-                                    </label>
-                                    <input
-                                        type="tel"
-                                        id="tenantPhone"
-                                        name="phone"
-                                        value={tenantData.phone}
-                                        onChange={handleTenantChange}
-                                        className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder-gray-400 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/10 focus:outline-none transition-colors"
-                                        placeholder="Enter your phone number"
-                                        required
-                                    />
-                                </div>
-
-                                <div className="mb-5">
-                                    <label htmlFor="tenantPassword" className="block text-sm font-medium text-gray-600 mb-1.5">
-                                        Password
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            id="tenantPassword"
-                                            name="password"
-                                            value={tenantData.password}
-                                            onChange={handleTenantChange}
-                                            className="w-full px-3.5 py-2.5 pr-10 border border-gray-300 rounded-lg text-sm text-gray-900 bg-white placeholder-gray-400 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/10 focus:outline-none transition-colors"
-                                            placeholder="••••••••"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#D4A017] transition-colors"
-                                            onClick={() => setShowPassword((p) => !p)}
-                                            tabIndex={-1}
-                                        >
-                                            {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <button
-                                    className="w-full py-2.5 bg-[#D4A017] text-black text-sm font-medium rounded-lg hover:bg-[#B8860B] transition-colors disabled:opacity-50 shadow-sm hover:shadow-md"
-                                    disabled={isSubmitting}
-                                    type="submit"
-                                >
-                                    {isSubmitting ? "Signing In..." : "Sign In"}
-                                </button>
-                            </form>
-                        )}
                     </div>
                     {/* Footer tagline */}
                     <p className="text-center text-neutral-500 text-xs mt-6 mb-4">

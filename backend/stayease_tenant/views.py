@@ -1,5 +1,8 @@
 import json
+import hashlib
+import uuid
 from datetime import datetime
+from decimal import Decimal, InvalidOperation
 
 from django.http import JsonResponse
 from django.utils import timezone
@@ -7,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
+from django.conf import settings
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -314,6 +318,75 @@ def tenant_rent_history(request):
         })
 
     return Response({'success': True, 'rentRecords': data})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def tenant_payu_init(request):
+    tenant = _get_tenant(request)
+    if not tenant:
+        return Response({'success': False, 'message': 'Tenant not found.'}, status=404)
+
+    amount_raw = str(request.data.get('amount', '')).strip()
+    try:
+        amount = Decimal(amount_raw)
+    except (InvalidOperation, TypeError):
+        return Response({'success': False, 'message': 'Amount must be a valid number.'}, status=400)
+
+    if amount <= 0:
+        return Response({'success': False, 'message': 'Amount must be greater than zero.'}, status=400)
+
+    payu_config = getattr(settings, 'PAYU_CONFIG', {})
+    merchant_key = (payu_config.get('merchant_key') or '').strip()
+    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
+    payu_base_url = (payu_config.get('base_url') or '').strip()
+    success_url = (payu_config.get('success_url') or '').strip()
+    failure_url = (payu_config.get('failure_url') or '').strip()
+
+    if not merchant_key or not merchant_salt or not payu_base_url:
+        return Response({
+            'success': False,
+            'message': 'Payment service is not configured yet. Please contact support.',
+        }, status=503)
+
+    txn_id = str(request.data.get('txnId') or f"SE{uuid.uuid4().hex[:18]}")
+    product_info = str(request.data.get('productInfo') or 'Rent Payment').strip()[:100]
+    firstname = (tenant.residentsName or request.user.first_name or 'Tenant').strip()
+    email = (tenant.email or '').strip()
+    phone = str(tenant.phoneNumber or request.user.username or '').strip()
+
+    amount_str = f"{amount:.2f}"
+    hash_sequence = "|".join([
+        merchant_key,
+        txn_id,
+        amount_str,
+        product_info,
+        firstname,
+        email,
+        '', '', '', '', '', '', '', '', '', '',
+        merchant_salt,
+    ])
+    payu_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
+
+    return Response({
+        'success': True,
+        'paymentProvider': 'payu',
+        'payuBaseUrl': payu_base_url,
+        'paymentData': {
+            'key': merchant_key,
+            'txnid': txn_id,
+            'amount': amount_str,
+            'productinfo': product_info,
+            'firstname': firstname,
+            'email': email,
+            'phone': phone,
+            'surl': success_url,
+            'furl': failure_url,
+            'hash': payu_hash,
+            'udf1': str(tenant.id),
+            'udf2': str(request.user.id),
+        }
+    })
 
 
 @api_view(['GET'])

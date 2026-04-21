@@ -31,7 +31,7 @@ export default function TenantInvoice({ isExpanded, setIsExpanded }) {
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">
                     <div><h1>Invoice #{id}</h1><p>Detailed rent invoice</p></div>
-                    <button className="btn btn-outline" onClick={() => navigate("/tenant/tenant-rent")}>Back to Rent History</button>
+                    <button className="btn btn-outline" onClick={() => navigate("/tenant/rent-history")}>Back to Rent History</button>
                 </div>
 
                 {loading ? (

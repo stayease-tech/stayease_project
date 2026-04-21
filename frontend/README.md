@@ -41,6 +41,15 @@ index.html
 - API requests proxied to Django backend at `http://127.0.0.1:8000` in dev (Vite proxy)
 - Smart proxy logic: frontend routes (dashboards, table pages) stay in SPA; API calls pass through to Django
 
+## Recent Progress (2026-04-22)
+
+- Added global date input guard (`src/shared/dateInput.js`) to prevent browser date overflow edge cases (for example year 275760) and enforce a common range (`1900-01-01` to `2099-12-31`).
+- Enabled app-wide date guard bootstrap in `src/main.jsx`.
+- Added explicit date-range validation + min/max constraints in:
+      - `src/sales/components/beds-components/TenantForm.jsx`
+      - `src/sales/components/beds-components/TenantDetails.jsx`
+- Fixed Vite proxy route classification so `/sales/tenant-form-submit/` is always proxied to Django (no frontend 404 due to route-prefix collision).
+
 ---
 
 ## Project Structure

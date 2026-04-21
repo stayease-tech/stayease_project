@@ -58,7 +58,7 @@ export default function TenantDashboard({ isExpanded, setIsExpanded }) {
                                     background: data?.kycApprovalStatus === "Rejected" ? "#FEF2F2" : "#FFFBEB",
                                     borderColor: data?.kycApprovalStatus === "Rejected" ? "#FCA5A5" : "#FCD34D",
                                 }}
-                                onClick={() => navigate("/tenant/tenant-kyc")}
+                                onClick={() => navigate("/tenant/kyc")}
                             >
                                 <div className="flex items-center gap-3">
                                     <ShieldCheck size={24} className={data?.kycApprovalStatus === "Rejected" ? "text-red-500" : "text-amber-500"} />
@@ -77,10 +77,10 @@ export default function TenantDashboard({ isExpanded, setIsExpanded }) {
                         )}
 
                         <div className="stats-grid">
-                            <StatCard icon={IndianRupee} label="Total Due" value={`₹${data?.totalDue ?? 0}`} color="#EF4444" onClick={() => navigate("/tenant/tenant-rent")} />
+                            <StatCard icon={IndianRupee} label="Total Due" value={`₹${data?.totalDue ?? 0}`} color="#EF4444" onClick={() => navigate("/tenant/rent-history")} />
                             <StatCard icon={Calendar} label="Next Due Date" value={data?.nextDueDate || "—"} color="#F59E0B" />
-                            <StatCard icon={CreditCard} label="Pending Invoices" value={data?.pendingRentCount ?? 0} color="#D4A017" onClick={() => navigate("/tenant/tenant-rent")} />
-                            <StatCard icon={MessageSquare} label="Open Complaints" value={data?.openComplaints ?? 0} color="#3B82F6" onClick={() => navigate("/tenant/tenant-complaints")} />
+                            <StatCard icon={CreditCard} label="Pending Invoices" value={data?.pendingRentCount ?? 0} color="#D4A017" onClick={() => navigate("/tenant/rent-history")} />
+                            <StatCard icon={MessageSquare} label="Open Maintenance Requests" value={data?.openComplaints ?? 0} color="#3B82F6" onClick={() => navigate("/tenant/complaints")} />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -99,10 +99,10 @@ export default function TenantDashboard({ isExpanded, setIsExpanded }) {
                             <div className="card">
                                 <div className="card-header"><h3>Quick Actions</h3></div>
                                 <div className="card-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
-                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/tenant-profile")}>My Profile</button>
-                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/tenant-kyc")}>KYC Status</button>
-                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/tenant-complaints")}>Raise Complaint</button>
-                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/tenant-lease")}>Lease Agreement</button>
+                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/profile")}>My Profile</button>
+                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/kyc")}>KYC Status</button>
+                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/complaints")}>Raise Maintenance Request</button>
+                                    <button className="btn btn-outline" onClick={() => navigate("/tenant/lease")}>Lease Agreement</button>
                                 </div>
                             </div>
                         </div>

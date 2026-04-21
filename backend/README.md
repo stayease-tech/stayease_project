@@ -46,6 +46,19 @@ SessionMiddleware → CsrfViewMiddleware → AuthenticationMiddleware
 DRF (SessionAuth or JWTAuth) → View → Serializer → Model → PostgreSQL
 ```
 
+## Recent Progress (2026-04-22)
+
+- Tenant create/update date handling was hardened in `stayease_sales/views.py`:
+     - strict ISO date parsing (`YYYY-MM-DD`),
+     - supported range guard (`1900-01-01` to `2099-12-31`),
+     - check-out must not be before check-in,
+     - fixed undefined `today` bug in tenant update path.
+- Tenant create flow remains transactional and now surfaces clear validation messages for invalid dates.
+- Started PayU integration for tenant payments:
+     - Added `POST /tenant-portal/payments/payu/init/` in `stayease_tenant/views.py` and `stayease_tenant/urls.py`.
+     - Added `PAYU_CONFIG` in settings for merchant key/salt/base URLs.
+     - Endpoint returns backend-generated PayU hash payload for secure checkout handoff.
+
 ---
 
 ## Django Apps

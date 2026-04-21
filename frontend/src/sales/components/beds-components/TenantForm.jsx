@@ -1,17 +1,94 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
-import { FaUpload } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
+import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../shared/dateInput";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { User, Phone, Mail, MapPin, Briefcase, Bed, Calendar, IndianRupee, ShieldCheck, CheckCircle, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
 
-function TenantForm({ isExpanded, setIsExpanded }) {
+const FIELD_CLS = "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-[#D4A017] transition-colors";
+const LABEL_CLS = "block text-xs font-medium text-gray-500 mb-1.5";
+const SELECT_CLS = `${FIELD_CLS} cursor-pointer`;
+
+function SectionCard({ icon: Icon, title, children }) {
+    return (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="flex items-center gap-2.5 px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <span className="p-1.5 rounded-lg bg-[#D4A017]/10"><Icon size={15} className="text-[#D4A017]" /></span>
+                <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
+            </div>
+            <div className="p-6">{children}</div>
+        </div>
+    );
+}
+
+function FieldRow({ children }) {
+    return <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>;
+}
+
+function Field({ label, children }) {
+    return (
+        <div>
+            <label className={LABEL_CLS}>{label}</label>
+            {children}
+        </div>
+    );
+}
+
+function getSubmitErrorMessage(err) {
+    const status = err?.response?.status;
+    const data = err?.response?.data;
+
+    if (typeof data === "string") {
+        if (status === 401 || status === 403) {
+            return "Your session expired. Please log in again and retry.";
+        }
+        return "Unable to submit the form right now. Please try again.";
+    }
+
+    const apiMessage =
+        data?.message ||
+        data?.error ||
+        data?.detail ||
+        (Array.isArray(data?.non_field_errors) ? data.non_field_errors[0] : null) ||
+        (Array.isArray(data?.errors) ? data.errors[0] : null);
+
+    if (apiMessage) return apiMessage;
+
+    if (status === 401 || status === 403) {
+        return "Your session expired. Please log in again and retry.";
+    }
+
+    if (status === 404) {
+        return "Service is temporarily unavailable. Please try again shortly.";
+    }
+
+    if (status >= 500) {
+        return "Server is busy right now. Please try again in a moment.";
+    }
+
+    if (status >= 400) {
+        return "Unable to submit the form right now. Please verify details and try again.";
+    }
+
+    if (err?.code === "ERR_NETWORK") {
+        return "Unable to reach server. Please check your connection and backend server.";
+    }
+
+    return "There was an error submitting the form.";
+}
+
+export default function TenantForm({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
     const { id } = useParams();
+    const isNew = !id || id === "new";
 
-    const [tenantData, setTenantData] = useState({
-        bedId: id,
+    const [beds, setBeds] = useState([]);
+    const [form, setForm] = useState({
+        bedId: isNew ? "" : id,
         propertyManager: "",
         salesManager: "",
         comfortClass: "",
@@ -22,442 +99,409 @@ function TenantForm({ isExpanded, setIsExpanded }) {
         permanentAddress: "",
         kycType: "",
         aadharNumber: "",
-        aadharFrontCopy: "",
-        aadharBackCopy: "",
         aadharStatus: "",
         panNumber: "",
-        panFrontCopy: "",
-        panBackCopy: "",
         panStatus: "",
         checkIn: "",
         checkOut: "",
-        totalDepositPaid: "",
+        totalDepositPaid: "0",
         rentPerMonth: "",
     });
+    const [submitting, setSubmitting] = useState(false);
+    const [credentials, setCredentials] = useState(null);
+    const [showPassword, setShowPassword] = useState(false);
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    // Fetch available beds when opened from sidebar (bedId = new)
+    useEffect(() => {
+        if (isNew) {
+            axios.get("/sales/get-beds-data/", { withCredentials: true })
+                .then((res) => {
+                    if (res.data.success) {
+                        const vacant = res.data.beds_table.filter(
+                            (b) => b.salesStatus === "Vacant" || b.salesStatus === "Pending"
+                        );
+                        setBeds(vacant);
+                    }
+                })
+                .catch(console.error);
+        }
+    }, [isNew]);
 
-    const triggerFileInput = (type) => {
-        if (type === "aadharFrontCopy") {
-            document.getElementById("aadharFrontCopy").click();
-        }
-        if (type === "aadharBackCopy") {
-            document.getElementById("aadharBackCopy").click();
-        }
+    const getCSRFToken = () => Cookies.get('csrftoken');
 
-        if (type === "panFrontCopy") {
-            document.getElementById("panFrontCopy").click();
-        }
-        if (type === "panBackCopy") {
-            document.getElementById("panBackCopy").click();
-        }
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => {
+            let nextValue = value;
+
+            if (name === "phoneNumber") {
+                nextValue = formatIndianPhone(value);
+            }
+
+            if (name === "aadharNumber") {
+                nextValue = value.replace(/\D/g, "").slice(0, 12);
+            }
+
+            if (name === "panNumber") {
+                nextValue = value.toUpperCase().replace(/\s/g, "").slice(0, 10);
+            }
+
+            const next = { ...prev, [name]: nextValue };
+
+            if (name === "kycType") {
+                next.kycType = value;
+                next.aadharNumber = "";
+                next.aadharStatus = "";
+                next.panNumber = "";
+                next.panStatus = "";
+            }
+
+            if (name === "checkIn" && next.checkOut && nextValue > next.checkOut) {
+                next.checkOut = "";
+            }
+
+            return next;
+        });
     };
 
-    useEffect(() => {
-        setTenantData(prev => ({
-            ...prev,
-            aadharNumber: "",
-            aadharFrontCopy: "",
-            aadharBackCopy: "",
-            aadharStatus: "",
-            panNumber: "",
-            panFrontCopy: "",
-            panBackCopy: "",
-            panStatus: "",
-        }))
-    }, [tenantData.kycType])
+    const validateForm = () => {
+        if (!form.bedId) return "Please select a bed.";
+        if (!form.residentsName?.trim()) return "Resident name is required.";
+        if (!/^[A-Za-z ]{2,}$/.test(form.residentsName.trim())) return "Resident name must contain only letters and spaces.";
 
-    const tenantHandleChange = (e) => {
-        const { name, value, type, files } = e.target;
+        if (!isValidIndianPhone(form.phoneNumber)) return "Phone number must be exactly 10 digits.";
 
-        setTenantData((prevState) => ({
-            ...prevState,
-            [name]: type === "file" ? files[0] : value,
-        }));
+        if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) return "Please enter a valid email address.";
+        if (!form.propertyManager) return "Property manager is required.";
+        if (!form.salesManager) return "Sales manager is required.";
+        if (!form.comfortClass) return "Comfort class is required.";
+        if (!form.mealType) return "Meal plan is required.";
+        if (!form.checkIn) return "Check-in date is required.";
 
-        if (name === 'checkIn' && tenantData.checkOut && value > tenantData.checkOut) {
-            alert('Check-in date must be before check-out date');
-            setTenantData(prev => ({
-                ...prev,
-                checkOut: ''
-            }));
+        if (!isValidIsoDateInRange(form.checkIn, DATE_INPUT_MIN, DATE_INPUT_MAX)) {
+            return "Check-in date must be between 1900-01-01 and 2099-12-31.";
         }
 
-        if (name === 'checkOut' && tenantData.checkIn && value < tenantData.checkIn) {
-            alert('Check-out date must be after check-in date');
-            setTenantData(prev => ({
-                ...prev,
-                checkOut: tenantData.checkIn
-            }));
+        if (form.checkOut && !isValidIsoDateInRange(form.checkOut, DATE_INPUT_MIN, DATE_INPUT_MAX)) {
+            return "Check-out date must be between 1900-01-01 and 2099-12-31.";
         }
-    }
 
-    const getCSRFToken = () => {
-        return Cookies.get('csrftoken');
-    }
+        if (form.checkOut && form.checkOut < form.checkIn) return "Check-out date cannot be before check-in date.";
 
-    axios.defaults.headers.common['X-CSRFToken'] = getCSRFToken();
+        const rentValue = Number(form.rentPerMonth);
+        if (!form.rentPerMonth || Number.isNaN(rentValue) || rentValue <= 0) return "Rent per month must be greater than 0.";
 
-    const tenantHandleSubmit = async (e) => {
+        const depositRaw = String(form.totalDepositPaid || "").trim();
+        if (depositRaw) {
+            const depositValue = Number(depositRaw);
+            if (Number.isNaN(depositValue) || depositValue < 0) return "Total deposit paid cannot be negative.";
+        }
+
+        if (form.kycType === "Aadhar") {
+            if (!/^\d{12}$/.test(form.aadharNumber || "")) return "Aadhaar number must be 12 digits.";
+            if (!form.aadharStatus) return "Aadhaar verification status is required.";
+        }
+
+        if (form.kycType === "PAN") {
+            if (!/^[A-Z]{5}\d{4}[A-Z]$/.test(form.panNumber || "")) return "PAN must follow format: ABCDE1234F.";
+            if (!form.panStatus) return "PAN verification status is required.";
+        }
+
+        return null;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
+        const validationError = validateForm();
+        if (validationError) {
+            toast.error(validationError);
+            return;
+        }
 
+        setSubmitting(true);
         try {
-            const response = await axios.post('/sales/tenant-form-submit/', tenantData, {
-                withCredentials: true,
-            });
+            axios.defaults.headers.common['X-CSRFToken'] = getCSRFToken();
+            const payload = {
+                ...form,
+                phoneNumber: normalizePhoneDigits(form.phoneNumber),
+                totalDepositPaid: String(form.totalDepositPaid || "").trim() || "0",
+            };
 
-            alert(response.data.message);
-
-            if (response.data.success) {
-                setTenantData({
-                    bedId: "",
-                    propertyManager: "",
-                    salesManager: "",
-                    comfortClass: "",
-                    mealType: "",
-                    residentsName: "",
-                    phoneNumber: "",
-                    email: "",
-                    permanentAddress: "",
-                    kycType: "",
-                    aadharNumber: "",
-                    aadharFrontCopy: "",
-                    aadharBackCopy: "",
-                    aadharStatus: "",
-                    panNumber: "",
-                    panFrontCopy: "",
-                    panBackCopy: "",
-                    panStatus: "",
-                    checkIn: "",
-                    checkOut: "",
-                    totalDepositPaid: "",
-                    rentPerMonth: "",
-                });
-
-                navigate(`/sales/sales-beds-table`);
+            const res = await axios.post('/sales/tenant-form-submit/', payload, { withCredentials: true, skipGlobalErrorToast: true });
+            if (res.data.success) {
+                setCredentials(res.data.tenantCredentials);
+            } else {
+                toast.error(res.data.message || "Submission failed.");
             }
         } catch (err) {
-            console.error('Error submitting form:', err);
-            alert('There was an error submitting the form. Please try again!');
-        } finally {
-            setIsSubmitting(false);
+            const errMsg = getSubmitErrorMessage(err);
+            toast.error(errMsg);
+            console.error(err);
         }
+        setSubmitting(false);
+    };
+
+    const copyToClipboard = (text) => navigator.clipboard.writeText(text);
+
+    // ── Success screen ─────────────────────────────────────────────
+    if (credentials) {
+        return (
+            <div>
+                <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
+                <div className={`min-h-screen bg-[#F5F5F0] transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+                    <Navbar isExpanded={isExpanded} />
+                    <div className="pt-20 px-6 md:px-10 pb-10 flex items-start justify-center">
+                        <div className="w-full max-w-lg mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="p-8 text-center">
+                                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle size={32} className="text-green-500" />
+                                </div>
+                                <h2 className="text-xl font-bold text-gray-900 mb-1">Tenant Registered!</h2>
+                                <p className="text-sm text-gray-500 mb-8">Share these credentials with the tenant for portal access.</p>
+                                <div className="space-y-3 text-left mb-8">
+                                    <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-0.5">Phone / Username</p>
+                                            <p className="text-sm font-semibold text-gray-900 font-mono">{credentials.username}</p>
+                                        </div>
+                                        <button onClick={() => copyToClipboard(credentials.username)} className="text-gray-400 hover:text-[#D4A017] transition-colors">
+                                            <Copy size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-0.5">Password</p>
+                                            <p className="text-sm font-semibold text-gray-900 font-mono tracking-wider">
+                                                {showPassword ? credentials.password : "••••••••••"}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => setShowPassword(!showPassword)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                            </button>
+                                            <button onClick={() => copyToClipboard(credentials.password)} className="text-gray-400 hover:text-[#D4A017] transition-colors">
+                                                <Copy size={16} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => navigate("/sales/sales-beds-table")}>
+                                        Back to Beds
+                                    </button>
+                                    <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#D4A017] text-white hover:bg-[#B8860B] transition-colors" onClick={() => { setCredentials(null); setForm({ bedId: isNew ? "" : id, propertyManager: "", salesManager: "", comfortClass: "", mealType: "", residentsName: "", phoneNumber: "", email: "", permanentAddress: "", kycType: "", aadharNumber: "", aadharStatus: "", panNumber: "", panStatus: "", checkIn: "", checkOut: "", totalDepositPaid: "0", rentPerMonth: "" }); }}>
+                                        Add Another
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
+    // ── Form ───────────────────────────────────────────────────────
     return (
         <div>
             <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
+            <div className={`min-h-screen bg-[#F5F5F0] transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <Navbar isExpanded={isExpanded} />
+                <div className="pt-20 px-6 md:px-10 pb-10">
+                    <div className="max-w-3xl mx-auto">
 
-                <div className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-[1rem]`}>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={tenantHandleSubmit} method='POST'>
-                        <div className="sm:flex justify-start">
-                            <button
-                                className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/sales/sales-beds-table`)}
-                                type="button">Prev</button>
+                    {/* Page Header */}
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">Add Resident</h1>
+                            <p className="text-sm text-gray-500 mt-0.5">Register a new tenant and generate portal credentials</p>
                         </div>
+                        <button type="button" className="px-4 py-2 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-white transition-colors" onClick={() => navigate("/sales/sales-beds-table")}>
+                            ← Back
+                        </button>
+                    </div>
 
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-stone-400">ADD TENANT DATA</h1>
+                    <form onSubmit={handleSubmit} className="space-y-5">
 
-                        <label htmlFor="propertyManager" className="text-[#D4A017] max-sm:text-sm"><strong>Property Manager:</strong></label>
-                        <select
-                            id="propertyManager"
-                            value={tenantData.propertyManager}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="propertyManager"
-                            required>
-                            <option value="" disabled>Select the property manager here</option>
-                            <option value="Madhusudhan">Madhusudhan</option>
-                            <option value="Kiran">Kiran</option>
-                            <option value="Rithan">Rithan</option>
-                        </select>
+                        {/* Bed Selection */}
+                        <SectionCard icon={Bed} title="Bed Assignment">
+                            {isNew ? (
+                                <Field label="Select Available Bed *">
+                                    <select name="bedId" value={form.bedId} onChange={handleChange} className={SELECT_CLS} required>
+                                        <option value="">Choose a bed...</option>
+                                        {beds.map((b) => (
+                                            <option key={b.id} value={b.id}>
+                                                {b.propertyName} — Room {b.roomNo} — {b.bedLabel} ({b.salesStatus})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Field>
+                            ) : (
+                                <p className="text-sm text-gray-600">Bed ID: <span className="font-semibold text-gray-900">#{id}</span></p>
+                            )}
+                        </SectionCard>
 
-                        <label htmlFor="salesManager" className="text-[#D4A017] max-sm:text-sm"><strong>Sales Manager:</strong></label>
-                        <select
-                            id="salesManager"
-                            value={tenantData.salesManager}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="salesManager"
-                            required>
-                            <option value="" disabled>Select the sales manager here</option>
-                            <option value="Madhusudhan">Madhusudhan</option>
-                            <option value="Kiran">Kiran</option>
-                            <option value="Rithan">Rithan</option>
-                        </select>
+                        {/* Resident Details */}
+                        <SectionCard icon={User} title="Resident Details">
+                            <div className="space-y-4">
+                                <FieldRow>
+                                    <Field label="Full Name *">
+                                        <input name="residentsName" value={form.residentsName} onChange={handleChange} className={FIELD_CLS} placeholder="Enter resident's full name" required />
+                                    </Field>
+                                    <Field label="Phone Number *">
+                                        <input
+                                            name="phoneNumber"
+                                            value={form.phoneNumber}
+                                            onChange={handleChange}
+                                            className={FIELD_CLS}
+                                            placeholder="98765 43210"
+                                            type="text"
+                                            inputMode="numeric"
+                                            maxLength={11}
+                                            required
+                                        />
+                                    </Field>
+                                </FieldRow>
+                                <FieldRow>
+                                    <Field label="Email Address">
+                                        <input name="email" value={form.email} onChange={handleChange} className={FIELD_CLS} placeholder="email@example.com" type="email" />
+                                    </Field>
+                                    <Field label="Permanent Address">
+                                        <input name="permanentAddress" value={form.permanentAddress} onChange={handleChange} className={FIELD_CLS} placeholder="City, State" />
+                                    </Field>
+                                </FieldRow>
+                            </div>
+                        </SectionCard>
 
-                        <label htmlFor="comfortClass" className="text-[#D4A017] max-sm:text-sm"><strong>Comfort Class:</strong></label>
-                        <select
-                            id="comfortClass"
-                            value={tenantData.comfortClass}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="comfortClass"
-                            required>
-                            <option value="" disabled>Select the comfort class here</option>
-                            <option value="With AC">With AC</option>
-                            <option value="Without AC">Without AC</option>
-                        </select>
+                        {/* Tenancy Details */}
+                        <SectionCard icon={Calendar} title="Tenancy Details">
+                            <div className="space-y-4">
+                                <FieldRow>
+                                    <Field label="Comfort Class *">
+                                        <select name="comfortClass" value={form.comfortClass} onChange={handleChange} className={SELECT_CLS} required>
+                                            <option value="">Select comfort class</option>
+                                            <option value="With AC">With AC</option>
+                                            <option value="Without AC">Without AC</option>
+                                        </select>
+                                    </Field>
+                                    <Field label="Meal Plan *">
+                                        <select name="mealType" value={form.mealType} onChange={handleChange} className={SELECT_CLS} required>
+                                            <option value="">Select meal plan</option>
+                                            <option value="Breakfast Only">Breakfast Only</option>
+                                            <option value="Breakfast & Lunch">Breakfast &amp; Lunch</option>
+                                            <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch &amp; Dinner</option>
+                                            <option value="Dinner Only">Dinner Only</option>
+                                            <option value="No Meal Plan">No Meal Plan</option>
+                                        </select>
+                                    </Field>
+                                </FieldRow>
+                                <FieldRow>
+                                    <Field label="Check-In Date *">
+                                        <input name="checkIn" value={form.checkIn} onChange={handleChange} className={FIELD_CLS} type="date" min={DATE_INPUT_MIN} max={DATE_INPUT_MAX} required />
+                                    </Field>
+                                    <Field label="Check-Out Date">
+                                        <input name="checkOut" value={form.checkOut} onChange={handleChange} className={FIELD_CLS} type="date" min={form.checkIn || DATE_INPUT_MIN} max={DATE_INPUT_MAX} />
+                                    </Field>
+                                </FieldRow>
+                                <FieldRow>
+                                    <Field label="Rent per Month (₹) *">
+                                        <input name="rentPerMonth" value={form.rentPerMonth} onChange={handleChange} className={FIELD_CLS} placeholder="e.g. 8000" type="number" min="0" required />
+                                    </Field>
+                                    <Field label="Total Deposit Paid (₹)">
+                                        <input name="totalDepositPaid" value={form.totalDepositPaid} onChange={handleChange} className={FIELD_CLS} placeholder="e.g. 16000" type="number" min="0" />
+                                    </Field>
+                                </FieldRow>
+                            </div>
+                        </SectionCard>
 
-                        <label htmlFor="mealType" className="text-[#D4A017] max-sm:text-sm"><strong>Meal Type:</strong></label>
-                        <select
-                            id="mealType"
-                            value={tenantData.mealType}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="mealType"
-                            required>
-                            <option value="" disabled>Select the meal type here</option>
-                            <option value="Breakfast Only">Breakfast Only</option>
-                            <option value="Breakfast & Lunch">Breakfast & Lunch</option>
-                            <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch & Dinner</option>
-                            <option value="Dinner Only">Dinner Only</option>
-                            <option value="No Meal Plan">No Meal Plan</option>
-                        </select>
+                        {/* Management */}
+                        <SectionCard icon={Briefcase} title="Management">
+                            <FieldRow>
+                                <Field label="Property Manager *">
+                                    <select name="propertyManager" value={form.propertyManager} onChange={handleChange} className={SELECT_CLS} required>
+                                        <option value="">Select manager</option>
+                                        <option value="Madhusudhan">Madhusudhan</option>
+                                        <option value="Kiran">Kiran</option>
+                                        <option value="Rithan">Rithan</option>
+                                    </select>
+                                </Field>
+                                <Field label="Sales Manager *">
+                                    <select name="salesManager" value={form.salesManager} onChange={handleChange} className={SELECT_CLS} required>
+                                        <option value="">Select manager</option>
+                                        <option value="Madhusudhan">Madhusudhan</option>
+                                        <option value="Kiran">Kiran</option>
+                                        <option value="Rithan">Rithan</option>
+                                    </select>
+                                </Field>
+                            </FieldRow>
+                        </SectionCard>
 
-                        <label htmlFor="residentsName" className="text-[#D4A017] max-sm:text-sm"><strong>Resident Name:</strong></label>
-                        <input
-                            type="text"
-                            id="residentsName"
-                            value={tenantData.residentsName}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="residentsName"
-                            placeholder="Enter the resident name here"
-                            required />
+                        {/* KYC Documents (optional) */}
+                        <SectionCard icon={ShieldCheck} title="KYC Documents (Optional)">
+                            <div className="space-y-4">
+                                <Field label="KYC Document Type">
+                                    <select name="kycType" value={form.kycType} onChange={handleChange} className={SELECT_CLS}>
+                                        <option value="">Select document type</option>
+                                        <option value="Aadhar">Aadhaar</option>
+                                        <option value="PAN">PAN</option>
+                                    </select>
+                                </Field>
 
-                        <label htmlFor="phoneNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Phone Number:</strong></label>
-                        <input
-                            type="tel"
-                            id="phoneNumber"
-                            value={tenantData.phoneNumber}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="phoneNumber"
-                            placeholder="Enter the phone number here"
-                            required />
+                                {form.kycType === "Aadhar" && (
+                                    <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
+                                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Aadhaar Details</p>
+                                        <FieldRow>
+                                            <Field label="Aadhaar Number">
+                                                <input name="aadharNumber" value={form.aadharNumber} onChange={handleChange} className={FIELD_CLS} placeholder="123412341234" inputMode="numeric" maxLength={12} />
+                                            </Field>
+                                            <Field label="Verification Status">
+                                                <select name="aadharStatus" value={form.aadharStatus} onChange={handleChange} className={SELECT_CLS} required={form.kycType === "Aadhar"}>
+                                                    <option value="">Select status</option>
+                                                    <option value="Verified">Verified</option>
+                                                    <option value="Not Verified">Not Verified</option>
+                                                </select>
+                                            </Field>
+                                        </FieldRow>
+                                        <p className="text-xs text-gray-400">📎 Tenant can upload document copies directly from their portal.</p>
+                                    </div>
+                                )}
 
-                        <label htmlFor="email" className="text-[#D4A017] max-sm:text-sm"><strong>Email:</strong></label>
-                        <input
-                            type="email"
-                            id="email"
-                            value={tenantData.email}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="email"
-                            placeholder="Enter the email address here"
-                            required />
+                                {form.kycType === "PAN" && (
+                                    <div className="p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-3">
+                                        <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">PAN Details</p>
+                                        <FieldRow>
+                                            <Field label="PAN Number">
+                                                <input name="panNumber" value={form.panNumber} onChange={handleChange} className={FIELD_CLS} placeholder="ABCDE1234F" maxLength={10} />
+                                            </Field>
+                                            <Field label="Verification Status">
+                                                <select name="panStatus" value={form.panStatus} onChange={handleChange} className={SELECT_CLS} required={form.kycType === "PAN"}>
+                                                    <option value="">Select status</option>
+                                                    <option value="Verified">Verified</option>
+                                                    <option value="Not Verified">Not Verified</option>
+                                                </select>
+                                            </Field>
+                                        </FieldRow>
+                                        <p className="text-xs text-gray-400">📎 Tenant can upload document copies directly from their portal.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </SectionCard>
 
-                        <label htmlFor="permanentAddress" className="text-[#D4A017] max-sm:text-sm"><strong>Permanent Address:</strong></label>
-                        <input
-                            type="text"
-                            id="permanentAddress"
-                            value={tenantData.permanentAddress}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="permanentAddress"
-                            placeholder="Enter the permanent address address here"
-                            required />
-
-                        <label htmlFor="kycType" className="text-[#D4A017] max-sm:text-sm"><strong>KYC:</strong></label>
-                        <select
-                            id="kycType"
-                            value={tenantData.kycType}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="kycType"
-                            required>
-                            <option value="" disabled>Select the document type here</option>
-                            <option value="Aadhar">Aadhar</option>
-                            <option value="PAN">PAN</option>
-                        </select>
-
-                        {tenantData.kycType === 'Aadhar' && <>
-                            <label htmlFor="aadharNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Number:</strong></label>
-                            <input
-                                type="text"
-                                id="aadharNumber"
-                                value={tenantData.aadharNumber}
-                                onChange={tenantHandleChange}
-                                className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                                name="aadharNumber"
-                                placeholder="Enter the aadhar number here"
-                                required />
-
-                            <label htmlFor="aadharFrontCopy" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar - Front Copy:</strong></label>
-
-                            <span className="py-1 px-2 w-full">
-                                <input
-                                    type="file"
-                                    id="aadharFrontCopy"
-                                    name="aadharFrontCopy"
-                                    accept="image/*, .pdf"
-                                    onChange={tenantHandleChange}
-                                    className="hidden"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => triggerFileInput('aadharFrontCopy')}
-                                    className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3 my-2"
-                                >
-                                    <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{tenantData.aadharFrontCopy?.name || 'Upload the document here'}</span>
-                                </button>
-                            </span>
-
-                            <label htmlFor="aadharBackCopy" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar - Back Copy:</strong></label>
-
-                            <span className="py-1 px-2 w-full">
-                                <input
-                                    type="file"
-                                    id="aadharBackCopy"
-                                    name="aadharBackCopy"
-                                    accept="image/*, .pdf"
-                                    onChange={tenantHandleChange}
-                                    className="hidden"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => triggerFileInput('aadharBackCopy')}
-                                    className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3 my-2"
-                                >
-                                    <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{tenantData.aadharBackCopy?.name || 'Upload the document here'}</span>
-                                </button>
-                            </span>
-
-                            <label htmlFor="aadharStatus" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Status:</strong></label>
-                            <select
-                                id="aadharStatus"
-                                value={tenantData.aadharStatus}
-                                onChange={tenantHandleChange}
-                                className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                                name="aadharStatus"
-                                required>
-                                <option value="" disabled>Select the status here</option>
-                                <option value="Verified">Verified</option>
-                                <option value="Not Verified">Not Verified</option>
-                            </select>
-                        </>}
-
-                        {tenantData.kycType === 'PAN' && <>
-                            <label htmlFor="panNumber" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Number:</strong></label>
-                            <input
-                                type="text"
-                                id="panNumber"
-                                value={tenantData.panNumber}
-                                onChange={tenantHandleChange}
-                                className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                                name="panNumber"
-                                placeholder="Enter the PAN number here"
-                                required />
-
-                            <label htmlFor="panFrontCopy" className="text-[#D4A017] max-sm:text-sm"><strong>PAN - Front Copy:</strong></label>
-
-                            <span className="py-1 px-2 w-full">
-                                <input
-                                    type="file"
-                                    id="panFrontCopy"
-                                    name="panFrontCopy"
-                                    accept="image/*, .pdf"
-                                    onChange={tenantHandleChange}
-                                    className="hidden"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => triggerFileInput('panFrontCopy')}
-                                    className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3 my-2"
-                                >
-                                    <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{tenantData.panFrontCopy?.name || 'Upload the document here'}</span>
-                                </button>
-                            </span>
-
-                            <label htmlFor="panBackCopy" className="text-[#D4A017] max-sm:text-sm"><strong>PAN - Back Copy:</strong></label>
-
-                            <span className="py-1 px-2 w-full">
-                                <input
-                                    type="file"
-                                    id="panBackCopy"
-                                    name="panBackCopy"
-                                    accept="image/*, .pdf"
-                                    onChange={tenantHandleChange}
-                                    className="hidden"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => triggerFileInput('panBackCopy')}
-                                    className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3 my-2"
-                                >
-                                    <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{tenantData.panBackCopy?.name || 'Upload the document here'}</span>
-                                </button>
-                            </span>
-
-                            <label htmlFor="panStatus" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Status:</strong></label>
-                            <select
-                                id="panStatus"
-                                value={tenantData.panStatus}
-                                onChange={tenantHandleChange}
-                                className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                                name="panStatus"
-                                required>
-                                <option value="" disabled>Select the status here</option>
-                                <option value="Verified">Verified</option>
-                                <option value="Not Verified">Not Verified</option>
-                            </select>
-                        </>}
-
-                        <label htmlFor="checkIn" className="text-[#D4A017] max-sm:text-sm"><strong>Check-In:</strong></label>
-                        <input
-                            type="date"
-                            id="checkIn"
-                            value={tenantData.checkIn}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                            name="checkIn"
-                            required />
-
-                        <label htmlFor="checkOut" className="text-[#D4A017] max-sm:text-sm"><strong>Check-Out:</strong></label>
-                        <input
-                            type="date"
-                            id="checkOut"
-                            value={tenantData.checkOut}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                            name="checkOut"
-                            min={tenantData.checkIn} />
-
-                        <label htmlFor="totalDepositPaid" className="text-[#D4A017] max-sm:text-sm"><strong>Total Deposit Paid:</strong></label>
-                        <input
-                            type="text"
-                            id="totalDepositPaid"
-                            value={tenantData.totalDepositPaid}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="totalDepositPaid"
-                            placeholder="Enter the total deposit paid here"
-                            required />
-
-                        <label htmlFor="rentPerMonth" className="text-[#D4A017] max-sm:text-sm"><strong>Rent Per Month:</strong></label>
-                        <input
-                            type="text"
-                            id="rentPerMonth"
-                            value={tenantData.rentPerMonth}
-                            onChange={tenantHandleChange}
-                            className="my-2 text-black w-full p-2 border border-gray-300 rounded placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                            name="rentPerMonth"
-                            placeholder="Enter the rent per month here"
-                            required />
-
-                        <button
-                            className="block w-full mt-6 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" disabled={isSubmitting}
-                            type="submit">{isSubmitting ? "Submitting..." : "Submit"}</button>
+                        {/* Submit */}
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button type="button" className="px-6 py-2.5 text-sm rounded-lg border border-gray-200 text-gray-700 hover:bg-white transition-colors" onClick={() => navigate("/sales/sales-beds-table")}>
+                                Cancel
+                            </button>
+                            <button type="submit" disabled={submitting} className="px-8 py-2.5 text-sm font-semibold rounded-lg bg-[#D4A017] text-white hover:bg-[#B8860B] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-sm shadow-[#D4A017]/20">
+                                {submitting ? "Registering..." : "Register Tenant"}
+                            </button>
+                        </div>
                     </form>
+                    </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
-export default TenantForm
+

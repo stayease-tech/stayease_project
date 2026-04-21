@@ -44,3 +44,14 @@ frontend/build/
 *.njsproj
 *.sln
 *.sw?
+
+# AI / Agent files — do not push
+CLAUDE.md
+.cursorrules
+.cursor/
+tasks/
+Prompts/
+*.prompt.md
+*_Prompt.md
+*_Orchestration.md
+mcp.json

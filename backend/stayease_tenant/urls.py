@@ -20,6 +20,7 @@ urlpatterns = [
     # Rent / Invoices
     path('rent-history/', views.tenant_rent_history, name='tenant_rent_history'),
     path('invoices/<int:pk>/', views.tenant_invoice_detail, name='tenant_invoice_detail'),
+    path('payments/payu/init/', views.tenant_payu_init, name='tenant_payu_init'),
 
     # Complaints
     path('complaints/', views.tenant_complaints, name='tenant_complaints'),
