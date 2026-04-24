@@ -1,5 +1,3 @@
-<!-- AI Navigation: Start with .md files for context before reading source code. See CLAUDE.md for reading order. -->
-
 # StayEase — Testing Guide
 
 ## Overview

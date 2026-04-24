@@ -1,5 +1,3 @@
-<!-- AI Navigation: Start with .md files for context before reading source code. See CLAUDE.md for reading order. -->
-
 # StayEase Backend — Django REST API
 
 The backend is a Django 5.1.4 project serving REST APIs for the web frontend, mobile app, and partner portal. It uses Django REST Framework, session-based auth (web), JWT auth (mobile), and PostgreSQL.

@@ -1,12 +1,18 @@
-<!-- AI Navigation: Start with .md files for context before reading source code. See CLAUDE.md for reading order. -->
-
 # StayEase — Property Management System
 
 A full-stack property management platform for co-living and PG operators. Includes a **public-facing website**, **5 internal staff portals**, a **partner portal** for property owners, a **resident portal**, and a **cross-platform mobile app**.
 
 ## Recent Progress (2026-04-24)
 
-- **Bug fixes and validation improvements (latest):**
+- **UI & KYC improvements:**
+  - BedsTable "Current Resident Data" column replaced text/icon with clear action buttons ("Add Resident" / "Edit Resident")
+  - Fixed column header casing: "Complete Resident Data" / "Current Resident Data" (was lowercase "resident")
+  - KYC Management now shows Approved residents — added Approved tab with green confirmation banner and Re-approve action on Rejected tab (web + mobile)
+  - Supply portal: fixed blank white cards in Owners, Properties, Rooms — FlatList `renderItem` now correctly destructures `({ item })` and uses children-based `ListCard` pattern
+  - Removed "Bed Summary", "Owners", "Properties" detail sections from Supply dashboard (stat cards remain)
+  - Reduced mobile test suite: removed redundant regression tests, focused endpoint tests; now **300 tests across 17 suites**
+
+- **Bug fixes and validation improvements:**
   - Member Since field now prevents future date/month selection (`max` attribute + backend validation)
   - Aadhar number displayed in `XXXX XXXX XXXX` format across all views (forms + detail pages)
   - Owner email validation moved to page 1 with inline error display (was only validating on page 2 transition)
@@ -23,7 +29,7 @@ A full-stack property management platform for co-living and PG operators. Includ
 - **Testing infrastructure — full test suites across all codebases:**
   - Backend: pytest + pytest-django + factory-boy + pytest-cov; tests for auth, validators, CRUD, smoke endpoints
   - Frontend: Vitest + @testing-library/react; tests for validation schemas, login component, dashboard smoke
-  - Mobile: Jest + @testing-library/react-native; 400 tests across 18 suites (validation, helpers, API endpoints, components, auth screens, navigation, smoke, regression)
+  - Mobile: Jest + @testing-library/react-native; 300 tests across 17 suites (validation, helpers, API endpoints, components, auth screens, navigation, smoke)
 - **Security hardening:**
   - Enabled Django password validators (min 8 chars, common password check, numeric check)
   - Added DRF rate limiting: 30/min anonymous, 120/min authenticated, 5/min login attempts
@@ -94,7 +100,7 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 | **Accounts** | Track expenses, vendor payments, owner payouts (fixed expenses), liabilities (deposit refunds), bank rawdata reconciliation |
 | **Operations** | Move-in/move-out checklists, property complaints, service requests, vendor assignments |
 | **Partners** | Owner-facing portal — view earnings, deductions, property occupancy, profile info |
-| **resident** | resident-facing portal — profile, KYC documents, rent history, complaints, lease agreements |
+| **Resident** | Resident-facing portal — profile, KYC documents, rent history, complaints, lease agreements |
 | **Admin** | Superuser dashboard with cross-portal visibility |
 
 ---
