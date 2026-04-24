@@ -44,7 +44,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
 
                 setBedsData(
                     (response?.data?.beds_table || [])
-                        .filter(item => item?.salesStatus === "Completed" && item?.tenant_data?.tenantStatus === 'Active')
+                        .filter(item => item?.salesStatus === "Completed" && item?.resident_data?.residentStatus === 'Active')
                         .sort((a, b) => {
                             if (a.roomNo !== b.roomNo) {
                                 return a.roomNo.localeCompare(b.roomNo);
@@ -63,7 +63,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
     }, []);
 
     const viewAgreementHandle = (bedData) => {
-        navigate(`/accounts/accounts-agreement-pdf/${bedData?.tenant_data?.id}`, { state: { bedData, type: 'BedsTable' } });
+        navigate(`/accounts/accounts-agreement-pdf/${bedData?.resident_data?.id}`, { state: { bedData, type: 'BedsTable' } });
     }
 
     const outputData = bedsData.map(data => ({
@@ -74,26 +74,26 @@ function BedsTable({ isExpanded, setIsExpanded }) {
         ['Flat Number']: data.roomNo,
         ['Flat Type']: data.roomType,
         ['Room Number']: data.bedLabel,
-        ['Property Manager']: data?.tenant_data?.propertyManager,
-        ['Sales Manager']: data?.tenant_data?.salesManager,
-        ['Comfort Class']: data?.tenant_data?.comfortClass,
-        ['Meal Type']: data?.tenant_data?.mealType,
-        ['Resident Name']: data?.tenant_data?.residentsName,
-        ['Phone Number']: data?.tenant_data?.phoneNumber,
-        ['Email ID']: data?.tenant_data?.email,
-        ['KYC Type']: data?.tenant_data?.kycType,
-        ['Aadhar Number']: data?.tenant_data?.aadharNumber,
-        ['Aadhar Status']: data?.tenant_data?.aadharStatus,
-        ['PAN Number']: data?.tenant_data?.panNumber,
-        ['PAN Status']: data?.tenant_data?.panStatus,
-        ['Check-In']: data?.tenant_data?.checkIn,
-        ['Check-Out']: data?.tenant_data?.checkOut,
-        ['Total Deposit Paid']: data?.tenant_data?.totalDepositPaid,
-        ['Rent Per Month']: data?.tenant_data?.rentPerMonth
+        ['Property Manager']: data?.resident_data?.propertyManager,
+        ['Sales Manager']: data?.resident_data?.salesManager,
+        ['Comfort Class']: data?.resident_data?.comfortClass,
+        ['Meal Type']: data?.resident_data?.mealType,
+        ['Resident Name']: data?.resident_data?.residentsName,
+        ['Phone Number']: data?.resident_data?.phoneNumber,
+        ['Email ID']: data?.resident_data?.email,
+        ['KYC Type']: data?.resident_data?.kycType,
+        ['Aadhar Number']: data?.resident_data?.aadharNumber,
+        ['Aadhar Status']: data?.resident_data?.aadharStatus,
+        ['PAN Number']: data?.resident_data?.panNumber,
+        ['PAN Status']: data?.resident_data?.panStatus,
+        ['Check-In']: data?.resident_data?.checkIn,
+        ['Check-Out']: data?.resident_data?.checkOut,
+        ['Total Deposit Paid']: data?.resident_data?.totalDepositPaid,
+        ['Rent Per Month']: data?.resident_data?.rentPerMonth
     }))
 
     const updateBedsDataHandle = (bedData) => {
-        navigate(`/accounts/accounts-beds-details/${bedData?.tenant_data?.id}`, { state: { bedData } });
+        navigate(`/accounts/accounts-beds-details/${bedData?.resident_data?.id}`, { state: { bedData } });
     };
 
     return (
@@ -141,7 +141,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                         <tr className="" key={bedData.id}>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{bedData?.propertyName}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{bedData?.tenant_data?.residentsName}</td>
+                                            <td className="border border-gray-300 px-4 py-2 text-center">{bedData?.resident_data?.residentsName}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{bedData?.roomNo}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{bedData?.roomType}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{bedData?.bedLabel}</td>
@@ -153,7 +153,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                             <td className="border border-gray-300 px-2 py-2 text-center">
                                                 <div className="flex justify-evenly">
                                                     <div>
-                                                        {bedData?.tenant_data?.rent_records[bedData?.tenant_data?.rent_records.length - 1]?.rentStatus || 'NA'}
+                                                        {bedData?.resident_data?.rent_records[bedData?.resident_data?.rent_records.length - 1]?.rentStatus || 'NA'}
                                                     </div>
                                                     <FaEdit className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => updateBedsDataHandle(bedData)} />
                                                 </div>

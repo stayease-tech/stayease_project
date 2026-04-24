@@ -28,15 +28,17 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
         <div>
             <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Owner KYC</h3>
 
-            <label htmlFor="aadharNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Number:</strong></label>
+            <label htmlFor="aadharNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Number: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="aadharNumber"
-                value={ownerData.aadharNumber}
+                value={ownerData.aadharNumber ? ownerData.aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ').trim() : ''}
                 onChange={ownerHandleChange}
-                className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
+                className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm tracking-wider"
                 name="aadharNumber"
-                placeholder="Enter the Account Number here"
+                placeholder="XXXX XXXX XXXX"
+                maxLength={14}
+                inputMode="numeric"
                 required />
 
             <label htmlFor="rentFree" className="text-[#D4A017] max-sm:text-sm"><strong>Upload Aadhar:</strong></label>
@@ -95,7 +97,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 </div>
             )}
 
-            <label htmlFor="aadharVerification" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Verification:</strong></label>
+            <label htmlFor="aadharVerification" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Verification: <span className="text-red-500">*</span></strong></label>
             <select
                 id="aadharVerification"
                 value={ownerData.aadharVerification}
@@ -108,7 +110,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 <option value="Not Verified">Not Verified</option>
             </select>
 
-            <label htmlFor="panNumber" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Number:</strong></label>
+            <label htmlFor="panNumber" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Number: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="panNumber"
@@ -169,7 +171,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 </div>
             )}
 
-            <label htmlFor="panVerification" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Verification:</strong></label>
+            <label htmlFor="panVerification" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Verification: <span className="text-red-500">*</span></strong></label>
             <select
                 id="panVerification"
                 value={ownerData.panVerification}
@@ -184,7 +186,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
 
             <h3 className="font-semibold mb-4 mt-4 text-stone-400 max-sm:text-sm">Bank Details</h3>
 
-            <label htmlFor="accountHolderName" className="text-[#D4A017] max-sm:text-sm"><strong>Account Holder's Name:</strong></label>
+            <label htmlFor="accountHolderName" className="text-[#D4A017] max-sm:text-sm"><strong>Account Holder's Name: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="accountHolderName"
@@ -195,7 +197,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 placeholder="Enter the Account Holder's Name here"
                 required />
 
-            <label htmlFor="accountNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Account Number:</strong></label>
+            <label htmlFor="accountNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Account Number: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="accountNumber"
@@ -206,7 +208,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 placeholder="Enter the Account Number here"
                 required />
 
-            <label htmlFor="bankName" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Name:</strong></label>
+            <label htmlFor="bankName" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Name: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="bankName"
@@ -217,7 +219,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 placeholder="Enter the Bank Name here"
                 required />
 
-            <label htmlFor="bankBranch" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Branch:</strong></label>
+            <label htmlFor="bankBranch" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Branch: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="bankBranch"
@@ -228,7 +230,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 placeholder="Enter the Bank Branch here"
                 required />
 
-            <label htmlFor="ifscCode" className="text-[#D4A017] max-sm:text-sm"><strong>IFSC Code:</strong></label>
+            <label htmlFor="ifscCode" className="text-[#D4A017] max-sm:text-sm"><strong>IFSC Code: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="ifscCode"
@@ -239,7 +241,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 placeholder="Enter the IFSC Code here"
                 required />
 
-            <label htmlFor="accountStatus" className="text-[#D4A017] max-sm:text-sm"><strong>Account Status:</strong></label>
+            <label htmlFor="accountStatus" className="text-[#D4A017] max-sm:text-sm"><strong>Account Status: <span className="text-red-500">*</span></strong></label>
             <select
                 id="accountStatus"
                 value={ownerData.accountStatus}
@@ -252,7 +254,7 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 <option value="Inactive">Inactive</option>
             </select>
 
-            <label htmlFor="paymentType" className="text-[#D4A017] max-sm:text-sm"><strong>Payment Type:</strong></label>
+            <label htmlFor="paymentType" className="text-[#D4A017] max-sm:text-sm"><strong>Payment Type: <span className="text-red-500">*</span></strong></label>
             <select
                 id="paymentType"
                 value={ownerData.paymentType}

@@ -217,7 +217,7 @@ function Blog7() {
                 </BulletSection>
 
                 <BulletSection title="Prevents Arbitrary Rent Increases & Evictions:">
-                    In the absence of a contract, landlords have the right to raise rent or remove tenants at any time. Clear terms and conditions are established in a written contract.
+                    In the absence of a contract, landlords have the right to raise rent or remove residents at any time. Clear terms and conditions are established in a written contract.
                 </BulletSection>
 
                 <BulletSection title="Easy Relocation Process:">
@@ -232,7 +232,7 @@ function Blog7() {
                 </li>
 
                 <NumberedSection title="1. Draft the Agreement">
-                    Include key details like rent amount, security deposit, lease duration, and tenant-landlord responsibilities.
+                    Include key details like rent amount, security deposit, lease duration, and resident-landlord responsibilities.
                 </NumberedSection>
 
                 <NumberedSection title="2. Get It Notarized or Registered">

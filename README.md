@@ -1,6 +1,65 @@
+<!-- AI Navigation: Start with .md files for context before reading source code. See CLAUDE.md for reading order. -->
+
 # StayEase — Property Management System
 
-A full-stack property management platform for co-living and PG operators. Includes a **public-facing website**, **5 internal staff portals**, a **partner portal** for property owners, a **tenant portal** for residents, and a **cross-platform mobile app**.
+A full-stack property management platform for co-living and PG operators. Includes a **public-facing website**, **5 internal staff portals**, a **partner portal** for property owners, a **resident portal**, and a **cross-platform mobile app**.
+
+## Recent Progress (2026-04-24)
+
+- **Bug fixes and validation improvements (latest):**
+  - Member Since field now prevents future date/month selection (`max` attribute + backend validation)
+  - Aadhar number displayed in `XXXX XXXX XXXX` format across all views (forms + detail pages)
+  - Owner email validation moved to page 1 with inline error display (was only validating on page 2 transition)
+  - Pincode validation: 6-digit Indian pincode format (`[1-9]\d{5}`) on frontend + backend
+  - Property serial_number field now has `unique=True` database constraint for guaranteed uniqueness
+  - Logout no longer shows "Request Failed" error (logout API call now skips global error toast)
+  - Export Data button now shows feedback when no data available (was silently failing)
+  - Toast messages auto-dismiss on route/tab change (ToastRouteCleanup component)
+  - All mandatory form fields now display red `*` indicator across all portals
+  - Page 1 of owner form validates all fields before allowing Next (name, phone, email, DOB, gender, member since)
+  - Property form page 1 validates before Next (name, type, year, address, pincode, rent, deposit, status)
+  - Backend owner submission validates: memberSince not future, valid email, valid Aadhaar (12 digits)
+  - All changes applied to both web frontend and mobile app
+- **Testing infrastructure — full test suites across all codebases:**
+  - Backend: pytest + pytest-django + factory-boy + pytest-cov; tests for auth, validators, CRUD, smoke endpoints
+  - Frontend: Vitest + @testing-library/react; tests for validation schemas, login component, dashboard smoke
+  - Mobile: Jest + @testing-library/react-native; 400 tests across 18 suites (validation, helpers, API endpoints, components, auth screens, navigation, smoke, regression)
+- **Security hardening:**
+  - Enabled Django password validators (min 8 chars, common password check, numeric check)
+  - Added DRF rate limiting: 30/min anonymous, 120/min authenticated, 5/min login attempts
+  - Custom `LoginRateThrottle` applied to all login endpoints (mobile, resident, partner)
+  - Added security headers: XSS filter, content-type nosniff, X-Frame-Options DENY
+  - Secure cookies in production (SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE)
+  - Removed leaked credentials from settings.py comments
+- **Input validation — Zod schemas (frontend + mobile) and backend validators:**
+  - Created shared Zod validation schemas for phone, email, amounts, Aadhaar, PAN, IFSC, pincode
+  - Form-level schemas for login, owner, property, resident, vendor, expense, lead forms
+  - Backend validators.py: phone, email, financial amount, identity docs, file upload validation
+- **Documentation:** Added TESTING.md, SECURITY.md for both main project and mobile app
+- **Dashboard quick actions standardized to "View" only** across all portals (web + mobile):
+  - Accounts: View Vendors, View Expenses, View Rawdata, View Other Files, View Liabilities
+  - Operations: View Beds, View Checklists, View Expenses, View Complaints, View KYC Pending
+  - Sales: View Beds, View Leads, View Expenses, View Documents
+  - Supply: View Owners, View Properties, View Rooms, View Expenses
+  - Mobile dashboards updated to match: Supply, Sales, Accounts, Operations
+- **Listing page alignment consistency** across all portals:
+  - Changed Operations and Sales listing pages from `max-w-6xl` to `w-[100%] lg:w-[98%]` to match Supply/Accounts
+- **Supply portal fixes:**
+  - Fixed duplicate property IDs: serial_number generation now always creates unique IDs
+  - Added duplicate name+location validation (same name in same area/city blocked)
+  - Fixed dashboard metrics not reflecting (wrong API endpoint + response key mismatch)
+  - Rewrote property details page with card-based layout, null-safe file handling, tab navigation
+  - Fixed property form: wrong placeholders (rating, status label)
+  - Fixed "Basement -1" → "Basement 1" label formatting
+- **UI improvements — website enquiry form & footer:**
+  - Enquiry form restyled with dark theme (`#111111` bg, `#1a1a1a` inputs) to match site aesthetic
+  - Footer: moved "Resident Login" link from copyright section into "Services" column
+- **Mobile app — property form floor/basement fields:**
+  - Added floor and basement counter sections to PropertyFormScreen (StayEase-Mobile)
+  - Matches web form data structure: `floorNos`, `roomsPerFloor`, `basementNos`, `roomsPerBasement`
+- **Completed resident refactoring** across all code, migrations, and database (formerly "tenant")
+- Frontend build validation: passed (2352 modules)
+- Backend system checks: 0 issues
 
 ---
 
@@ -23,7 +82,7 @@ A full-stack property management platform for co-living and PG operators. Includ
 
 ## Overview
 
-StayEase is a multi-portal property management system built for co-living/PG businesses. It handles the full lifecycle of property management — from acquiring properties and onboarding tenants to collecting rent, tracking expenses, handling complaints, and paying out owners.
+StayEase is a multi-portal property management system built for co-living/PG businesses. It handles the full lifecycle of property management — from acquiring properties and onboarding residents to collecting rent, tracking expenses, handling complaints, and paying out owners.
 
 ### What the Platform Does
 
@@ -31,11 +90,11 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 |------|-------------|
 | **Website** | Public marketing site with property listings, blog, enquiry forms |
 | **Supply** | Onboard property owners, manage properties, rooms, and beds |
-| **Sales** | Manage tenant onboarding, bed assignments, rent collection, leads tracking |
+| **Sales** | Manage resident onboarding, bed assignments, rent collection, leads tracking |
 | **Accounts** | Track expenses, vendor payments, owner payouts (fixed expenses), liabilities (deposit refunds), bank rawdata reconciliation |
 | **Operations** | Move-in/move-out checklists, property complaints, service requests, vendor assignments |
 | **Partners** | Owner-facing portal — view earnings, deductions, property occupancy, profile info |
-| **Tenant** | Tenant-facing portal — profile, KYC documents, rent history, complaints, lease agreements |
+| **resident** | resident-facing portal — profile, KYC documents, rent history, complaints, lease agreements |
 | **Admin** | Superuser dashboard with cross-portal visibility |
 
 ---
@@ -64,7 +123,7 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 ```
 
 - **Staff web portals** communicate via **session-based auth** (cookies + CSRF)
-- **Tenant portal** communicates via **JWT bearer tokens** (access + refresh)
+- **resident portal** communicates via **JWT bearer tokens** (access + refresh)
 - **Mobile app** communicates via **JWT bearer tokens** (access + refresh)
 - All clients share the same Django REST backend and PostgreSQL database
 
@@ -77,10 +136,10 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 | **Admin** | Username + Password | All portals, cross-portal dashboard |
 | **Accounts** | Username + Password | Vendors, expenses, payouts, liabilities, rawdata, files |
 | **Operations** | Username + Password | Checklists, complaints, service requests |
-| **Sales** | Username + Password | Beds, tenants, rent, leads |
+| **Sales** | Username + Password | Beds, residents, rent, leads |
 | **Supply** | Username + Password | Owners, properties, rooms, beds |
 | **Partners** | Phone + OTP | Own properties, earnings, deductions (read-only) |
-| **Tenant** | Phone + Password | Profile, KYC upload, rent history, complaints, lease |
+| **resident** | Phone + Password | Profile, KYC upload, rent history, complaints, lease |
 
 ---
 
@@ -143,13 +202,13 @@ PMS_Stayease/
 │   │   └── wsgi.py
 │   ├── stayease_accounts/        # Accounts module (vendors, expenses, liabilities)
 │   ├── stayease_operations/      # Operations module (checklists, complaints)
-│   ├── stayease_sales/           # Sales module (tenants, rent, leads)
+│   ├── stayease_sales/           # Sales module (residents, rent, leads)
 │   ├── stayease_supply/          # Supply module (owners, properties, rooms)
 │   ├── stayease_partners/        # Partners module (owner portal)
-│   ├── stayease_tenant/          # Tenant portal (dashboard, KYC, rent, complaints, lease)
+│   ├── stayease_resident/          # resident portal (dashboard, KYC, rent, complaints, lease)
 │   ├── stayease_app/             # Website & catch-all routes
 │   ├── property_details/         # Property contracts
-│   └── tenant_details/           # Tenant contracts
+│   └── resident_details/           # resident contracts
 │
 ├── frontend/                     # React SPA (Vite + Tailwind)
 │   ├── package.json
@@ -165,7 +224,7 @@ PMS_Stayease/
 │       ├── sales/                # Sales portal components
 │       ├── supply/               # Supply portal components
 │       ├── partners/             # Partners portal components
-│       ├── tenant/              # Tenant portal components
+│       ├── resident/              # resident portal components
 │       └── website/              # Public website components
 │
 └── _legacy/                      # Previous separate React apps (archived)
@@ -203,14 +262,14 @@ StayEase-Mobile/                  # /Users/swamy/Project/StayEase-Mobile/
     │   ├── AuthStack.js          # Login screens
     │   └── RoleNavigators.js     # Tab + stack navigators per role
     └── screens/                  # 53 screens total
-        ├── auth/                 # StaffLogin, PartnerLogin, TenantLogin
+        ├── auth/                 # StaffLogin, PartnerLogin, residentLogin
         ├── admin/                # AdminDashboard
         ├── accounts/             # 13 screens
         ├── operations/           # 7 screens
         ├── sales/                # 7 screens
         ├── supply/               # 10 screens
         ├── partners/             # 4 screens
-        └── tenant/              # 8 screens
+        └── resident/              # 8 screens
 ```
 
 ---
@@ -344,7 +403,7 @@ cd backend && python manage.py collectstatic --noinput
 | `/api/token/` | POST | None | Staff login (JWT, mobile) |
 | `/api/token/refresh/` | POST | None | Refresh JWT access token |
 | `/api/partner-login/` | POST | None | Partner OTP login (JWT, mobile) |
-| `/api/tenant-login/` | POST | None | Tenant login (phone + password, JWT) |
+| `/api/resident-login/` | POST | None | Resident login (phone + password, JWT) |
 | `/partners/send-otp/` | POST | None | Send OTP to partner phone |
 | `/partners/verify-otp/` | POST | None | Verify OTP (session-based, web) |
 
@@ -373,7 +432,7 @@ cd backend && python manage.py collectstatic --noinput
 | `/accounts/get-other-files/` | GET | List misc files |
 | `/accounts/other-files-upload/` | POST | Upload misc file |
 | `/accounts/other-file-delete/<id>/` | DELETE | Delete misc file |
-| `/accounts/get-beds-data/` | GET | Beds with tenant + liability info |
+| `/accounts/get-beds-data/` | GET | Beds with resident + liability info |
 | `/accounts/get-owner-data/` | GET | Owners with rent + expense totals |
 | `/accounts/get-user-activity-data/` | GET | User login/logout activity |
 
@@ -391,17 +450,17 @@ cd backend && python manage.py collectstatic --noinput
 | `/operations/operations-form-update/<id>/` | PUT | Update complaint category |
 | `/operations/feedback-form-submit/` | POST | Submit complaint feedback |
 | `/operations/get-room-data/` | GET | Rooms & beds data |
-| `/operations/kyc-pending/` | GET | List tenants by KYC status |
-| `/operations/kyc-approve/<id>/` | POST | Approve tenant KYC |
-| `/operations/kyc-reject/<id>/` | POST | Reject tenant KYC (with reason) |
+| `/operations/kyc-pending/` | GET | List residents by KYC status |
+| `/operations/kyc-approve/<id>/` | POST | Approve resident KYC |
+| `/operations/kyc-reject/<id>/` | POST | Reject resident KYC (with reason) |
 
 ### Sales (`/sales/`)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/sales/get-beds-data/` | GET | Beds with tenant + rent records |
-| `/sales/tenant-form-submit/` | POST | Create tenant (multipart) |
-| `/sales/tenant-data-update/<id>/` | PUT | Update tenant (multipart) |
+| `/sales/get-beds-data/` | GET | Beds with resident + rent records |
+| `/sales/resident-form-submit/` | POST | Create resident (multipart) |
+| `/sales/resident-data-update/<id>/` | PUT | Update resident (multipart) |
 | `/sales/rent-data-update/<id>/` | PUT | Update rent record |
 | `/sales/get-leads-data/` | GET | List leads |
 | `/sales/leads-form-submit/` | POST | Create lead |
@@ -435,23 +494,23 @@ cd backend && python manage.py collectstatic --noinput
 | `/partners/get-owner-data/?phone=` | GET | Owner profile + financials |
 | `/partners/get-property-data/?phone=` | GET | Owner's properties + occupancy |
 
-### Tenant Portal (`/tenant-portal/`)
+### Resident Portal (`/resident-portal/`)
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/tenant-portal/dashboard/` | GET | JWT | Tenant dashboard (stats, property info) |
-| `/tenant-portal/profile/` | GET | JWT | Tenant profile details |
-| `/tenant-portal/profile/update/` | POST | JWT | Update tenant profile |
-| `/tenant-portal/change-password/` | POST | JWT | Change tenant password |
-| `/tenant-portal/kyc/upload/` | POST | JWT | Upload KYC documents (multipart) |
-| `/tenant-portal/kyc/status/` | GET | JWT | Get KYC approval status |
-| `/tenant-portal/rent-history/` | GET | JWT | Rent payment records |
-| `/tenant-portal/invoices/<id>/` | GET | JWT | Single invoice detail |
-| `/tenant-portal/complaints/` | GET | JWT | List tenant complaints |
-| `/tenant-portal/complaints/submit/` | POST | JWT | Submit new complaint |
-| `/tenant-portal/complaints/<id>/` | GET | JWT | Complaint detail with timeline |
-| `/tenant-portal/lease/` | GET | JWT | Lease documents (Zoho e-sign) |
-| `/tenant-portal/register-push-token/` | POST | JWT | Register push notification token |
+| `/resident-portal/dashboard/` | GET | JWT | Resident dashboard (stats, property info) |
+| `/resident-portal/profile/` | GET | JWT | Resident profile details |
+| `/resident-portal/profile/update/` | POST | JWT | Update resident profile |
+| `/resident-portal/change-password/` | POST | JWT | Change resident password |
+| `/resident-portal/kyc/upload/` | POST | JWT | Upload KYC documents (multipart) |
+| `/resident-portal/kyc/status/` | GET | JWT | Get KYC approval status |
+| `/resident-portal/rent-history/` | GET | JWT | Rent payment records |
+| `/resident-portal/invoices/<id>/` | GET | JWT | Single invoice detail |
+| `/resident-portal/complaints/` | GET | JWT | List resident complaints |
+| `/resident-portal/complaints/submit/` | POST | JWT | Submit new complaint |
+| `/resident-portal/complaints/<id>/` | GET | JWT | Complaint detail with timeline |
+| `/resident-portal/lease/` | GET | JWT | Lease documents (Zoho e-sign) |
+| `/resident-portal/register-push-token/` | POST | JWT | Register push notification token |
 
 ### Contracts
 
@@ -459,8 +518,8 @@ cd backend && python manage.py collectstatic --noinput
 |----------|--------|-------------|
 | `/contract/property-table/` | GET | List property contracts |
 | `/contract/submit-contract/` | POST | Create property contract |
-| `/tenant-details/tenant-table/` | GET | List tenant contracts |
-| `/tenant-details/tenant-data/` | POST | Submit tenant contract |
+| `/resident-details/resident-table/` | GET | List resident contracts |
+| `/resident-details/resident-data/` | POST | Submit resident contract |
 
 ---
 
@@ -526,9 +585,9 @@ The brand uses a gold-on-black theme across all surfaces — sidebar, navbar, ta
 
 Partners login with phone number + OTP (no password).
 
-Tenant accounts are auto-created when a tenant is onboarded through the Sales portal. The login credentials (phone + generated password) are returned at creation time.
+Residents are auto-created when onboarded through the Sales portal. The login credentials (phone + generated password) are returned at creation time.
 
-**Default Tenant password formula:** First 4 characters of the last word of the tenant's name (as-is casing) + `@` + last 4 digits of their phone number. Example: "Ravi Kumar" with phone 9876547890 → `Kuma@7890`
+**Default resident password formula:** First 4 characters of the last word of the resident's name (as-is casing) + `@` + last 4 digits of their phone number. Example: "Ravi Kumar" with phone 9876547890 → `Kuma@7890`
 
 ---
 

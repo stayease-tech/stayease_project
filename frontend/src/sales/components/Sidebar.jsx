@@ -7,7 +7,7 @@ import SharedSidebar from "../../shared/Sidebar";
 
 const menuItems = [
     { name: "View Beds", icon: <LiaBedSolid />, link: "/sales/sales-beds-table" },
-    { name: "Add Resident", icon: <MdPersonAdd />, link: "/sales/sales-tenant-form/new" },
+    { name: "Add Resident", icon: <MdPersonAdd />, link: "/sales/sales-resident-form/new" },
     { name: "Agreements", icon: <FaFileContract />, link: "/sales/sales-agreement-pdf", disabled: true },
     { name: "Download PDF", icon: <FaFilePdf />, link: "/sales/sales-download-pdf", disabled: true },
     { name: "Track Rent", icon: <TbReportMoney />, link: "/sales/sales-track-rent", disabled: true },

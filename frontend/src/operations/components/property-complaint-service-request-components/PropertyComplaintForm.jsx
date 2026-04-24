@@ -27,7 +27,7 @@ function PropertyComplaintForm() {
     }
 
     const [propertyComplaintData, setPropertyComplaintData] = useState({
-        tenantId: searchParams.get('id'),
+        residentId: searchParams.get('id'),
         residentsName: searchParams.get('residentsName'),
         phoneNumber: searchParams.get('phoneNumber'),
         electricalElectronics: {
@@ -461,7 +461,7 @@ function PropertyComplaintForm() {
                     </div>
 
                     <div className="mb-[20px]">
-                        <label htmlFor="itemCategory" className="text-[#D4A017] max-sm:text-sm block my-3"><strong>Preferred Time for Visit / Inspection:</strong></label>
+                        <label htmlFor="itemCategory" className="text-[#D4A017] max-sm:text-sm block my-3"><strong>Preferred Time for Visit / Inspection: <span className="text-red-500">*</span></strong></label>
                         <select
                             value={propertyComplaintData.preferredTime}
                             name='preferredTime'

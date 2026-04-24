@@ -117,20 +117,20 @@ function ChecklistFeedbackTable({ isExpanded, setIsExpanded }) {
     }, []);
 
     const viewMoveInChecklistData = (data) => {
-        navigate(`/operations/operations-moveinchecklist-data/${data?.tenantId}`, { state: { data: data } });
+        navigate(`/operations/operations-moveinchecklist-data/${data?.residentId}`, { state: { data: data } });
     };
 
     const generateLink = (data, type) => {
         const params = new URLSearchParams({
-            tenantId: data?.tenantId,
+            residentId: data?.residentId,
         }).toString();
 
-        return type === 'moveInFeedback' ? (`${window.location.origin}/operations/operations-moveinfeedback-form/${data?.tenantId}?${params}`) : (`${window.location.origin}/operations/operations-moveoutfeedback-form/${data?.tenantId}?${params}`)
+        return type === 'moveInFeedback' ? (`${window.location.origin}/operations/operations-moveinfeedback-form/${data?.residentId}?${params}`) : (`${window.location.origin}/operations/operations-moveoutfeedback-form/${data?.residentId}?${params}`)
     };
 
     const viewMoveInFeedbackData = async (data) => {
         if (data?.moveInFeedbackStatus) {
-            navigate(`/operations/operations-moveinfeedback-data/${data?.tenantId}`, { state: { data: data } });
+            navigate(`/operations/operations-moveinfeedback-data/${data?.residentId}`, { state: { data: data } });
         } else {
             const link = generateLink(data, 'moveInFeedback');
             await navigator.clipboard.writeText(link);
@@ -141,15 +141,15 @@ function ChecklistFeedbackTable({ isExpanded, setIsExpanded }) {
 
     const viewMoveOutChecklistData = (data) => {
         (data?.moveOutChecklistStatus) ?
-            navigate(`/operations/operations-moveoutchecklist-data/${data?.tenantId}`, { state: { data } })
+            navigate(`/operations/operations-moveoutchecklist-data/${data?.residentId}`, { state: { data } })
             :
-            navigate(`/operations/operations-moveoutchecklist-form/${data?.tenantId}`, { state: { data } });
+            navigate(`/operations/operations-moveoutchecklist-form/${data?.residentId}`, { state: { data } });
 
     };
 
     const viewMoveOutFeedbackData = async (data) => {
         if (data?.moveOutFeedbackStatus) {
-            navigate(`/operations/operations-moveoutfeedback-data/${data?.tenantId}`, { state: { data } });
+            navigate(`/operations/operations-moveoutfeedback-data/${data?.residentId}`, { state: { data } });
         } else {
             const link = generateLink(data, 'moveOutFeedback');
             await navigator.clipboard.writeText(link);
@@ -166,7 +166,7 @@ function ChecklistFeedbackTable({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-                    <div className="max-w-6xl mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">RESIDENT CHECKLIST & FEEDBACK TABLE</h1>
 
                         <div className="sm:flex justify-end">

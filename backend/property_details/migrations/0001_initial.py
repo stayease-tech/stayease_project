@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 ('securityDeposit', models.CharField()),
                 ('userFeeDueDate', models.CharField()),
                 ('propertyAddress', models.CharField()),
-                ('tenantContact', models.CharField()),
+                ('residentContact', models.CharField()),
                 ('status', models.BooleanField(default=False)),
                 ('submitted_at', models.DateTimeField(auto_now_add=True)),
             ],

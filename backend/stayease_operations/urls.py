@@ -19,6 +19,6 @@ urlpatterns = [
     path('get-room-data/', views.get_room_data, name='get_room_data'),
     # KYC management
     path('kyc-pending/', views.get_kyc_pending, name='get_kyc_pending'),
-    path('kyc-approve/<int:tenant_id>/', views.kyc_approve, name='kyc_approve'),
-    path('kyc-reject/<int:tenant_id>/', views.kyc_reject, name='kyc_reject'),
+    path('kyc-approve/<int:resident_id>/', views.kyc_approve, name='kyc_approve'),
+    path('kyc-reject/<int:resident_id>/', views.kyc_reject, name='kyc_reject'),
 ]

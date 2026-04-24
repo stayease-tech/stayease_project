@@ -114,7 +114,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
 
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-stone-400">ADD LEAD DATA</h1>
 
-                        <label htmlFor="leadDate" className="text-[#D4A017] max-sm:text-sm"><strong>Lead Date:</strong></label>
+                        <label htmlFor="leadDate" className="text-[#D4A017] max-sm:text-sm"><strong>Lead Date: <span className="text-red-500">*</span></strong></label>
                         <input
                             type="date"
                             id="leadDate"
@@ -124,7 +124,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             name="leadDate"
                             required />
 
-                        <label htmlFor="leadSource" className="text-[#D4A017] max-sm:text-sm"><strong>Lead Source:</strong></label>
+                        <label htmlFor="leadSource" className="text-[#D4A017] max-sm:text-sm"><strong>Lead Source: <span className="text-red-500">*</span></strong></label>
                         <select
                             id="leadSource"
                             value={leadData.leadSource}
@@ -147,7 +147,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             <option value="Pamphlet">Pamphlet</option>
                         </select>
 
-                        <label htmlFor="name" className="text-[#D4A017] max-sm:text-sm"><strong>Name:</strong></label>
+                        <label htmlFor="name" className="text-[#D4A017] max-sm:text-sm"><strong>Name: <span className="text-red-500">*</span></strong></label>
                         <input
                             type="text"
                             id="name"
@@ -158,7 +158,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             placeholder="Enter the Name here"
                             required />
 
-                        <label htmlFor="contact" className="text-[#D4A017] max-sm:text-sm"><strong>Contact:</strong></label>
+                        <label htmlFor="contact" className="text-[#D4A017] max-sm:text-sm"><strong>Contact: <span className="text-red-500">*</span></strong></label>
                         <input
                             type="text"
                             id="contact"
@@ -171,7 +171,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             maxLength={11}
                             required />
 
-                        <label htmlFor="email" className="text-[#D4A017] max-sm:text-sm"><strong>Email:</strong></label>
+                        <label htmlFor="email" className="text-[#D4A017] max-sm:text-sm"><strong>Email: <span className="text-red-500">*</span></strong></label>
                         <input
                             type="email"
                             id="email"
@@ -182,7 +182,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             placeholder="Enter the Email Id here"
                             required />
 
-                        <label htmlFor="leadResult" className="text-[#D4A017] max-sm:text-sm"><strong>Lead Status:</strong></label>
+                        <label htmlFor="leadResult" className="text-[#D4A017] max-sm:text-sm"><strong>Lead Status: <span className="text-red-500">*</span></strong></label>
                         <select
                             id="leadResult"
                             value={leadData.leadResult}
@@ -200,7 +200,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                         </select>
 
                         {leadData.leadResult === "Not Converted" && <>
-                            <label htmlFor="notConvertedReason" className="text-[#D4A017] max-sm:text-sm"><strong>Reason for Not Converted:</strong></label>
+                            <label htmlFor="notConvertedReason" className="text-[#D4A017] max-sm:text-sm"><strong>Reason for Not Converted: <span className="text-red-500">*</span></strong></label>
                             <select
                                 id="notConvertedReason"
                                 value={leadData.notConvertedReason}

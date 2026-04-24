@@ -28,7 +28,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
         const options = {
             margin: 0,
-            filename: `${bedsData?.tenant_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`,
+            filename: `${bedsData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`,
             image: { type: 'jpeg', quality: 1 },
             html2canvas: {
                 scale: 2,
@@ -54,7 +54,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
 
-                    <div className="max-w-6xl mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">AGREEMENT</h1>
 
                         <div className="sm:flex justify-between">
@@ -79,7 +79,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             <tbody className='text-center'>
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2 w-[50%]"><b>Community Manager</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.propertyManager}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.propertyManager}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
@@ -95,22 +95,22 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Monthly User Fee</b></td>
-                                                    <td className="py-1 px-2"><b>{`₹${bedsData?.tenant_data?.rentPerMonth}`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`₹${bedsData?.resident_data?.rentPerMonth}`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Duration of Stay (“Term”)</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.checkOut ? `${getMonthsBetweenDates(bedsData?.tenant_data?.checkIn, bedsData?.tenant_data?.checkOut)} Months` : '-'}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.checkOut ? `${getMonthsBetweenDates(bedsData?.resident_data?.checkIn, bedsData?.resident_data?.checkOut)} Months` : '-'}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Agreement Start Date</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.checkIn ? new Date(bedsData.tenant_data.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.checkIn ? new Date(bedsData.resident_data.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Agreement End Date</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.checkOut ? new Date(bedsData.tenant_data.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.checkOut ? new Date(bedsData.resident_data.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
@@ -120,7 +120,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Security Deposit</b></td>
-                                                    <td className="py-1 px-2"><b>{`₹${bedsData?.tenant_data?.totalDepositPaid}`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`₹${bedsData?.resident_data?.totalDepositPaid}`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
@@ -143,32 +143,32 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             <tbody className='text-center'>
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2 w-[50%]"><b>Name of User</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.residentsName}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.residentsName}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Permanent Address</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.permanentAddress}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.permanentAddress}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Phone Number (To be used for communication and notices)</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.phoneNumber}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.phoneNumber}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Email (To be used for communication and notices)</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.email}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.email}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Resident Identity Type</b></td>
-                                                    <td className="py-1 px-2"><b>{`${bedsData?.tenant_data?.kycType} Card`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`${bedsData?.resident_data?.kycType} Card`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Resident Identity Number</b></td>
-                                                    <td className="py-1 px-2"><b>{bedsData?.tenant_data?.kycType === 'Aadhar' ? bedsData?.tenant_data?.aadharNumber : bedsData?.tenant_data?.panNumber}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedsData?.resident_data?.kycType === 'Aadhar' ? bedsData?.resident_data?.aadharNumber : bedsData?.resident_data?.panNumber}</b></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -426,7 +426,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                     </p>
 
                                     <p className="pb-5">
-                                        15.In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all tenants. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all tenants residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
+                                        15.In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all residents. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all residents residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
                                     </p>
 
                                     <p className="pb-5">
@@ -793,7 +793,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             </li>
 
                                             <li className="ps-[15px] pb-5">
-                                                In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all tenants. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all tenants residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
+                                                In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all residents. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all residents residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
                                             </li>
 
                                             <li className="ps-[15px] pb-5">
@@ -970,11 +970,11 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             </p>
 
                                             <p className='pb-5'>
-                                                As the tenant, I agree to abide by these terms throughout the duration of my tenancy. I understand that failure to comply with these terms may result in penalties or forfeiture of deposit. By signing below, I confirm my acceptance of the terms and conditions and agree to adhere to them accordingly.
+                                                As the resident, I agree to abide by these terms throughout the duration of my tenancy. I understand that failure to comply with these terms may result in penalties or forfeiture of deposit. By signing below, I confirm my acceptance of the terms and conditions and agree to adhere to them accordingly.
                                             </p>
 
                                             <p className='pb-5'>
-                                                As the service provider, we “Stayease” , confirm that we have provided the tenant, [Tenant's Full Name], with a copy of the rental agreement containing all terms and conditions applicable to their tenancy. We declare that we have explained the terms to the tenant to the best of our ability and ensured that they understand their obligations as outlined in the agreement. By signing below, we affirm our commitment to uphold the terms of the rental agreement and provide the necessary support to the tenant throughout their tenancy period.
+                                                As the service provider, we “Stayease” , confirm that we have provided the resident, [resident's Full Name], with a copy of the rental agreement containing all terms and conditions applicable to their tenancy. We declare that we have explained the terms to the resident to the best of our ability and ensured that they understand their obligations as outlined in the agreement. By signing below, we affirm our commitment to uphold the terms of the rental agreement and provide the necessary support to the resident throughout their tenancy period.
                                             </p>
 
                                             <b>

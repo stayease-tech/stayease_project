@@ -10,8 +10,9 @@ const navigation = [
     { name: 'Properties', to: '/properties' },
     { name: 'Blog', to: '/blog' },
     { name: 'Contact', to: '/contact' },
-    { name: 'Tenant Login', to: '/tenant-login' },
 ]
+
+const RESIDENT_PORTAL_LINK = { name: 'Resident Login', to: '/resident-login' }
 
 // Memoized social links component - only re-renders when isMobile prop changes
 const SocialLinks = memo(({ isMobile = false }) => {
@@ -169,6 +170,15 @@ export default function Navbar() {
                             </Link>
                         );
                     })}
+
+                    <div className="mt-3 border-t border-white/10 pt-3 px-1">
+                        <Link
+                            to={RESIDENT_PORTAL_LINK.to}
+                            className="block rounded-md px-3 py-2 text-sm font-medium text-[#eba312] hover:bg-[#282b38]"
+                        >
+                            {RESIDENT_PORTAL_LINK.name}
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Mobile social links */}

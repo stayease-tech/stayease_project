@@ -8,6 +8,7 @@ import NoOfFloors from "../property-form-components/NoOfFloors";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
 
 function PropertyForm({ isExpanded, setIsExpanded }) {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ function PropertyForm({ isExpanded, setIsExpanded }) {
     basementNos: 0,
     roomsPerBasement: [],
     floorNos: 0,
-    roomsPerFloor: [{ floor: 0, rooms: 0 }],
+    roomsPerFloor: [],
     noOfRooms: 0,
   });
 
@@ -131,11 +132,48 @@ function PropertyForm({ isExpanded, setIsExpanded }) {
         };
       }
 
+      if (name === 'pincode') {
+        return {
+          ...prevState,
+          [name]: value.replace(/\D/g, '').slice(0, 6)
+        };
+      }
+
+      if (name === 'foundedYear') {
+        return {
+          ...prevState,
+          [name]: value.replace(/\D/g, '').slice(0, 4)
+        };
+      }
+
+      if (name === 'rent' || name === 'deposit' || name === 'rentFree') {
+        return {
+          ...prevState,
+          [name]: value.replace(/\D/g, '')
+        };
+      }
+
       return {
         ...prevState,
         [name]: value
       };
     });
+  };
+
+  const validatePropertyData = () => {
+    if (!propertyData.propertyName?.trim()) { toast.error("Property name is required."); return false; }
+    if (!propertyData.propertyType) { toast.error("Property type is required."); return false; }
+    if (!propertyData.foundedYear || !/^\d{4}$/.test(propertyData.foundedYear)) { toast.error("Founded year must be a 4-digit year."); return false; }
+    if (!propertyData.doorBuilding?.trim()) { toast.error("Building number is required."); return false; }
+    if (!propertyData.streetAddress?.trim()) { toast.error("Street address is required."); return false; }
+    if (!propertyData.area?.trim()) { toast.error("Area is required."); return false; }
+    if (!propertyData.state) { toast.error("State is required."); return false; }
+    if (!propertyData.city) { toast.error("City is required."); return false; }
+    if (!propertyData.pincode || !/^[1-9]\d{5}$/.test(propertyData.pincode)) { toast.error("Please enter a valid 6-digit Indian pincode."); return false; }
+    if (!propertyData.rent) { toast.error("Rent is required."); return false; }
+    if (!propertyData.deposit) { toast.error("Deposit is required."); return false; }
+    if (!propertyData.status) { toast.error("Status is required."); return false; }
+    return true;
   };
 
   const getCSRFToken = () => {
@@ -194,7 +232,7 @@ function PropertyForm({ isExpanded, setIsExpanded }) {
           basementNos: 0,
           roomsPerBasement: [],
           floorNos: 0,
-          roomsPerFloor: [{ floor: 0, rooms: 0 }],
+          roomsPerFloor: [],
           noOfRooms: 0
         });
 
@@ -225,7 +263,8 @@ function PropertyForm({ isExpanded, setIsExpanded }) {
               <PropertyData propertyData={propertyData} triggerPropertyFileInput={triggerPropertyFileInput} propertyHandleChange={propertyHandleChange} />
 
               <button
-                className="block w-full px-4 py-2 mt-3 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle('propertyKyc')}
+                className="block w-full px-4 py-2 mt-3 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
+                onClick={() => { if (validatePropertyData()) dataHandleToggle('propertyKyc'); }}
                 type="button">Next</button>
             </>
             }

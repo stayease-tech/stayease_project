@@ -7,7 +7,8 @@ from django.http import JsonResponse
 from django.core.mail import EmailMessage
 from django.db.models import Sum, FloatField, Q, OuterRef, Subquery, Prefetch, Exists
 from django.db.models.functions import Cast
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -15,7 +16,7 @@ from django.contrib.auth import authenticate, login, logout
 from datetime import datetime, timedelta
 from .models import User_Activity_Data, User_Login_Data, Vendor_Detail, RawdataFile, Rawdata_Detail, Expense_Detail, Expense_Category_Detail, Fixed_Expense_Detail, Liability_Detail, OtherFile
 from stayease_supply.models import Owner_Data, Property_Data, Room_Data, Bed_Data
-from stayease_sales.models import Tenant_Data
+from stayease_sales.models import resident_Data
 
 # Create your views here.
 @login_required
@@ -132,7 +133,7 @@ def get_resident_deductions(resident, room):
     return total
 
 def get_resident_amount(id, type):
-    liability_query = Liability_Detail.objects.filter(liability_tenant_id=id).first()
+    liability_query = Liability_Detail.objects.filter(liability_resident_id=id).first()
 
     if not liability_query:
         return None
@@ -357,11 +358,11 @@ def get_owner_rooms(request, id):
 def get_resident_data(request, property_name, room):
     if request.method == 'GET':
         try:
-            residents = Tenant_Data.objects.filter(
+            residents = resident_Data.objects.filter(
                 bed_data_instance__room__property__propertyName=property_name,
                 bed_data_instance__room__roomNo=room,
                 bed_data_instance__salesStatus='Completed',
-                tenantStatus='Active'
+                residentStatus='Active'
             )
             
             serialized_rooms = serializers.serialize('json', residents)
@@ -1203,7 +1204,7 @@ def get_beds_data(request):
                             queryset=Bed_Data.objects.prefetch_related(
                                 Prefetch(
                                     'bed_data_instance',
-                                    queryset=Tenant_Data.objects.all()
+                                    queryset=resident_Data.objects.all()
                                 )
                             )
                         )
@@ -1216,8 +1217,8 @@ def get_beds_data(request):
             for property in properties:
                 for room in property.property.all():
                     for bed in room.room.all():
-                        for tenant in bed.bed_data_instance.all():
-                            if bed.salesStatus == 'Completed' and tenant.tenantStatus == 'Active':
+                        for resident in bed.bed_data_instance.all():
+                            if bed.salesStatus == 'Completed' and resident.residentStatus == 'Active':
                                 data.append({
                                     'propertyName': property.propertyName,
                                     'doorBuilding': property.doorBuilding,
@@ -1228,32 +1229,32 @@ def get_beds_data(request):
                                     'pincode': property.pincode,
                                     'roomNo': room.roomNo,
                                     'bedRoomType': bed.roomType,
-                                    'tenantId': tenant.id,
-                                    'propertyManager': tenant.propertyManager,
-                                    'residentsName': tenant.residentsName,
-                                    'phoneNumber': tenant.phoneNumber,
-                                    'email': tenant.email,
-                                    'permanentAddress': tenant.permanentAddress,
-                                    'kycType': tenant.kycType,
-                                    'aadharNumber': tenant.aadharNumber,
-                                    'aadharFrontCopy': tenant.aadharFrontCopy.url if tenant.aadharFrontCopy else None,
-                                    'aadharBackCopy': tenant.aadharBackCopy.url if tenant.aadharBackCopy else None,
-                                    'panNumber': tenant.panNumber,
-                                    'panFrontCopy': tenant.panFrontCopy.url if tenant.panFrontCopy else None,
-                                    'panBackCopy': tenant.panBackCopy.url if tenant.panBackCopy else None,
-                                    'checkIn': tenant.checkIn,
-                                    'checkOut': tenant.checkOut,
-                                    'rentPerMonth': tenant.rentPerMonth,
-                                    'totalDepositPaid': tenant.totalDepositPaid,
-                                    'residentDeductions': get_resident_deductions(tenant.residentsName, tenant.bed_data_instance.room.roomNo),
-                                    'payoutDate': datetime.strptime(tenant.checkOut, '%Y-%m-%d').date() + timedelta(days=45) if tenant.checkOut else '',
-                                    'id': get_resident_amount(tenant.id, 'id'),
-                                    'status': get_resident_amount(tenant.id, 'status'),
-                                    'amount': get_resident_amount(tenant.id, 'amount'),
-                                    'utrNumber': get_resident_amount(tenant.id, 'utrNumber'),
-                                    'transferredDate': get_resident_amount(tenant.id, 'transferredDate'),
-                                    'createdAt': get_resident_amount(tenant.id, 'createdAt'),
-                                    'updatedAt': get_resident_amount(tenant.id, 'updatedAt')
+                                    'residentId': resident.id,
+                                    'propertyManager': resident.propertyManager,
+                                    'residentsName': resident.residentsName,
+                                    'phoneNumber': resident.phoneNumber,
+                                    'email': resident.email,
+                                    'permanentAddress': resident.permanentAddress,
+                                    'kycType': resident.kycType,
+                                    'aadharNumber': resident.aadharNumber,
+                                    'aadharFrontCopy': resident.aadharFrontCopy.url if resident.aadharFrontCopy else None,
+                                    'aadharBackCopy': resident.aadharBackCopy.url if resident.aadharBackCopy else None,
+                                    'panNumber': resident.panNumber,
+                                    'panFrontCopy': resident.panFrontCopy.url if resident.panFrontCopy else None,
+                                    'panBackCopy': resident.panBackCopy.url if resident.panBackCopy else None,
+                                    'checkIn': resident.checkIn,
+                                    'checkOut': resident.checkOut,
+                                    'rentPerMonth': resident.rentPerMonth,
+                                    'totalDepositPaid': resident.totalDepositPaid,
+                                    'residentDeductions': get_resident_deductions(resident.residentsName, resident.bed_data_instance.room.roomNo),
+                                    'payoutDate': datetime.strptime(resident.checkOut, '%Y-%m-%d').date() + timedelta(days=45) if resident.checkOut else '',
+                                    'id': get_resident_amount(resident.id, 'id'),
+                                    'status': get_resident_amount(resident.id, 'status'),
+                                    'amount': get_resident_amount(resident.id, 'amount'),
+                                    'utrNumber': get_resident_amount(resident.id, 'utrNumber'),
+                                    'transferredDate': get_resident_amount(resident.id, 'transferredDate'),
+                                    'createdAt': get_resident_amount(resident.id, 'createdAt'),
+                                    'updatedAt': get_resident_amount(resident.id, 'updatedAt')
                                 })
 
             return JsonResponse({'success': True, 'beds_table': data})
@@ -1263,11 +1264,12 @@ def get_beds_data(request):
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
-@login_required
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_liability_data(request):
     if request.method == 'GET':
         try:
-            liabilities = Liability_Detail.objects.select_related('liability_tenant').all()
+            liabilities = Liability_Detail.objects.select_related('liability_resident').all()
             liability_data = [
                 {
                     "id": l.id,
@@ -1275,7 +1277,7 @@ def get_liability_data(request):
                     "amount": l.amount,
                     "utrNumber": l.utrNumber,
                     "transferredDate": l.transferredDate,
-                    "tenantName": l.liability_tenant.residentsName if l.liability_tenant else "",
+                    "residentName": l.liability_resident.residentsName if l.liability_resident else "",
                     "createdAt": l.createdAt,
                     "updatedAt": l.updatedAt,
                 }
@@ -1292,13 +1294,13 @@ def liability_form_submit(request):
     if request.method == 'POST':
         try:
             liability_data = json.loads(request.body)
-            tenant_instance = Tenant_Data.objects.get(id=liability_data.get('tenantId'))
-            bed_data = tenant_instance.bed_data_instance
+            resident_instance = resident_Data.objects.get(id=liability_data.get('residentId'))
+            bed_data = resident_instance.bed_data_instance
             room_data = bed_data.room
             property_data = room_data.property
 
             Liability_Detail.objects.create(
-                liability_tenant=tenant_instance,
+                liability_resident=resident_instance,
                 status=liability_data.get('status', 'Pending'),
                 checkSendEmail=liability_data.get('checkSendEmail', False),
                 amount=liability_data.get('amount', ''),
@@ -1307,11 +1309,11 @@ def liability_form_submit(request):
             )
 
             if liability_data.get('checkSendEmail', False) == True:
-                check_in_date = datetime.strptime(tenant_instance.checkIn, "%Y-%m-%d")
+                check_in_date = datetime.strptime(resident_instance.checkIn, "%Y-%m-%d")
                 formatted_check_in_date_date = check_in_date.strftime("%d-%b-%Y")
 
-                if tenant_instance.checkOut:
-                    check_out_date = datetime.strptime(tenant_instance.checkOut, "%Y-%m-%d")
+                if resident_instance.checkOut:
+                    check_out_date = datetime.strptime(resident_instance.checkOut, "%Y-%m-%d")
                     formatted_check_out_date_date = check_out_date.strftime("%d-%b-%Y")
                 else:
                     formatted_check_out_date_date = "-"
@@ -1321,7 +1323,7 @@ def liability_form_submit(request):
                 html_body = f"""
 <html>
 <body>
-    <p>Dear {tenant_instance.residentsName},</p>
+    <p>Dear {resident_instance.residentsName},</p>
     
     <p>Thank you for staying at {property_data.propertyName} during your visit from {formatted_check_in_date_date} to {formatted_check_out_date_date}. We hope you had a pleasant experience!</p>
     
@@ -1330,7 +1332,7 @@ def liability_form_submit(request):
     <h3>Booking Details:</h3>
 
     <ul>
-        <li><strong>Guest Name:</strong> {tenant_instance.residentsName}</li>
+        <li><strong>Guest Name:</strong> {resident_instance.residentsName}</li>
         <li><strong>Property Name:</strong> {property_data.propertyName}</li>
         <li><strong>Check-in Date:</strong> {formatted_check_in_date_date}</li>
         <li><strong>Check-out Date:</strong> {formatted_check_out_date_date}</li>
@@ -1357,7 +1359,7 @@ def liability_form_submit(request):
                     subject=subject,
                     body=html_body,
                     from_email='hello@mystayease.com',
-                    to=[tenant_instance.email],
+                    to=[resident_instance.email],
                 )
                 
                 emailsend.content_subtype = "html"
@@ -1378,7 +1380,7 @@ def liability_data_update(request, id):
             data = json.loads(request.body)
 
             FIELD_MAPPING = {
-                'liability_tenant': 'liability_tenant',
+                'liability_resident': 'liability_resident',
                 'status': 'status',
                 'checkSendEmail': 'checkSendEmail',
                 'amount': 'amount',
@@ -1411,16 +1413,16 @@ def liability_data_update(request, id):
                     updates['transferredDate'] = ''
 
             if 'checkSendEmail' in updates and updates['checkSendEmail'] == True:
-                tenant_instance = Tenant_Data.objects.get(id=data.get('tenantId'))
-                bed_instance = tenant_instance.bed_data_instance
+                resident_instance = resident_Data.objects.get(id=data.get('residentId'))
+                bed_instance = resident_instance.bed_data_instance
                 room_data = bed_instance.room
                 property_data = room_data.property
 
-                check_in_date = datetime.strptime(tenant_instance.checkIn, "%Y-%m-%d")
+                check_in_date = datetime.strptime(resident_instance.checkIn, "%Y-%m-%d")
                 formatted_check_in_date_date = check_in_date.strftime("%d-%b-%Y")
 
-                if tenant_instance.checkOut:
-                    check_out_date = datetime.strptime(tenant_instance.checkOut, "%Y-%m-%d")
+                if resident_instance.checkOut:
+                    check_out_date = datetime.strptime(resident_instance.checkOut, "%Y-%m-%d")
                     formatted_check_out_date_date = check_out_date.strftime("%d-%b-%Y")
                 else:
                     formatted_check_out_date_date = "-"
@@ -1430,7 +1432,7 @@ def liability_data_update(request, id):
                 html_body = f"""
 <html>
 <body>
-    <p>Dear {tenant_instance.residentsName},</p>
+    <p>Dear {resident_instance.residentsName},</p>
     
     <p>Thank you for staying at {property_data.propertyName} during your visit from {formatted_check_in_date_date} to {formatted_check_out_date_date}. We hope you had a pleasant experience!</p>
     
@@ -1439,7 +1441,7 @@ def liability_data_update(request, id):
     <h3>Booking Details:</h3>
 
     <ul>
-        <li><strong>Guest Name:</strong> {tenant_instance.residentsName}</li>
+        <li><strong>Guest Name:</strong> {resident_instance.residentsName}</li>
         <li><strong>Property Name:</strong> {property_data.propertyName}</li>
         <li><strong>Check-in Date:</strong> {formatted_check_in_date_date}</li>
         <li><strong>Check-out Date:</strong> {formatted_check_out_date_date}</li>
@@ -1466,7 +1468,7 @@ def liability_data_update(request, id):
                     subject=subject,
                     body=html_body,
                     from_email='hello@mystayease.com',
-                    to=[tenant_instance.email],
+                    to=[resident_instance.email],
                 )
                 
                 emailsend.content_subtype = "html"
@@ -1761,11 +1763,13 @@ from rest_framework.response import Response
 from rest_framework import status as drf_status
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from stayease_project.throttles import LoginRateThrottle
 
 
 class MobileLoginView(APIView):
     """Staff login for mobile — returns JWT tokens + user info."""
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         username = request.data.get('username')
@@ -1807,6 +1811,7 @@ class MobileLoginView(APIView):
 class MobilePartnerLoginView(APIView):
     """Partner OTP verification for mobile — returns JWT tokens."""
     permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
         phone = request.data.get('phone')

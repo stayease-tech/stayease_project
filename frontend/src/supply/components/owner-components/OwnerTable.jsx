@@ -103,6 +103,7 @@ function OwnerTable({ isExpanded, setIsExpanded }) {
                                     <tr className="bg-gray-50 text-gray-700">
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Owner Name</th>
+                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Properties</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Submitted At</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Last Updated</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">View Property Details</th>
@@ -116,6 +117,7 @@ function OwnerTable({ isExpanded, setIsExpanded }) {
                                         <tr className="" key={ownerData.id}>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{ownerData?.ownerName}</td>
+                                            <td className="border border-gray-300 px-4 py-2 text-center">{ownerData?.noOfProperties ?? 0}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{formatter.format(new Date(ownerData?.submittedDateAndTime))}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">{formatter.format(new Date(ownerData?.updatedDateAndTime))}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">

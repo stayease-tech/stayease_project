@@ -80,7 +80,7 @@ export default function Navbar({ isExpanded, toggleSidebar }) {
                                         : 'border-neutral-700 hover:border-neutral-600'
                                     }
                                 `}
-                                placeholder="Search properties, tenants..."
+                                placeholder="Search properties, residents..."
                             />
                             {searchQuery && (
                                 <button

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import PropertyContract_Detail
-from tenant_details.models import TenantContract_Detail
+from resident_details.models import residentContract_Detail
 # from django.views.decorators.csrf import csrf_exempt
 from django.core.serializers import serialize
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -35,9 +35,9 @@ def submit_contract(request):
             securityDeposit = request.POST.get('securityDeposit')
             userFeeDueDate = request.POST.get('userFeeDueDate')
             propertyAddress = request.POST.get('propertyAddress')
-            tenantContact = request.POST.get('tenantContact')
+            residentContact = request.POST.get('residentContact')
 
-            exists = TenantContract_Detail.objects.filter(uniqueId=uniqueId).exists()
+            exists = residentContract_Detail.objects.filter(uniqueId=uniqueId).exists()
 
             PropertyContract_Detail.objects.create(
             uniqueId=uniqueId,
@@ -52,7 +52,7 @@ def submit_contract(request):
             securityDeposit=securityDeposit,
             userFeeDueDate=userFeeDueDate,
             propertyAddress=propertyAddress,
-            tenantContact=tenantContact,
+            residentContact=residentContact,
             status=exists
         )
             

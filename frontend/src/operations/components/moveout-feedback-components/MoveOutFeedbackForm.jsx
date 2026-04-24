@@ -36,7 +36,7 @@ function MoveOutFeedbackForm() {
     const [lastScrollPosition, setLastScrollPosition] = useState(0);
 
     const [moveOutFeedbackData, setMoveOutFeedbackData] = useState({
-        tenantId: searchParams.get('tenantId'),
+        residentId: searchParams.get('residentId'),
         overallStayExperience: 0,
         cleanlinessPropertyStay: 0,
         responsivenessPropertyTeam: 0,

@@ -77,7 +77,7 @@ class Owner_Data(models.Model):
 
 class Property_Data(models.Model):
     owner = models.ForeignKey(Owner_Data, related_name="owner", on_delete=models.CASCADE)
-    serial_number = models.CharField(max_length=20)
+    serial_number = models.CharField(max_length=20, unique=True)
     propertyName = models.CharField()
     propertyType = models.CharField()
     foundedYear = models.CharField()
@@ -111,74 +111,16 @@ class Property_Data(models.Model):
     
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            old_instance = None
-            if self.pk:
-                old_instance = Property_Data.objects.select_for_update().get(pk=self.pk)
-            
-            name_changed = old_instance and (old_instance.propertyName != self.propertyName)
-            year_changed = old_instance and (old_instance.foundedYear != self.foundedYear)
-            
-            if year_changed and not name_changed:
-                same_name_properties = Property_Data.objects.select_for_update().filter(
-                    propertyName=self.propertyName,
-                    serial_number__isnull=False
-                ).exclude(serial_number='')
-                
-                updates = []
-                for prop in same_name_properties:
-                    parts = prop.serial_number.split('-')
-                    if len(parts) == 3:
-                        new_serial = f"SE-{self.foundedYear}-{parts[2]}"
-                        updates.append((prop.pk, new_serial))
-                
-                if updates:
-                    from django.db.models import Case, When, Value, CharField
-                    
-                    Property_Data.objects.filter(
-                        pk__in=[u[0] for u in updates]
-                    ).update(
-                        foundedYear=self.foundedYear,
-                        serial_number=Case(
-                            *[When(pk=pk, then=Value(serial)) 
-                            for pk, serial in updates],
-                            output_field=CharField()
-                        )
-                    )
-                    
-                    if self.pk in [u[0] for u in updates]:
-                        self.refresh_from_db()
-            
-            elif name_changed:
-                existing_property = Property_Data.objects.select_for_update().filter(
-                    propertyName=self.propertyName
-                ).exclude(serial_number='').first()
-                
-                if existing_property:
-                    self.serial_number = existing_property.serial_number
-                    if year_changed:
-                        parts = self.serial_number.split('-')
-                        if len(parts) == 3:
-                            self.serial_number = f"SE-{self.foundedYear}-{parts[2]}"
-                else:
-                    count = Property_Data.objects.filter(
-                        foundedYear=self.foundedYear
-                    ).count()
-                    self.serial_number = f"SE-{self.foundedYear}-{str(count + 1).zfill(7)}"
-            
             if not self.serial_number:
-                existing_property = Property_Data.objects.select_for_update().filter(
-                    propertyName=self.propertyName,
+                count = Property_Data.objects.select_for_update().filter(
                     foundedYear=self.foundedYear
-                ).exclude(serial_number='').first()
-                
-                if existing_property:
-                    self.serial_number = existing_property.serial_number
-                else:
-                    count = Property_Data.objects.filter(
-                        foundedYear=self.foundedYear
-                    ).count()
+                ).count()
+                self.serial_number = f"SE-{self.foundedYear}-{str(count + 1).zfill(7)}"
+                # Ensure uniqueness
+                while Property_Data.objects.filter(serial_number=self.serial_number).exists():
+                    count += 1
                     self.serial_number = f"SE-{self.foundedYear}-{str(count + 1).zfill(7)}"
-            
+
             super().save(*args, **kwargs)
 
     class Meta:
@@ -188,29 +130,14 @@ class Property_Data(models.Model):
         ]
 
     def delete(self, *args, **kwargs):
-        if self.saleDeed:
-            if os.path.isfile(self.saleDeed.path):
-                os.remove(self.saleDeed.path)
-
-        if self.ebill:
-            if os.path.isfile(self.ebill.path):
-                os.remove(self.ebill.path)
-
-        if self.taxReceipt:
-            if os.path.isfile(self.taxReceipt.path):
-                os.remove(self.taxReceipt.path)
-
-        if self.waterBill:
-            if os.path.isfile(self.waterBill.path):
-                os.remove(self.waterBill.path)
-
-        if self.loi:
-            if os.path.isfile(self.loi.path):
-                os.remove(self.loi.path)
-
-        if self.agreement:
-            if os.path.isfile(self.agreement.path):
-                os.remove(self.agreement.path)
+        for field_name in ['saleDeed', 'ebill', 'taxReceipt', 'waterBill', 'loi', 'agreement', 'image']:
+            file_field = getattr(self, field_name, None)
+            if file_field and file_field.name:
+                try:
+                    if os.path.isfile(file_field.path):
+                        os.remove(file_field.path)
+                except (ValueError, FileNotFoundError):
+                    pass
 
         super().delete(*args, **kwargs)
 
@@ -249,12 +176,12 @@ class Bed_Data(models.Model):
     permanentAddress = models.CharField(max_length=255, blank=True, null=True)
     kycType = models.CharField(max_length=255, blank=True, null=True)
     aadharNumber = models.CharField(max_length=255, blank=True, null=True)
-    aadharFrontCopy = models.FileField(upload_to='documents/tenant-documents/%Y/%m/%d/', blank=True, null=True)
-    aadharBackCopy = models.FileField(upload_to='documents/tenant-documents/%Y/%m/%d/', blank=True, null=True)
+    aadharFrontCopy = models.FileField(upload_to='documents/resident-documents/%Y/%m/%d/', blank=True, null=True)
+    aadharBackCopy = models.FileField(upload_to='documents/resident-documents/%Y/%m/%d/', blank=True, null=True)
     aadharStatus = models.CharField(max_length=255, blank=True, null=True)
     panNumber = models.CharField(max_length=255, blank=True, null=True)
-    panFrontCopy = models.FileField(upload_to='documents/tenant-documents/%Y/%m/%d/', blank=True, null=True)
-    panBackCopy = models.FileField(upload_to='documents/tenant-documents/%Y/%m/%d/', blank=True, null=True)
+    panFrontCopy = models.FileField(upload_to='documents/resident-documents/%Y/%m/%d/', blank=True, null=True)
+    panBackCopy = models.FileField(upload_to='documents/resident-documents/%Y/%m/%d/', blank=True, null=True)
     panStatus = models.CharField(max_length=255, blank=True, null=True)
     checkIn = models.CharField(max_length=255, blank=True, null=True)
     checkOut = models.CharField(max_length=255, blank=True, null=True)

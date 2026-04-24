@@ -25,7 +25,7 @@ function Blog6() {
                         both parties can encounter a number of difficulties that could result in monetary and
                         legal issues. By outlining the terms and circumstances of the rental relationship, a
                         rental agreement acts as a safeguard and makes sure that both landlords and
-                        tenants are aware of their responsibilities.</p>
+                        residents are aware of their responsibilities.</p>
                 </li>
             </ul>
 
@@ -43,24 +43,24 @@ function Blog6() {
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>1. Unregulated Rent Increases</h3>
-                    <p>Tenants are left exposed financially since landlords can raise rent at any time without
-                        a rental agreement. In order to give tenants certainty and stability, a written contract
+                    <p>residents are left exposed financially since landlords can raise rent at any time without
+                        a rental agreement. In order to give residents certainty and stability, a written contract
                         usually contains provisions that control the frequency and percentage of rent
                         increases.</p>
                 </li>
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>2. Unclear Eviction Rules</h3>
-                    <p>The terms under which a landlord may evict a tenant are outlined in a rental
+                    <p>The terms under which a landlord may evict a resident are outlined in a rental
                         agreement. Without one, landlords can find it difficult to get rid of troublesome
-                        tenants who break verbal agreements, or tenants might face the possibility of an
+                        residents who break verbal agreements, or residents might face the possibility of an
                         unexpected eviction. The absence of a written agreement might impede legal
                         processes.</p>
                 </li>
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>3. Property Damage Liability</h3>
-                    <p>Without a formal agreement defining the tenant&#39;s obligations, the landlord may find it
+                    <p>Without a formal agreement defining the resident&#39;s obligations, the landlord may find it
                         difficult to recoup repair costs if a renter destroys the property. Such costs are
                         typically covered by a security deposit clause in a rental agreement.</p>
                 </li>
@@ -76,7 +76,7 @@ function Blog6() {
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>5. Loss of Tax Benefits</h3>
-                    <p>Rental agreements are frequently used by tenants to obtain tax exemptions for the
+                    <p>Rental agreements are frequently used by residents to obtain tax exemptions for the
                         House Rent Allowance (HRA). They might not be able to receive these financial
                         benefits without a legal contract, which would increase their tax obligations.
                     </p>
@@ -84,7 +84,7 @@ function Blog6() {
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>6. Lack of Clarity on Notice Periods and Moving Out</h3>
-                    <p>Tenants may vacate at any moment without giving advance warning if there is no
+                    <p>residents may vacate at any moment without giving advance warning if there is no
                         agreement in place, leaving landlords with empty homes and monetary losses. The
                         notice period needed to vacate the property is specified in a rental agreement, giving
                         both parties enough time to make the necessary preparations.
@@ -93,10 +93,10 @@ function Blog6() {
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>Conclusion</h3>
-                    <p>To protect the rights of both landlords and tenants, a rental agreement is necessary.
+                    <p>To protect the rights of both landlords and residents, a rental agreement is necessary.
                         It guarantees responsibility for property damage, guards against arbitrary eviction,
                         helps control rent hikes, and provides legal evidence in court. Landlords can obtain a
-                        steady rental income, and tenants can receive tax benefits.
+                        steady rental income, and residents can receive tax benefits.
                         <br /><br />
                         Both parties should make sure they develop and sign a rental agreement that
                         precisely describes the terms and circumstances before leasing or renting out a

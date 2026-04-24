@@ -8,10 +8,10 @@ import Cookies from 'js-cookie';
 export default function LiabilityForm({ isExpanded, setIsExpanded }) {
     const location = useLocation();
     const navigate = useNavigate();
-    const tenantData = location.state?.tenantData;
+    const residentData = location.state?.residentData;
 
     const [liabiltyData, setLiabiltyData] = useState({
-        tenantId: tenantData?.tenantId,
+        residentId: residentData?.residentId,
         status: '',
         checkSendEmail: false,
         amount: '',
@@ -97,7 +97,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="propertyName"
                             type="text"
-                            value={tenantData?.propertyName || '-'}
+                            value={residentData?.propertyName || '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="propertyName"
                             readOnly
@@ -107,7 +107,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="residentsName"
                             type="text"
-                            value={tenantData?.residentsName || '-'}
+                            value={residentData?.residentsName || '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="residentsName"
                             readOnly
@@ -117,7 +117,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="checkIn"
                             type="text"
-                            value={tenantData?.checkIn ? formatDateToDDMonYYYY(tenantData?.checkIn) : '-'}
+                            value={residentData?.checkIn ? formatDateToDDMonYYYY(residentData?.checkIn) : '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="checkIn"
                             readOnly
@@ -127,7 +127,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="checkOut"
                             type="text"
-                            value={tenantData?.checkOut ? formatDateToDDMonYYYY(tenantData?.checkOut) : '-'}
+                            value={residentData?.checkOut ? formatDateToDDMonYYYY(residentData?.checkOut) : '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="checkOut"
                             readOnly
@@ -137,19 +137,19 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="kycType"
                             type="text"
-                            value={tenantData?.kycType || '-'}
+                            value={residentData?.kycType || '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="kycType"
                             readOnly
                         />
 
-                        {tenantData?.kycType === 'Aadhar' ?
+                        {residentData?.kycType === 'Aadhar' ?
                             <>
                                 <label htmlFor="aadharNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Aadhar Number:</strong></label>
                                 <input
                                     id="aadharNumber"
                                     type="text"
-                                    value={tenantData?.aadharNumber || '-'}
+                                    value={residentData?.aadharNumber || '-'}
                                     className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                                     name="aadharNumber"
                                     readOnly
@@ -161,7 +161,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                                 <input
                                     id="panNumber"
                                     type="text"
-                                    value={tenantData?.panNumber || '-'}
+                                    value={residentData?.panNumber || '-'}
                                     className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                                     name="panNumber"
                                     readOnly
@@ -172,7 +172,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="totalDepositPaid"
                             type="text"
-                            value={tenantData?.totalDepositPaid || '-'}
+                            value={residentData?.totalDepositPaid || '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="totalDepositPaid"
                             readOnly
@@ -182,7 +182,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="residentDeductions"
                             type="text"
-                            value={tenantData?.residentDeductions || '-'}
+                            value={residentData?.residentDeductions || '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="residentDeductions"
                             readOnly
@@ -192,7 +192,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="netPayout"
                             type="text"
-                            value={(Number(tenantData?.totalDepositPaid) - Number(tenantData?.residentDeductions)) || 0}
+                            value={(Number(residentData?.totalDepositPaid) - Number(residentData?.residentDeductions)) || 0}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="netPayout"
                             readOnly
@@ -202,13 +202,13 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <input
                             id="payoutDate"
                             type="text"
-                            value={tenantData?.payoutDate || '-'}
+                            value={residentData?.payoutDate || '-'}
                             className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                             name="payoutDate"
                             readOnly
                         />
 
-                        <label htmlFor="status" className="text-[#D4A017] max-sm:text-sm"><strong>Status:</strong></label>
+                        <label htmlFor="status" className="text-[#D4A017] max-sm:text-sm"><strong>Status: <span className="text-red-500">*</span></strong></label>
                         <select id="status" value={liabiltyData.status} onChange={liabilityHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="status" required>
                             <option value="" disabled>Select the status here</option>
                             <option value="Pending">Pending</option>
@@ -239,7 +239,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         </>}
 
                         {liabiltyData?.status === 'Settled' && <>
-                            <label htmlFor="amount" className="text-[#D4A017] max-sm:text-sm"><strong>Amount:</strong></label>
+                            <label htmlFor="amount" className="text-[#D4A017] max-sm:text-sm"><strong>Amount: <span className="text-red-500">*</span></strong></label>
                             <input
                                 id="amount"
                                 type="text"
@@ -251,7 +251,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                                 required
                             />
 
-                            <label htmlFor="utrNumber" className="text-[#D4A017] max-sm:text-sm"><strong>UTR Number:</strong></label>
+                            <label htmlFor="utrNumber" className="text-[#D4A017] max-sm:text-sm"><strong>UTR Number: <span className="text-red-500">*</span></strong></label>
                             <input
                                 id="utrNumber"
                                 type="text"
@@ -263,7 +263,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                                 required
                             />
 
-                            <label className="text-[#D4A017] max-sm:text-sm"><strong>Transferred Date:</strong></label>
+                            <label className="text-[#D4A017] max-sm:text-sm"><strong>Transferred Date: <span className="text-red-500">*</span></strong></label>
                             <input
                                 id="transferredDate"
                                 type="date"

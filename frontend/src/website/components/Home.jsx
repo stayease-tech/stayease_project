@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Home = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -514,6 +515,128 @@ const Home = () => {
         </ScrollFadeIn>
       </section>
 
+      {/* Services Section */}
+      <section className="bg-[#1c1c1c] py-12 lg:py-20 -mt-px border-b border-gray-600">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <ScrollFadeIn direction="up" className="text-center mb-12 lg:mb-16">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-white tracking-[0.2em] mb-4">
+              OUR SERVICES
+            </h2>
+            <p className="text-gray-400 text-base sm:text-lg max-w-3xl mx-auto">
+              Quick access to resident services and support
+            </p>
+          </ScrollFadeIn>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
+            {/* Service 1: Resident Login */}
+            <ScrollFadeIn direction="left" delay={0} className="relative group">
+              <div className="relative border border-gray-600 p-8 lg:p-10 bg-gradient-to-br from-[#eba312]/5 to-transparent hover:border-[#eba312] transition-all duration-300">
+                <div className="absolute top-0 left-0 w-0 h-0 border-l-4 border-t-4 border-[#eba312] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute bottom-0 right-0 w-0 h-0 border-r-4 border-b-4 border-[#eba312] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <motion.div 
+                  className="w-16 h-16 lg:w-20 lg:h-20 rounded-full border-2 border-[#eba312] flex items-center justify-center mb-6 mx-auto group-hover:scale-110 transition-transform"
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <svg className="w-8 lg:w-10 h-8 lg:h-10 text-[#eba312]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                </motion.div>
+                
+                <h3 className="text-xl sm:text-2xl font-light text-white text-center mb-3 tracking-wide">
+                  RESIDENT LOGIN
+                </h3>
+                <p className="text-gray-400 text-center text-sm mb-6">
+                  Access your account, view rent history, KYC status, and manage your profile
+                </p>
+                
+                <Link to="/resident-login">
+                  <motion.button 
+                    className="w-full border border-[#eba312] text-[#eba312] hover:bg-[#eba312] hover:text-black py-3 lg:py-4 text-sm font-medium uppercase tracking-[0.2em] transition-all duration-300"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    SIGN IN
+                  </motion.button>
+                </Link>
+              </div>
+            </ScrollFadeIn>
+
+            {/* Service 2: Property Enquiry */}
+            <ScrollFadeIn direction="up" delay={0.1} className="relative group">
+              <div className="relative border border-gray-600 p-8 lg:p-10 hover:border-[#eba312] transition-all duration-300">
+                <div className="absolute top-0 left-0 w-0 h-0 border-l-4 border-t-4 border-[#eba312] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute bottom-0 right-0 w-0 h-0 border-r-4 border-b-4 border-[#eba312] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <motion.div 
+                  className="w-16 h-16 lg:w-20 lg:h-20 rounded-full border-2 border-gray-600 flex items-center justify-center mb-6 mx-auto group-hover:border-[#eba312] group-hover:scale-110 transition-all"
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <svg className="w-8 lg:w-10 h-8 lg:h-10 text-gray-400 group-hover:text-[#eba312] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </motion.div>
+                
+                <h3 className="text-xl sm:text-2xl font-light text-white text-center mb-3 tracking-wide">
+                  PROPERTY ENQUIRY
+                </h3>
+                <p className="text-gray-400 text-center text-sm mb-6">
+                  Have questions about a property? Send us your enquiry and we'll respond quickly
+                </p>
+                
+                <motion.button 
+                  className="w-full border border-gray-600 text-white hover:border-[#eba312] hover:text-[#eba312] py-3 lg:py-4 text-sm font-medium uppercase tracking-[0.2em] transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    const enquirySection = document.querySelector('[data-enquiry-section]');
+                    if (enquirySection) enquirySection.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  SEND ENQUIRY
+                </motion.button>
+              </div>
+            </ScrollFadeIn>
+
+            {/* Service 3: Contact Support */}
+            <ScrollFadeIn direction="right" delay={0.2} className="relative group">
+              <div className="relative border border-gray-600 p-8 lg:p-10 hover:border-[#eba312] transition-all duration-300">
+                <div className="absolute top-0 left-0 w-0 h-0 border-l-4 border-t-4 border-[#eba312] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute bottom-0 right-0 w-0 h-0 border-r-4 border-b-4 border-[#eba312] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <motion.div 
+                  className="w-16 h-16 lg:w-20 lg:h-20 rounded-full border-2 border-gray-600 flex items-center justify-center mb-6 mx-auto group-hover:border-[#eba312] group-hover:scale-110 transition-all"
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <svg className="w-8 lg:w-10 h-8 lg:h-10 text-gray-400 group-hover:text-[#eba312] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                </motion.div>
+                
+                <h3 className="text-xl sm:text-2xl font-light text-white text-center mb-3 tracking-wide">
+                  CONTACT SUPPORT
+                </h3>
+                <p className="text-gray-400 text-center text-sm mb-6">
+                  Need help? Connect with our support team for assistance
+                </p>
+                
+                <motion.a 
+                  href="mailto:support@stayease.com"
+                  className="block w-full border border-gray-600 text-white text-center hover:border-[#eba312] hover:text-[#eba312] py-3 lg:py-4 text-sm font-medium uppercase tracking-[0.2em] transition-all duration-300"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  GET HELP
+                </motion.a>
+              </div>
+            </ScrollFadeIn>
+          </div>
+        </div>
+      </section>
+
       {/* Amenities Section */}
       <section className="bg-[#1c1c1c] py-12 lg:py-20 -mt-px">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -671,19 +794,9 @@ const Home = () => {
         </div>
       </section>
     
-      {/* Contact/Enquiry Section */}
-      <section className="relative bg-[#1c1c1c] py-12 lg:py-20 -mt-px overflow-hidden">
-        <div 
-          className="absolute inset-0 opacity-60"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'brightness(0.3) contrast(1.2)'
-          }}
-        ></div>
-
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
+      {/* Contact/Enquiry Section - WHITE BACKGROUND */}
+      <section className="w-full bg-white py-12 lg:py-20" data-enquiry-section>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[60vh] lg:min-h-[80vh]">
             
             {/* Left Side - Text Content */}
@@ -691,17 +804,17 @@ const Home = () => {
               <div className="relative">
                 <div className="absolute -top-3 lg:-top-4 -left-3 lg:-left-4 w-12 lg:w-16 h-12 lg:h-16 border-l-2 border-t-2 border-[#eba312]"></div>
                 
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-white mb-6 lg:mb-8 tracking-wide leading-tight">
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-gray-900 mb-6 lg:mb-8 tracking-wide leading-tight">
                   SEND US YOUR ENQUIRY
                 </h2>
               </div>
 
               <div className="space-y-6 lg:space-y-8">
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-light text-white leading-relaxed">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-light text-gray-900 leading-relaxed">
                   Connect with StayEase
                 </h3>
                 
-                <p className="text-lg sm:text-xl lg:text-2xl font-light text-gray-300 leading-relaxed">
+                <p className="text-lg sm:text-xl lg:text-2xl font-light text-gray-700 leading-relaxed">
                   Drop your concern, query or feedback
                 </p>
               </div>
@@ -713,7 +826,7 @@ const Home = () => {
 
             {/* Right Side - Contact Form */}
             <ScrollFadeIn direction="right" className="relative">
-              <div className="relative bg-gray-800/80 backdrop-blur-sm p-8 sm:p-10 lg:p-12 border border-[#eba312]">
+              <div className="relative bg-white p-8 sm:p-10 lg:p-12 border-2 border-[#eba312] shadow-xl">
                 {/* Corner decorations */}
                 <div className="absolute -top-2 -left-2 w-6 lg:w-8 h-6 lg:h-8 border-l-2 border-t-2 border-[#eba312]"></div>
                 <div className="absolute -top-2 -right-2 w-6 lg:w-8 h-6 lg:h-8 border-r-2 border-t-2 border-[#eba312]"></div>
@@ -724,9 +837,9 @@ const Home = () => {
                   {/* Form Fields */}
                   {[
                     { label: "Name", type: "text", border: "border-[#eba312]" },
-                    { label: "Email", type: "email", border: "border-gray-600" },
-                    { label: "Phone", type: "tel", border: "border-gray-600" },
-                    { label: "Your Requirements", type: "textarea", border: "border-gray-600" }
+                    { label: "Email", type: "email", border: "border-gray-300" },
+                    { label: "Phone", type: "tel", border: "border-gray-300" },
+                    { label: "Your Requirements", type: "textarea", border: "border-gray-300" }
                   ].map((field, index) => (
                     <ScrollFadeIn 
                       key={index}
@@ -734,17 +847,17 @@ const Home = () => {
                       delay={index * 0.05}
                       className="space-y-2 lg:space-y-3"
                     >
-                      <label className="block text-gray-400 text-base lg:text-lg font-light">{field.label}</label>
+                      <label className="block text-gray-900 text-base lg:text-lg font-light">{field.label}</label>
                       <div className="relative">
                         {field.type === "textarea" ? (
                           <textarea 
                             rows="2"
-                            className={`w-full bg-transparent text-white text-lg lg:text-xl font-light pb-3 border-b-2 ${field.border} focus:outline-none focus:border-[#eba312] transition-colors resize-none`}
+                            className={`w-full bg-white text-gray-900 text-lg lg:text-xl font-light pb-3 border-b-2 ${field.border} focus:outline-none focus:border-[#eba312] transition-colors resize-none`}
                           />
                         ) : (
                           <input 
                             type={field.type}
-                            className={`w-full bg-transparent text-white text-lg lg:text-xl font-light pb-3 border-b-2 ${field.border} focus:outline-none focus:border-[#eba312] transition-colors`}
+                            className={`w-full bg-white text-gray-900 text-lg lg:text-xl font-light pb-3 border-b-2 ${field.border} focus:outline-none focus:border-[#eba312] transition-colors`}
                           />
                         )}
                       </div>
@@ -754,7 +867,7 @@ const Home = () => {
                   {/* Submit Button */}
                   <ScrollFadeIn direction="up" delay={0.3} className="pt-6 lg:pt-8">
                     <motion.button 
-                      className="w-full border border-[#eba312] text-white hover:bg-[#eba312] hover:text-black py-3 lg:py-4 text-base lg:text-lg font-medium uppercase tracking-[0.2em] transition-all duration-300"
+                      className="w-full border border-[#eba312] text-white bg-[#eba312] hover:bg-white hover:text-[#eba312] py-3 lg:py-4 text-base lg:text-lg font-medium uppercase tracking-[0.2em] transition-all duration-300"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -765,6 +878,27 @@ const Home = () => {
               </div>
             </ScrollFadeIn>
           </div>
+        </div>
+      </section>
+
+      {/* Resident Login CTA Section */}
+      <section className="w-full bg-gradient-to-r from-[#eba312] to-[#d4a017] py-12 lg:py-16">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-light text-white mb-4 lg:mb-6">
+            Already a Resident?
+          </h2>
+          <p className="text-lg sm:text-xl lg:text-2xl font-light text-white/90 mb-8 lg:mb-10">
+            Access your portal, view rent history, KYC status, and manage your account
+          </p>
+          <Link to="/resident-login">
+            <motion.button 
+              className="inline-block bg-white text-[#eba312] px-8 lg:px-12 py-4 lg:py-5 text-base lg:text-lg font-semibold uppercase tracking-[0.2em] hover:bg-gray-100 transition-all duration-300 border-2 border-white"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Sign In to Your Account
+            </motion.button>
+          </Link>
         </div>
       </section>
     </div>

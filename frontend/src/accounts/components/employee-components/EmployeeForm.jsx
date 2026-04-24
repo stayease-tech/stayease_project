@@ -91,7 +91,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
               htmlFor="firstName"
               className="text-[#D4A017] max-sm:text-sm"
             >
-              <strong>First Name:</strong>
+              <strong>First Name: <span className="text-red-500">*</span></strong>
             </label>
             <input
               type="text"
@@ -104,7 +104,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
             />
 
             <label htmlFor="lastName" className="text-[#D4A017] max-sm:text-sm">
-              <strong>Last Name:</strong>
+              <strong>Last Name: <span className="text-red-500">*</span></strong>
             </label>
             <input
               type="text"
@@ -117,7 +117,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
             />
 
             <label htmlFor="phone" className="text-[#D4A017] max-sm:text-sm">
-              <strong>Phone Number:</strong>
+              <strong>Phone Number: <span className="text-red-500">*</span></strong>
             </label>
             <input
               type="tel"
@@ -130,7 +130,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
             />
 
             <label htmlFor="email" className="text-[#D4A017] max-sm:text-sm">
-              <strong>Email Address:</strong>
+              <strong>Email Address: <span className="text-red-500">*</span></strong>
             </label>
             <input
               type="email"
@@ -143,7 +143,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
             />
 
             <label htmlFor="gender" className="text-[#D4A017] max-sm:text-sm">
-              <strong>Gender:</strong>
+              <strong>Gender: <span className="text-red-500">*</span></strong>
             </label>
             <select
               value={employeeData.gender}
@@ -160,7 +160,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
             </select>
 
             <label htmlFor="role" className="text-[#D4A017] max-sm:text-sm">
-              <strong>Role:</strong>
+              <strong>Role: <span className="text-red-500">*</span></strong>
             </label>
             <select
               value={employeeData.role}

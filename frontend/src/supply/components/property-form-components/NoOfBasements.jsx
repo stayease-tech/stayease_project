@@ -126,7 +126,7 @@ function NoOfBasements({ propertyData, setPropertyData }) {
             <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
                 {propertyData.roomsPerBasement.map((room, i) => (
                     <div className="my-3" key={i}>
-                        <label htmlFor="roomNos" className="block text-[#D4A017]"><strong>Add Number of Rooms (Basement -{room.basement}):</strong></label>
+                        <label htmlFor="roomNos" className="block text-[#D4A017]"><strong>Add Number of Rooms (Basement {room.basement}):</strong></label>
 
                         <div className="flex my-3 items-center">
                             <button

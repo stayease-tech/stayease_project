@@ -13,7 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
-from .models import User_Activity_Data, User_Login_Data, Tenant_Data, Tenant_Rent_Data, Leads_Detail, Document, SigningRequest
+from .models import User_Activity_Data, User_Login_Data, resident_Data, resident_Rent_Data, Leads_Detail, Document, SigningRequest
 from stayease_supply.models import Property_Data, Room_Data, Bed_Data
 from stayease_accounts.models import Expense_Detail, Expense_Category_Detail
 from .service import ZohoESignService
@@ -152,7 +152,7 @@ def update_delay_charges_for_received_rents():
     current_date = date.today()
     current_day = current_date.day
     
-    received_rents = Tenant_Rent_Data.objects.filter(rentStatus='Received')
+    received_rents = resident_Rent_Data.objects.filter(rentStatus='Received')
     
     updated_count = 0
     
@@ -200,23 +200,23 @@ def update_delay_charges_for_received_rents():
             import traceback
             traceback.print_exc()
     
-def sync_rent_records_for_active_tenants():
+def sync_rent_records_for_active_residents():
     current_date = date.today()
     
-    active_tenants = Tenant_Data.objects.filter(tenantStatus='Active')
+    active_residents = resident_Data.objects.filter(residentStatus='Active')
     
     stats = {
-        'total_active_tenants': active_tenants.count(),
+        'total_active_residents': active_residents.count(),
         'records_created': 0,
-        'tenants_processed': 0
+        'residents_processed': 0
     }
     
-    for tenant in active_tenants:
-        if not tenant.checkIn:
+    for resident in active_residents:
+        if not resident.checkIn:
             continue
             
         try:
-            checkin_date = tenant.checkIn
+            checkin_date = resident.checkIn
             if isinstance(checkin_date, str):
                 checkin_date = datetime.strptime(checkin_date, "%Y-%m-%d").date()
             
@@ -231,8 +231,8 @@ def sync_rent_records_for_active_tenants():
                 expected_months.append(month_str)
                 current_month = current_month + relativedelta(months=1)
             
-            existing_months = set(Tenant_Rent_Data.objects.filter(
-                tenant_data_instance=tenant
+            existing_months = set(resident_Rent_Data.objects.filter(
+                resident_data_instance=resident
             ).values_list('month', flat=True))
             
             months_to_create = [month for month in expected_months if month not in existing_months]
@@ -241,26 +241,26 @@ def sync_rent_records_for_active_tenants():
                 records_to_create = []
                 for month_str in months_to_create:
                     records_to_create.append(
-                        Tenant_Rent_Data(
-                            tenant_data_instance=tenant,
+                        resident_Rent_Data(
+                            resident_data_instance=resident,
                             month=month_str,
-                            rent=tenant.rentPerMonth,
+                            rent=resident.rentPerMonth,
                             delayCharges=calculate_daily_value(current_date.day)
                         )
                     )
                 
-                Tenant_Rent_Data.objects.bulk_create(records_to_create)
+                resident_Rent_Data.objects.bulk_create(records_to_create)
                 stats['records_created'] += len(records_to_create)
             
-            stats['tenants_processed'] += 1
+            stats['residents_processed'] += 1
             
         except Exception as e:
-            print(f"Error processing tenant {tenant.id}: {e}")
+            print(f"Error processing resident {resident.id}: {e}")
             continue
             
-def calculate_rent_with_delay_charges_new_tenant(checkIn, tenant_instance):
-    if tenant_instance.pk is None:
-        tenant_instance.save()
+def calculate_rent_with_delay_charges_new_resident(checkIn, resident_instance):
+    if resident_instance.pk is None:
+        resident_instance.save()
     
     target_date = datetime.strptime(checkIn, "%Y-%m-%d").date()
     current_date = date.today()
@@ -270,23 +270,23 @@ def calculate_rent_with_delay_charges_new_tenant(checkIn, tenant_instance):
         end_month_date = current_date.replace(day=1)
         
         while current_month_date < end_month_date:
-            tenant_rent_instance = Tenant_Rent_Data(
-                tenant_data_instance=tenant_instance,
+            resident_rent_instance = resident_Rent_Data(
+                resident_data_instance=resident_instance,
                 month=current_month_date.strftime("%B %Y"),
-                rent=tenant_instance.rentPerMonth,
+                rent=resident_instance.rentPerMonth,
                 delayCharges=calculate_daily_value(current_date.day)
             )
-            tenant_rent_instance.save()
+            resident_rent_instance.save()
                         
             current_month_date = current_month_date + relativedelta(months=1)
 
-def calculate_rent_with_delay_charges_update(checkIn, tenant_instance):
+def calculate_rent_with_delay_charges_update(checkIn, resident_instance):
     if not checkIn:
         print("Error: checkIn is None or empty")
         return
     
-    rent_records = Tenant_Rent_Data.objects.filter(
-        tenant_data_instance=tenant_instance
+    rent_records = resident_Rent_Data.objects.filter(
+        resident_data_instance=resident_instance
     )
     
     checkin_date = checkIn
@@ -316,16 +316,16 @@ def calculate_rent_with_delay_charges_update(checkIn, tenant_instance):
     
     with transaction.atomic():
         if months_to_remove:
-            Tenant_Rent_Data.objects.filter(
-                tenant_data_instance=tenant_instance,
+            resident_Rent_Data.objects.filter(
+                resident_data_instance=resident_instance,
                 month__in=list(months_to_remove)
             ).delete()
         
         for month_date in months_to_add:
-            Tenant_Rent_Data.objects.create(
-                tenant_data_instance=tenant_instance,
+            resident_Rent_Data.objects.create(
+                resident_data_instance=resident_instance,
                 month=month_date.strftime("%B %Y"),
-                rent=tenant_instance.rentPerMonth,
+                rent=resident_instance.rentPerMonth,
                 delayCharges=calculate_daily_value(current_date.day)
             )
         
@@ -355,52 +355,52 @@ def is_current_month_in_range(start_date_str, end_date_str=None):
 
 today = timezone.now().date()
 
-def update_bed_status_for_checked_out_tenants():
+def update_bed_status_for_checked_out_residents():
     Bed_Data.objects.filter(bed_data_instance__isnull=True).update(salesStatus='Pending')
     
-    tenants = Tenant_Data.objects.select_related('bed_data_instance').all()
+    residents = resident_Data.objects.select_related('bed_data_instance').all()
     
-    if not tenants.exists():
+    if not residents.exists():
         return
     
-    has_active_tenants = False
-    for tenant in tenants:
+    has_active_residents = False
+    for resident in residents:
         try:
-            if tenant.checkOut and tenant.checkOut.strip():
-                check_out_date = datetime.strptime(tenant.checkOut.strip(), '%Y-%m-%d').date()
+            if resident.checkOut and resident.checkOut.strip():
+                check_out_date = datetime.strptime(resident.checkOut.strip(), '%Y-%m-%d').date()
                 if check_out_date > today:
-                    has_active_tenants = True
+                    has_active_residents = True
                     break
             else:
-                has_active_tenants = True
+                has_active_residents = True
                 break
         except Exception as e:
-            print(f"Error checking tenant {tenant.id}: {e}")
+            print(f"Error checking resident {resident.id}: {e}")
             continue
     
-    tenants_to_update = []
+    residents_to_update = []
     beds_to_update = []
     
-    for tenant in tenants:
+    for resident in residents:
         try:
-            if tenant.checkOut and tenant.checkOut.strip():
-                check_out_date = datetime.strptime(tenant.checkOut.strip(), '%Y-%m-%d').date()
+            if resident.checkOut and resident.checkOut.strip():
+                check_out_date = datetime.strptime(resident.checkOut.strip(), '%Y-%m-%d').date()
                 is_active = (check_out_date > today)
             else:
                 is_active = True
             
-            tenant.tenantStatus = 'Active' if is_active else 'Inactive'
-            tenants_to_update.append(tenant)
+            resident.residentStatus = 'Active' if is_active else 'Inactive'
+            residents_to_update.append(resident)
             
-            if tenant.bed_data_instance:
-                tenant.bed_data_instance.salesStatus = 'Completed' if has_active_tenants else 'Pending'
-                beds_to_update.append(tenant.bed_data_instance)
+            if resident.bed_data_instance:
+                resident.bed_data_instance.salesStatus = 'Completed' if has_active_residents else 'Pending'
+                beds_to_update.append(resident.bed_data_instance)
                 
         except Exception as e:
-            print(f"Error processing tenant {tenant.id}: {e}")
+            print(f"Error processing resident {resident.id}: {e}")
     
-    if tenants_to_update:
-        Tenant_Data.objects.bulk_update(tenants_to_update, ['tenantStatus'])
+    if residents_to_update:
+        resident_Data.objects.bulk_update(residents_to_update, ['residentStatus'])
     
     if beds_to_update:
         Bed_Data.objects.bulk_update(beds_to_update, ['salesStatus'])
@@ -417,7 +417,7 @@ def get_beds_data(request):
                             queryset=Bed_Data.objects.prefetch_related(
                                 Prefetch(
                                     'bed_data_instance',
-                                    queryset=Tenant_Data.objects.all()
+                                    queryset=resident_Data.objects.all()
                                 )
                             )
                         )
@@ -430,13 +430,13 @@ def get_beds_data(request):
             for property in properties:
                 for room in property.property.all():
                     for bed in room.room.all():
-                        tenants = list(bed.bed_data_instance.all())
+                        residents = list(bed.bed_data_instance.all())
                         
-                        if tenants:
-                            for tenant in tenants:
-                                tenant_rent_list = []
-                                for rent_data in tenant.tenant_data_instance.all():
-                                    tenant_rent_list.append({
+                        if residents:
+                            for resident in residents:
+                                resident_rent_list = []
+                                for rent_data in resident.resident_data_instance.all():
+                                    resident_rent_list.append({
                                         'id': rent_data.id,
                                         'month': rent_data.month,
                                         'rent': rent_data.rent,
@@ -463,7 +463,7 @@ def get_beds_data(request):
                                             except:
                                                 return datetime.min
                                 
-                                tenant_rent_list.sort(key=month_sort_key)
+                                resident_rent_list.sort(key=month_sort_key)
                                 
                                 data.append({
                                     'id': bed.id,
@@ -491,40 +491,40 @@ def get_beds_data(request):
                                     'wifiNo': bed.wifiNo,
                                     'bescomMeterNo': bed.bescomMeterNo,
                                     'salesStatus': bed.salesStatus,
-                                    'tenant_data': {
-                                        'id': tenant.id,
-                                        'bed_data_instance_id': tenant.bed_data_instance_id,
-                                        'propertyManager': tenant.propertyManager,
-                                        'salesManager': tenant.salesManager,
-                                        'comfortClass': tenant.comfortClass,
-                                        'mealType': tenant.mealType,
-                                        'residentsName': tenant.residentsName,
-                                        'phoneNumber': tenant.phoneNumber,
-                                        'email': tenant.email,
-                                        'permanentAddress': tenant.permanentAddress,
-                                        'kycType': tenant.kycType,
-                                        'aadharNumber': tenant.aadharNumber,
-                                        'aadharFrontCopy': tenant.aadharFrontCopy.url if tenant.aadharFrontCopy else '',
-                                        'aadharBackCopy': tenant.aadharBackCopy.url if tenant.aadharBackCopy else '',
-                                        'aadharStatus': tenant.aadharStatus,
-                                        'panNumber': tenant.panNumber,
-                                        'panFrontCopy': tenant.panFrontCopy.url if tenant.panFrontCopy else '',
-                                        'panBackCopy': tenant.panBackCopy.url if tenant.panBackCopy else '',
-                                        'panStatus': tenant.panStatus,
-                                        'checkIn': tenant.checkIn,
-                                        'checkOut': tenant.checkOut,
-                                        'totalDepositPaid': tenant.totalDepositPaid,
-                                        'rentPerMonth': tenant.rentPerMonth,
-                                        'tenantStatus': tenant.tenantStatus,
-                                        'moveInChecklistStatus': tenant.moveInChecklistStatus,
-                                        'moveInFeedbackStatus': tenant.moveInFeedbackStatus,
-                                        'moveOutChecklistStatus': tenant.moveOutChecklistStatus,
-                                        'moveOutFeedbackStatus': tenant.moveOutFeedbackStatus,
-                                        'residentDeductions': get_resident_deductions(tenant.residentsName, tenant.bed_data_instance.room.roomNo),
-                                        'payoutDate': datetime.strptime(tenant.checkOut, '%Y-%m-%d').date() + timedelta(days=45) if tenant.checkOut else '',
-                                        'submittedDateAndTime': tenant.submittedDateAndTime,
-                                        'updatedDateAndTime': tenant.updatedDateAndTime,
-                                        'rent_records': tenant_rent_list
+                                    'resident_data': {
+                                        'id': resident.id,
+                                        'bed_data_instance_id': resident.bed_data_instance_id,
+                                        'propertyManager': resident.propertyManager,
+                                        'salesManager': resident.salesManager,
+                                        'comfortClass': resident.comfortClass,
+                                        'mealType': resident.mealType,
+                                        'residentsName': resident.residentsName,
+                                        'phoneNumber': resident.phoneNumber,
+                                        'email': resident.email,
+                                        'permanentAddress': resident.permanentAddress,
+                                        'kycType': resident.kycType,
+                                        'aadharNumber': resident.aadharNumber,
+                                        'aadharFrontCopy': resident.aadharFrontCopy.url if resident.aadharFrontCopy else '',
+                                        'aadharBackCopy': resident.aadharBackCopy.url if resident.aadharBackCopy else '',
+                                        'aadharStatus': resident.aadharStatus,
+                                        'panNumber': resident.panNumber,
+                                        'panFrontCopy': resident.panFrontCopy.url if resident.panFrontCopy else '',
+                                        'panBackCopy': resident.panBackCopy.url if resident.panBackCopy else '',
+                                        'panStatus': resident.panStatus,
+                                        'checkIn': resident.checkIn,
+                                        'checkOut': resident.checkOut,
+                                        'totalDepositPaid': resident.totalDepositPaid,
+                                        'rentPerMonth': resident.rentPerMonth,
+                                        'residentStatus': resident.residentStatus,
+                                        'moveInChecklistStatus': resident.moveInChecklistStatus,
+                                        'moveInFeedbackStatus': resident.moveInFeedbackStatus,
+                                        'moveOutChecklistStatus': resident.moveOutChecklistStatus,
+                                        'moveOutFeedbackStatus': resident.moveOutFeedbackStatus,
+                                        'residentDeductions': get_resident_deductions(resident.residentsName, resident.bed_data_instance.room.roomNo),
+                                        'payoutDate': datetime.strptime(resident.checkOut, '%Y-%m-%d').date() + timedelta(days=45) if resident.checkOut else '',
+                                        'submittedDateAndTime': resident.submittedDateAndTime,
+                                        'updatedDateAndTime': resident.updatedDateAndTime,
+                                        'rent_records': resident_rent_list
                                     }
                                 })
                         else:
@@ -554,11 +554,11 @@ def get_beds_data(request):
                                 'wifiNo': bed.wifiNo,
                                 'bescomMeterNo': bed.bescomMeterNo,
                                 'salesStatus': bed.salesStatus,
-                                'tenant_data': {}
+                                'resident_data': {}
                             })
 
-            update_bed_status_for_checked_out_tenants()
-            sync_rent_records_for_active_tenants()
+            update_bed_status_for_checked_out_residents()
+            sync_rent_records_for_active_residents()
             update_delay_charges_for_received_rents()
 
             return JsonResponse({'success': True, 'beds_table': data})
@@ -568,7 +568,7 @@ def get_beds_data(request):
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
-def validate_tenant_dates(new_checkIn, new_checkOut, bed_instance, tenant_instance=None):
+def validate_resident_dates(new_checkIn, new_checkOut, bed_instance, resident_instance=None):
     def parse_date(date_str):
         if not date_str:
             return None
@@ -592,15 +592,15 @@ def validate_tenant_dates(new_checkIn, new_checkOut, bed_instance, tenant_instan
     if new_in and new_out and new_out < new_in:
         return False
     
-    existing_tenants = bed_instance.bed_data_instance.all()
-    if tenant_instance:
-        existing_tenants = existing_tenants.exclude(id=tenant_instance.id)
+    existing_residents = bed_instance.bed_data_instance.all()
+    if resident_instance:
+        existing_residents = existing_residents.exclude(id=resident_instance.id)
     
-    existing_tenants = existing_tenants.exclude(checkIn__isnull=True).exclude(checkIn='')
+    existing_residents = existing_residents.exclude(checkIn__isnull=True).exclude(checkIn='')
     
-    for tenant in existing_tenants:
-        exist_in = parse_date(tenant.checkIn)
-        exist_out = parse_date(tenant.checkOut)
+    for resident in existing_residents:
+        exist_in = parse_date(resident.checkIn)
+        exist_out = parse_date(resident.checkOut)
         
         if ranges_overlap(new_in, new_out, exist_in, exist_out):
             return False
@@ -626,19 +626,19 @@ def parse_and_validate_iso_date(date_str, field_label, required=False):
     return raw, parsed, None
 
 @csrf_exempt
-def tenant_form_submit(request):
+def resident_form_submit(request):
     if request.method == 'POST':
         try:
-            tenant_data = json.loads(request.body)
+            resident_data = json.loads(request.body)
 
-            bed_id = tenant_data.get('bedId')
+            bed_id = resident_data.get('bedId')
             if not bed_id:
                 return JsonResponse({'success': False, 'message': 'Bed selection is required.'})
 
             bed_data_instance = Bed_Data.objects.get(id=bed_id)
 
             check_in_value, check_in_date, check_in_error = parse_and_validate_iso_date(
-                tenant_data.get('checkIn'),
+                resident_data.get('checkIn'),
                 'Check-in date',
                 required=True,
             )
@@ -646,7 +646,7 @@ def tenant_form_submit(request):
                 return JsonResponse({'success': False, 'message': check_in_error})
 
             check_out_value, check_out_date, check_out_error = parse_and_validate_iso_date(
-                tenant_data.get('checkOut'),
+                resident_data.get('checkOut'),
                 'Check-out date',
                 required=False,
             )
@@ -656,51 +656,51 @@ def tenant_form_submit(request):
             if check_in_date and check_out_date and check_out_date < check_in_date:
                 return JsonResponse({'success': False, 'message': 'Check-out date cannot be before check-in date.'})
 
-            phone_raw = str(tenant_data.get('phoneNumber', '')).strip()
+            phone_raw = str(resident_data.get('phoneNumber', '')).strip()
             phone_digits = ''.join(ch for ch in phone_raw if ch.isdigit())
             if len(phone_digits) != 10:
                 return JsonResponse({'success': False, 'message': 'Phone number must be exactly 10 digits.'})
 
-            # A tenant portal user is keyed by phone number (username). Re-using the same
-            # phone across multiple tenants causes a one-to-one collision on tenantUser.
-            existing_phone_tenant = Tenant_Data.objects.filter(
+            # A resident portal user is keyed by phone number (username). Re-using the same
+            # phone across multiple residents causes a one-to-one collision on residentUser.
+            existing_phone_resident = resident_Data.objects.filter(
                 phoneNumber=phone_digits,
-                tenantUser__isnull=False,
+                residentUser__isnull=False,
             ).first()
-            if existing_phone_tenant:
+            if existing_phone_resident:
                 return JsonResponse({
                     'success': False,
                     'message': 'A resident with this phone number already exists. Please use a different phone number.',
                 })
 
-            total_deposit = str(tenant_data.get('totalDepositPaid', '')).strip() or '0'
+            total_deposit = str(resident_data.get('totalDepositPaid', '')).strip() or '0'
 
-            tenant_instance = Tenant_Data(
+            resident_instance = resident_Data(
                 bed_data_instance = bed_data_instance,
-                propertyManager = tenant_data.get('propertyManager', ''),
-                salesManager = tenant_data.get('salesManager', ''),
-                comfortClass = tenant_data.get('comfortClass', ''),
-                mealType = tenant_data.get('mealType', ''),
-                residentsName = tenant_data.get('residentsName', ''),
+                propertyManager = resident_data.get('propertyManager', ''),
+                salesManager = resident_data.get('salesManager', ''),
+                comfortClass = resident_data.get('comfortClass', ''),
+                mealType = resident_data.get('mealType', ''),
+                residentsName = resident_data.get('residentsName', ''),
                 phoneNumber = phone_digits,
-                email = tenant_data.get('email', ''),
-                permanentAddress = tenant_data.get('permanentAddress', ''),
-                kycType = tenant_data.get('kycType', ''),
-                aadharNumber = tenant_data.get('aadharNumber', ''),
-                aadharFrontCopy = tenant_data.get('aadharFrontCopy', ''),
-                aadharBackCopy = tenant_data.get('aadharBackCopy', ''),
-                aadharStatus = tenant_data.get('aadharStatus', ''),
-                panNumber = tenant_data.get('panNumber', ''),
-                panFrontCopy = tenant_data.get('panFrontCopy', ''),
-                panBackCopy = tenant_data.get('panBackCopy', ''),
-                panStatus = tenant_data.get('panStatus', ''),
+                email = resident_data.get('email', ''),
+                permanentAddress = resident_data.get('permanentAddress', ''),
+                kycType = resident_data.get('kycType', ''),
+                aadharNumber = resident_data.get('aadharNumber', ''),
+                aadharFrontCopy = resident_data.get('aadharFrontCopy', ''),
+                aadharBackCopy = resident_data.get('aadharBackCopy', ''),
+                aadharStatus = resident_data.get('aadharStatus', ''),
+                panNumber = resident_data.get('panNumber', ''),
+                panFrontCopy = resident_data.get('panFrontCopy', ''),
+                panBackCopy = resident_data.get('panBackCopy', ''),
+                panStatus = resident_data.get('panStatus', ''),
                 checkIn = check_in_value,
                 checkOut = check_out_value,
                 totalDepositPaid = total_deposit,
-                rentPerMonth = tenant_data.get('rentPerMonth', ''),
+                rentPerMonth = resident_data.get('rentPerMonth', ''),
             )
 
-            if validate_tenant_dates(check_in_value, check_out_value, bed_data_instance) == False:
+            if validate_resident_dates(check_in_value, check_out_value, bed_data_instance) == False:
                 return JsonResponse({'success': False, 'message': 'Check-In or Check-Out dates are within existing Check-Ins and Check-Outs!'})
 
             with transaction.atomic():
@@ -708,28 +708,28 @@ def tenant_form_submit(request):
                 if check_out_date:
                     if check_out_date <= today:
                         bed_data_instance.salesStatus = 'Pending'
-                        tenant_instance.tenantStatus = 'Inactive'
+                        resident_instance.residentStatus = 'Inactive'
                     else:
                         bed_data_instance.salesStatus = 'Completed'
-                        tenant_instance.tenantStatus = 'Active'
-                        calculate_rent_with_delay_charges_new_tenant(check_in_value, tenant_instance)
+                        resident_instance.residentStatus = 'Active'
+                        calculate_rent_with_delay_charges_new_resident(check_in_value, resident_instance)
                 else:
                     bed_data_instance.salesStatus = 'Completed'
-                    tenant_instance.tenantStatus = 'Active'
-                    calculate_rent_with_delay_charges_new_tenant(check_in_value, tenant_instance)
+                    resident_instance.residentStatus = 'Active'
+                    calculate_rent_with_delay_charges_new_resident(check_in_value, resident_instance)
 
-                tenant_instance.save()
+                resident_instance.save()
                 bed_data_instance.save()
 
-                # Create Django auth user for tenant portal access
-                from stayease_tenant.utils import create_tenant_user
-                user, plain_password = create_tenant_user(tenant_instance)
+                # Create Django auth user for resident portal access
+                from stayease_resident.utils import create_resident_user
+                user, plain_password = create_resident_user(resident_instance)
 
             return JsonResponse({
                 'success': True,
-                'message': 'Tenant data submitted successfully!',
-                'tenantCredentials': {
-                    'username': tenant_instance.phoneNumber,
+                'message': 'resident data submitted successfully!',
+                'residentCredentials': {
+                    'username': resident_instance.phoneNumber,
                     'password': plain_password,
                 },
             })
@@ -742,13 +742,13 @@ def tenant_form_submit(request):
 
 @api_view(["PUT"])
 @csrf_exempt
-def tenant_data_update(request, id):
+def resident_data_update(request, id):
     if request.method == 'PUT':
         try:
             submitted_data = request.POST
             uploaded_files = request.FILES
 
-            tenant_instance = Tenant_Data.objects.get(pk=id)
+            resident_instance = resident_Data.objects.get(pk=id)
 
             updated_fields = []
 
@@ -756,8 +756,8 @@ def tenant_data_update(request, id):
                 if field == 'csrfmiddlewaretoken':
                     continue
                     
-                if hasattr(tenant_instance, field):
-                    current_value = getattr(tenant_instance, field)
+                if hasattr(resident_instance, field):
+                    current_value = getattr(resident_instance, field)
                     
                     if current_value is None:
                         current_value_str = ''
@@ -765,11 +765,11 @@ def tenant_data_update(request, id):
                         current_value_str = str(current_value)
                         
                     if str(new_value) != current_value_str:
-                        setattr(tenant_instance, field, new_value)
+                        setattr(resident_instance, field, new_value)
                         updated_fields.append(field)
 
             check_in_value, check_in_date, check_in_error = parse_and_validate_iso_date(
-                tenant_instance.checkIn,
+                resident_instance.checkIn,
                 'Check-in date',
                 required=False,
             )
@@ -777,7 +777,7 @@ def tenant_data_update(request, id):
                 return JsonResponse({'success': False, 'message': check_in_error})
 
             check_out_value, check_out_date, check_out_error = parse_and_validate_iso_date(
-                tenant_instance.checkOut,
+                resident_instance.checkOut,
                 'Check-out date',
                 required=False,
             )
@@ -787,13 +787,13 @@ def tenant_data_update(request, id):
             if check_in_date and check_out_date and check_out_date < check_in_date:
                 return JsonResponse({'success': False, 'message': 'Check-out date cannot be before check-in date.'})
 
-            tenant_instance.checkIn = check_in_value
-            tenant_instance.checkOut = check_out_value
+            resident_instance.checkIn = check_in_value
+            resident_instance.checkOut = check_out_value
 
             if uploaded_files:
                 for field, new_file in uploaded_files.items():
-                    if hasattr(tenant_instance, field):
-                        existing_file = getattr(tenant_instance, field)
+                    if hasattr(resident_instance, field):
+                        existing_file = getattr(resident_instance, field)
                         
                         if existing_file:
                             try:
@@ -802,37 +802,37 @@ def tenant_data_update(request, id):
                             except Exception as e:
                                 raise ValidationError(f"Error deleting old file {field}: {str(e)}")
                         
-                        setattr(tenant_instance, field, new_file)
+                        setattr(resident_instance, field, new_file)
                         updated_fields.append(field)
 
             bed_data_instance = Bed_Data.objects.get(id = submitted_data.get('bedId'))
 
-            if validate_tenant_dates(tenant_instance.checkIn, tenant_instance.checkOut, bed_data_instance, tenant_instance) == False:
+            if validate_resident_dates(resident_instance.checkIn, resident_instance.checkOut, bed_data_instance, resident_instance) == False:
                 return JsonResponse({'success': False, 'message': 'Check-In or Check-Out dates are within existing Check-Ins and Check-Outs!'})
 
             today = date.today()
             if 'checkOut' in updated_fields:
-                if tenant_instance.checkOut:
+                if resident_instance.checkOut:
                     if check_out_date <= today:
                         bed_data_instance.salesStatus = 'Pending'
-                        tenant_instance.tenantStatus = 'Inactive'
+                        resident_instance.residentStatus = 'Inactive'
                     else:
                         bed_data_instance.salesStatus = 'Completed'
-                        tenant_instance.tenantStatus = 'Active'
+                        resident_instance.residentStatus = 'Active'
                     bed_data_instance.save()
                 else:
                     bed_data_instance.salesStatus = 'Completed'
-                    tenant_instance.tenantStatus = 'Active'
+                    resident_instance.residentStatus = 'Active'
                     bed_data_instance.save()
 
-            tenant_instance.save()
+            resident_instance.save()
 
-            if tenant_instance.tenantStatus == 'Active' and tenant_instance.checkIn:
-                calculate_rent_with_delay_charges_update(tenant_instance.checkIn, tenant_instance)
-            elif tenant_instance.tenantStatus == 'Active' and not tenant_instance.checkIn:
+            if resident_instance.residentStatus == 'Active' and resident_instance.checkIn:
+                calculate_rent_with_delay_charges_update(resident_instance.checkIn, resident_instance)
+            elif resident_instance.residentStatus == 'Active' and not resident_instance.checkIn:
                 pass
 
-            return JsonResponse({'success': True, 'message': 'Tenant data updated successfully!'})
+            return JsonResponse({'success': True, 'message': 'resident data updated successfully!'})
         except Exception as e:
             print (e)
             return JsonResponse({'success': False, 'message': 'Error updating data. Please try again later!'})
@@ -851,7 +851,7 @@ def rent_data_update(request, id):
                 'transferredDate': 'transferredDate',
             }
 
-            instance = Tenant_Rent_Data.objects.get(pk=id)
+            instance = resident_Rent_Data.objects.get(pk=id)
             tracking_model = instance
             
             updates = {}

@@ -2,463 +2,193 @@ import React from 'react';
 import { Link } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 
-function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, ownerHandleChange }) {
+function getFileName(fileValue) {
+    if (!fileValue) return 'No file uploaded';
+    if (typeof fileValue === 'object' && fileValue.name) return fileValue.name;
+    if (typeof fileValue === 'string' && fileValue.length > 0) {
+        const parts = fileValue.split('/');
+        return parts[parts.length - 1] || 'View file';
+    }
+    return 'No file uploaded';
+}
+
+function getFileUrl(fileValue) {
+    if (!fileValue) return '#';
+    if (typeof fileValue === 'string') return fileValue;
+    if (typeof fileValue === 'object') return URL.createObjectURL(fileValue);
+    return '#';
+}
+
+function DetailRow({ label, value, editMode, children }) {
     return (
-        <div className='mt-3'>
-            <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Owner KYC</h3>
+        <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 py-3 border-b border-gray-100 last:border-b-0">
+            <dt className="text-sm font-medium text-[#D4A017] sm:w-40 sm:min-w-[10rem] sm:flex-shrink-0">{label}</dt>
+            <dd className="text-sm text-slate-700 sm:flex-1 min-w-0">
+                {editMode ? children : value}
+            </dd>
+        </div>
+    );
+}
 
-            <div className="w-full overflow-x-auto">
-                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded text-xs sm:text-sm-lg max-sm:text-xs">
-                    <tbody className='text-xs sm:text-sm'>
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar Number</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.aadharNumber}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="aadharNumber"
-                                            value={ownerDetails.aadharNumber}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="aadharNumber"
-                                            placeholder="Enter the Aadhar Number here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+function FileRow({ label, fileValue, fieldName, editMode, onChange, onTrigger }) {
+    return (
+        <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 py-3 border-b border-gray-100 last:border-b-0">
+            <dt className="text-sm font-medium text-[#D4A017] sm:w-40 sm:min-w-[10rem] sm:flex-shrink-0">{label}</dt>
+            <dd className="text-sm text-slate-700 sm:flex-1 min-w-0">
+                {!editMode ? (
+                    fileValue ? (
+                        <Link to={getFileUrl(fileValue)} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-[#D4A017] hover:underline">
+                            {getFileName(fileValue)}
+                        </Link>
+                    ) : (
+                        <span className="text-gray-400">No file uploaded</span>
+                    )
+                ) : (
+                    <>
+                        <input type="file" id={fieldName} name={fieldName} accept="image/*, .pdf"
+                            onChange={onChange} className="hidden" />
+                        <button type="button" onClick={() => onTrigger(fieldName)}
+                            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded text-sm bg-white hover:bg-gray-50">
+                            <FaUpload className="text-[#D4A017]" />
+                            <span className="truncate max-w-xs">{getFileName(fileValue)}</span>
+                        </button>
+                    </>
+                )}
+            </dd>
+        </div>
+    );
+}
 
-                        <tr className="border-b border-white">
-                            <th rowSpan="2" className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Upload Aadhar</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">
-                                        <Link to={
-                                            typeof ownerDetails.aadharFrontCopy === 'string'
-                                                ? ownerDetails.aadharFrontCopy
-                                                : ownerDetails.aadharFrontCopy
-                                                    ? URL.createObjectURL(ownerDetails.aadharFrontCopy)
-                                                    : '#'
-                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                            {ownerDetails.aadharFrontCopy?.name || ownerDetails?.aadharFrontCopy.split('/')[8]}
-                                        </Link>
-                                    </span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="file"
-                                            id="aadharFrontCopy"
-                                            name="aadharFrontCopy"
-                                            accept="image/*, .pdf"
-                                            onChange={ownerHandleChange}
-                                            className="hidden"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerFileInput('aadharFrontCopy')}
-                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                        >
-                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{ownerDetails.aadharFrontCopy?.name || ownerDetails.aadharFrontCopy.split('/')[8]}</span>
-                                        </button>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-                        <tr className='border-b border-white'>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">
-                                        <Link to={
-                                            typeof ownerDetails.aadharBackCopy === 'string'
-                                                ? ownerDetails.aadharBackCopy
-                                                : ownerDetails.aadharBackCopy
-                                                    ? URL.createObjectURL(ownerDetails.aadharBackCopy)
-                                                    : '#'
-                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                            {ownerDetails.aadharBackCopy?.name || ownerDetails?.aadharBackCopy.split('/')[8]}
-                                        </Link>
-                                    </span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="file"
-                                            id="aadharBackCopy"
-                                            name="aadharBackCopy"
-                                            accept="image/*, .pdf"
-                                            onChange={ownerHandleChange}
-                                            className="hidden"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerFileInput('aadharBackCopy')}
-                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                        >
-                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{ownerDetails.aadharBackCopy?.name || ownerDetails.aadharBackCopy.split('/')[8]}</span>
-                                        </button>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, ownerHandleChange }) {
+    const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
+    const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar Verification</th>
+    return (
+        <div className="space-y-6">
+            {/* Aadhaar KYC */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Aadhaar Details</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="Aadhaar Number *" value={
+                        ownerDetails.aadharNumber
+                            ? <span className="tracking-wider">{ownerDetails.aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ').trim()}</span>
+                            : '—'
+                    } editMode={dataEditView}>
+                        <input type="text" name="aadharNumber"
+                            value={ownerDetails.aadharNumber ? ownerDetails.aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ').trim() : ''}
+                            onChange={ownerHandleChange} className={`${inputClass} tracking-wider`}
+                            placeholder="XXXX XXXX XXXX" maxLength={14} inputMode="numeric" required />
+                    </DetailRow>
 
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.aadharVerification}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="aadharVerification"
-                                            value={ownerDetails.aadharVerification}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="aadharVerification"
-                                            required>
-                                            <option value="" disabled>Select the Verification Status here</option>
-                                            <option value="Verified">Verified</option>
-                                            <option value="Not Verified">Not Verified</option>
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <FileRow label="Aadhaar Front" fileValue={ownerDetails.aadharFrontCopy} fieldName="aadharFrontCopy"
+                        editMode={dataEditView} onChange={ownerHandleChange} onTrigger={triggerFileInput} />
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN Number</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.panNumber}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="panNumber"
-                                            value={ownerDetails.panNumber}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="panNumber"
-                                            placeholder="Enter the Aadhar Number here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <FileRow label="Aadhaar Back" fileValue={ownerDetails.aadharBackCopy} fieldName="aadharBackCopy"
+                        editMode={dataEditView} onChange={ownerHandleChange} onTrigger={triggerFileInput} />
 
-                        <tr className="border-b border-white">
-                            <th rowSpan="2" className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Upload PAN</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">
-                                        <Link to={
-                                            typeof ownerDetails.panFrontCopy === 'string'
-                                                ? ownerDetails.panFrontCopy
-                                                : ownerDetails.panFrontCopy
-                                                    ? URL.createObjectURL(ownerDetails.panFrontCopy)
-                                                    : '#'
-                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                            {ownerDetails.panFrontCopy?.name || ownerDetails?.panFrontCopy.split('/')[8]}
-                                        </Link>
-                                    </span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="file"
-                                            id="panFrontCopy"
-                                            name="panFrontCopy"
-                                            accept="image/*, .pdf"
-                                            onChange={ownerHandleChange}
-                                            className="hidden"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerFileInput('panFrontCopy')}
-                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                        >
-                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{ownerDetails.panFrontCopy?.name || ownerDetails.panFrontCopy.split('/')[8]}</span>
-                                        </button>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className='border-b border-white'>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">
-                                        <Link to={
-                                            typeof ownerDetails.panBackCopy === 'string'
-                                                ? ownerDetails.panBackCopy
-                                                : ownerDetails.panBackCopy
-                                                    ? URL.createObjectURL(ownerDetails.panBackCopy)
-                                                    : '#'
-                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                            {ownerDetails.panBackCopy?.name || ownerDetails?.panBackCopy.split('/')[8]}
-                                        </Link>
-                                    </span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="file"
-                                            id="panBackCopy"
-                                            name="panBackCopy"
-                                            accept="image/*, .pdf"
-                                            onChange={ownerHandleChange}
-                                            className="hidden"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerFileInput('panBackCopy')}
-                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                        >
-                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{ownerDetails.panBackCopy?.name || ownerDetails.panBackCopy.split('/')[8]}</span>
-                                        </button>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN Verification</th>
-
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.panVerification}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="panVerification"
-                                            value={ownerDetails.panVerification}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="panVerification"
-                                            required>
-                                            <option value="" disabled>Select the Verification Status here</option>
-                                            <option value="Verified">Verified</option>
-                                            <option value="Not Verified">Not Verified</option>
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <DetailRow label="Verification" value={ownerDetails.aadharVerification || '—'} editMode={dataEditView}>
+                        <select name="aadharVerification" value={ownerDetails.aadharVerification}
+                            onChange={ownerHandleChange} className={selectClass}>
+                            <option value="" disabled>Select status</option>
+                            <option value="Verified">Verified</option>
+                            <option value="Not Verified">Not Verified</option>
+                        </select>
+                    </DetailRow>
+                </dl>
             </div>
 
-            <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">Bank Details</h3>
+            {/* PAN KYC */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">PAN Details</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="PAN Number *" value={ownerDetails.panNumber || '—'} editMode={dataEditView}>
+                        <input type="text" name="panNumber" value={ownerDetails.panNumber}
+                            onChange={ownerHandleChange} className={inputClass}
+                            placeholder="ABCDE1234F" required />
+                    </DetailRow>
 
-            <div className="w-full overflow-x-auto">
-                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded text-xs sm:text-sm-lg max-sm:text-xs">
-                    <tbody className='text-xs sm:text-sm'>
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Account Holder's Name</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.accountHolderName}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="accountHolderName"
-                                            value={ownerDetails.accountHolderName}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="accountHolderName"
-                                            placeholder="Enter the Account Holder's Name here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <FileRow label="PAN Front" fileValue={ownerDetails.panFrontCopy} fieldName="panFrontCopy"
+                        editMode={dataEditView} onChange={ownerHandleChange} onTrigger={triggerFileInput} />
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Account Number</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.accountNumber}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="accountNumber"
-                                            value={ownerDetails.accountNumber}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="accountNumber"
-                                            placeholder="Enter the Account Number here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <FileRow label="PAN Back" fileValue={ownerDetails.panBackCopy} fieldName="panBackCopy"
+                        editMode={dataEditView} onChange={ownerHandleChange} onTrigger={triggerFileInput} />
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Bank Name</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.bankName}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="bankName"
-                                            value={ownerDetails.bankName}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="bankName"
-                                            placeholder="Enter the Bank Name here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Bank Branch</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.bankBranch}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="bankBranch"
-                                            value={ownerDetails.bankBranch}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="bankBranch"
-                                            placeholder="Enter the Bank Branch here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">IFSC Code</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.ifscCode}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="ifscCode"
-                                            value={ownerDetails.ifscCode}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="ifscCode"
-                                            placeholder="Enter the IFSC Code here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Account Status</th>
-
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.accountStatus}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="accountStatus"
-                                            value={ownerDetails.accountStatus}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="accountStatus"
-                                            required>
-                                            <option value="" disabled>Select the Account Status here</option>
-                                            <option value="Active">Active</option>
-                                            <option value="Inactive">Inactive</option>
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Payment Type</th>
-
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{ownerDetails.paymentType}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="paymentType"
-                                            value={ownerDetails.paymentType}
-                                            onChange={ownerHandleChange}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="paymentType"
-                                            required>
-                                            <option value="" disabled>Select the Payment Type here</option>
-                                            <option value="Auto">Auto</option>
-                                            <option value="Manual">Manual</option>
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Cheque Copy</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">
-                                        <Link to={
-                                            typeof ownerDetails.chequeCopy === 'string'
-                                                ? ownerDetails.chequeCopy
-                                                : ownerDetails.chequeCopy
-                                                    ? URL.createObjectURL(ownerDetails.chequeCopy)
-                                                    : '#'
-                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                            {ownerDetails.chequeCopy?.name || ownerDetails?.chequeCopy.split('/')[8]}
-                                        </Link>
-                                    </span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="file"
-                                            id="chequeCopy"
-                                            name="chequeCopy"
-                                            accept="image/*, .pdf"
-                                            onChange={ownerHandleChange}
-                                            className="hidden"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerFileInput('chequeCopy')}
-                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                        >
-                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{ownerDetails.chequeCopy?.name || ownerDetails.chequeCopy.split('/')[8]}</span>
-                                        </button>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <DetailRow label="Verification" value={ownerDetails.panVerification || '—'} editMode={dataEditView}>
+                        <select name="panVerification" value={ownerDetails.panVerification}
+                            onChange={ownerHandleChange} className={selectClass}>
+                            <option value="" disabled>Select status</option>
+                            <option value="Verified">Verified</option>
+                            <option value="Not Verified">Not Verified</option>
+                        </select>
+                    </DetailRow>
+                </dl>
             </div>
 
-            <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">Property Details</h3>
+            {/* Bank Details */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Bank Details</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="Account Holder *" value={ownerDetails.accountHolderName || '—'} editMode={dataEditView}>
+                        <input type="text" name="accountHolderName" value={ownerDetails.accountHolderName}
+                            onChange={ownerHandleChange} className={inputClass}
+                            placeholder="Enter account holder name" required />
+                    </DetailRow>
 
-            <div className="w-full overflow-x-auto">
-                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded text-xs sm:text-sm-lg max-sm:text-xs">
-                    <tbody className='text-xs sm:text-sm'>
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">No of Properties</th>
-                            <td className="flex">
-                                <span className="py-1 px-2 w-full">{ownerData?.noOfProperties}</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                    <DetailRow label="Account Number *" value={ownerDetails.accountNumber || '—'} editMode={dataEditView}>
+                        <input type="text" name="accountNumber" value={ownerDetails.accountNumber}
+                            onChange={ownerHandleChange} className={inputClass}
+                            placeholder="Enter account number" required />
+                    </DetailRow>
+
+                    <DetailRow label="Bank Name *" value={ownerDetails.bankName || '—'} editMode={dataEditView}>
+                        <input type="text" name="bankName" value={ownerDetails.bankName}
+                            onChange={ownerHandleChange} className={inputClass}
+                            placeholder="Enter bank name" required />
+                    </DetailRow>
+
+                    <DetailRow label="Branch *" value={ownerDetails.bankBranch || '—'} editMode={dataEditView}>
+                        <input type="text" name="bankBranch" value={ownerDetails.bankBranch}
+                            onChange={ownerHandleChange} className={inputClass}
+                            placeholder="Enter bank branch" required />
+                    </DetailRow>
+
+                    <DetailRow label="IFSC Code *" value={ownerDetails.ifscCode || '—'} editMode={dataEditView}>
+                        <input type="text" name="ifscCode" value={ownerDetails.ifscCode}
+                            onChange={ownerHandleChange} className={inputClass}
+                            placeholder="ABCD0XXXXXX" required />
+                    </DetailRow>
+
+                    <DetailRow label="Account Status" value={ownerDetails.accountStatus || '—'} editMode={dataEditView}>
+                        <select name="accountStatus" value={ownerDetails.accountStatus}
+                            onChange={ownerHandleChange} className={selectClass}>
+                            <option value="" disabled>Select status</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </DetailRow>
+
+                    <DetailRow label="Payment Type" value={ownerDetails.paymentType || '—'} editMode={dataEditView}>
+                        <select name="paymentType" value={ownerDetails.paymentType}
+                            onChange={ownerHandleChange} className={selectClass}>
+                            <option value="" disabled>Select type</option>
+                            <option value="Auto">Auto</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </DetailRow>
+
+                    <FileRow label="Cheque Copy" fileValue={ownerDetails.chequeCopy} fieldName="chequeCopy"
+                        editMode={dataEditView} onChange={ownerHandleChange} onTrigger={triggerFileInput} />
+                </dl>
+            </div>
+
+            {/* Property Count */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Property Summary</h3>
+                <div className="bg-white rounded-lg p-4 border border-gray-200 text-center inline-block min-w-[8rem]">
+                    <p className="text-2xl font-bold text-[#D4A017]">{ownerData?.noOfProperties || 0}</p>
+                    <p className="text-xs text-stone-400 mt-1">Properties</p>
+                </div>
             </div>
         </div>
     )

@@ -116,7 +116,7 @@ function Blog1() {
                 {/* Section 1 */}
                 <BlogSection title="1. Affordability and Cost-Effectiveness" isNumbered>
                     <p className='leading-relaxed'>
-                        One of the primary benefits of coliving is its affordability. For millennials who are just starting out in their careers, high rents in metropolitan cities can be overwhelming. Coliving spaces in Bangalore offer a budget-friendly solution. By sharing common areas such as kitchens, living rooms, and utilities, tenants save a significant amount on monthly expenses. This makes coliving the best choice for those looking to cut costs without compromising on comfort or location.
+                        One of the primary benefits of coliving is its affordability. For millennials who are just starting out in their careers, high rents in metropolitan cities can be overwhelming. Coliving spaces in Bangalore offer a budget-friendly solution. By sharing common areas such as kitchens, living rooms, and utilities, residents save a significant amount on monthly expenses. This makes coliving the best choice for those looking to cut costs without compromising on comfort or location.
                     </p>
                 </BlogSection>
 

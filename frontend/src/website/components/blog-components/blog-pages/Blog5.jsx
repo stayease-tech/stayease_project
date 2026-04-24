@@ -130,7 +130,7 @@ function Blog5() {
                 {/* Section 1 */}
                 <BlogSection title="Safety First: A Secure Living Environment">
                     Coliving spaces' emphasis on security is one of their main benefits. To make sure
-                    tenants feel safe, the majority of coliving facilities provide 24-hour security, CCTV
+                    residents feel safe, the majority of coliving facilities provide 24-hour security, CCTV
                     monitoring, biometric access, and on-site personnel. Coliving spaces offer a
                     controlled security framework, which makes them a favored option for women who
                     wish to live independently without sacrificing their wellbeing, in contrast to traditional

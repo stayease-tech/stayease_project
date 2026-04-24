@@ -9,7 +9,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
     const location = useLocation();
     const bedData = location?.state?.bedData || {};
-    const tenantData = location?.state?.tenantData || {};
+    const residentData = location?.state?.residentData || {};
     const type = location?.state?.type;
     const pdfRef = useRef(null);
 
@@ -30,7 +30,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
         const options = {
             margin: 0,
-            filename: `${(bedData && bedData.tenant_data ? bedData?.tenant_data?.residentsName : tenantData?.residentsName).replace(/\s+/g, '')}_Contract.pdf`,
+            filename: `${(bedData && bedData.resident_data ? bedData?.resident_data?.residentsName : residentData?.residentsName).replace(/\s+/g, '')}_Contract.pdf`,
             image: { type: 'jpeg', quality: 1 },
             html2canvas: {
                 scale: 2,
@@ -94,30 +94,30 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             <tbody className='text-center'>
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2 w-[50%]"><b>Community Manager</b></td>
-                                                    <td className="py-1 px-2"><b>{bedData && bedData.tenant_data ? bedData?.tenant_data?.propertyManager : tenantData?.propertyManager}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedData && bedData.resident_data ? bedData?.resident_data?.propertyManager : residentData?.propertyManager}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Room No.</b></td>
-                                                    <td className="py-1 px-2"><b>{bedData && bedData.tenant_data ? bedData?.roomNo : tenantData?.roomNo}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedData && bedData.resident_data ? bedData?.roomNo : residentData?.roomNo}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2">
                                                         <b>Type of Accommodation for use as residence</b></td>
-                                                    <td className="py-1 px-2"><b>{`${bedData && bedData.tenant_data ? bedData?.bedRoomType : tenantData?.bedRoomType} Room`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`${bedData && bedData.resident_data ? bedData?.bedRoomType : residentData?.bedRoomType} Room`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Monthly User Fee</b></td>
-                                                    <td className="py-1 px-2"><b>{`₹${bedData && bedData.tenant_data ? bedData?.tenant_data?.rentPerMonth : tenantData?.rentPerMonth}`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`₹${bedData && bedData.resident_data ? bedData?.resident_data?.rentPerMonth : residentData?.rentPerMonth}`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Duration of Stay (“Term”)</b></td>
                                                     <td className="py-1 px-2"><b>{(() => {
-                                                        const checkIn = bedData?.tenant_data?.checkIn || tenantData?.checkIn;
-                                                        const checkOut = bedData?.tenant_data?.checkOut || tenantData?.checkOut;
+                                                        const checkIn = bedData?.resident_data?.checkIn || residentData?.checkIn;
+                                                        const checkOut = bedData?.resident_data?.checkOut || residentData?.checkOut;
 
                                                         return checkIn && checkOut ? `${getMonthsBetweenDates(checkIn, checkOut)} Months` : '-';
                                                     })()}</b></td>
@@ -125,8 +125,8 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Agreement Start Date</b></td>
-                                                    <td className="py-1 px-2"><b>{(bedData?.tenant_data?.checkIn || tenantData?.checkIn)
-                                                        ? new Date(bedData?.tenant_data?.checkIn || tenantData?.checkIn)
+                                                    <td className="py-1 px-2"><b>{(bedData?.resident_data?.checkIn || residentData?.checkIn)
+                                                        ? new Date(bedData?.resident_data?.checkIn || residentData?.checkIn)
                                                             .toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
                                                             .replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3')
                                                         : '-'}</b></td>
@@ -134,8 +134,8 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Agreement End Date</b></td>
-                                                    <td className="py-1 px-2"><b>{(bedData?.tenant_data?.checkOut || tenantData?.checkOut)
-                                                        ? new Date(bedData?.tenant_data?.checkOut || tenantData?.checkOut)
+                                                    <td className="py-1 px-2"><b>{(bedData?.resident_data?.checkOut || residentData?.checkOut)
+                                                        ? new Date(bedData?.resident_data?.checkOut || residentData?.checkOut)
                                                             .toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })
                                                             .replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3')
                                                         : '-'}</b></td>
@@ -148,7 +148,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Security Deposit</b></td>
-                                                    <td className="py-1 px-2"><b>{`₹${bedData && bedData.tenant_data ? bedData?.tenant_data?.totalDepositPaid : tenantData?.totalDepositPaid}`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`₹${bedData && bedData.resident_data ? bedData?.resident_data?.totalDepositPaid : residentData?.totalDepositPaid}`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
@@ -158,7 +158,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Stayease Property (“Premise”) name and address</b></td>
-                                                    {bedData && bedData.tenant_data ? <td className="py-1 px-2"><b>{`${bedData?.propertyName}`}</b> - {`${bedData?.doorBuilding}, ${bedData?.streetAddress}, ${bedData?.streetAddress}, ${bedData?.area}, ${bedData?.city}, ${bedData?.state} - ${bedData?.pincode}`}</td> : <td className="py-1 px-2"><b>{`${tenantData?.propertyName}`}</b> - {`${tenantData?.doorBuilding}, ${tenantData?.streetAddress}, ${tenantData?.streetAddress}, ${tenantData?.area}, ${tenantData?.city}, ${tenantData?.state} - ${tenantData?.pincode}`}</td>}
+                                                    {bedData && bedData.resident_data ? <td className="py-1 px-2"><b>{`${bedData?.propertyName}`}</b> - {`${bedData?.doorBuilding}, ${bedData?.streetAddress}, ${bedData?.streetAddress}, ${bedData?.area}, ${bedData?.city}, ${bedData?.state} - ${bedData?.pincode}`}</td> : <td className="py-1 px-2"><b>{`${residentData?.propertyName}`}</b> - {`${residentData?.doorBuilding}, ${residentData?.streetAddress}, ${residentData?.streetAddress}, ${residentData?.area}, ${residentData?.city}, ${residentData?.state} - ${residentData?.pincode}`}</td>}
 
                                                 </tr>
                                             </tbody>
@@ -172,32 +172,32 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             <tbody className='text-center'>
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2 w-[50%]"><b>Name of User</b></td>
-                                                    <td className="py-1 px-2"><b>{bedData && bedData.tenant_data ? bedData?.tenant_data?.residentsName : tenantData?.residentsName}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedData && bedData.resident_data ? bedData?.resident_data?.residentsName : residentData?.residentsName}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Permanent Address</b></td>
-                                                    <td className="py-1 px-2"><b>{bedData && bedData.tenant_data ? bedData?.tenant_data?.permanentAddress : tenantData?.permanentAddress}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedData && bedData.resident_data ? bedData?.resident_data?.permanentAddress : residentData?.permanentAddress}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Phone Number (To be used for communication and notices)</b></td>
-                                                    <td className="py-1 px-2"><b>{bedData && bedData.tenant_data ? bedData?.tenant_data?.phoneNumber : tenantData?.phoneNumber}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedData && bedData.resident_data ? bedData?.resident_data?.phoneNumber : residentData?.phoneNumber}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Email (To be used for communication and notices)</b></td>
-                                                    <td className="py-1 px-2"><b>{bedData && bedData.tenant_data ? bedData?.tenant_data?.email : tenantData?.email}</b></td>
+                                                    <td className="py-1 px-2"><b>{bedData && bedData.resident_data ? bedData?.resident_data?.email : residentData?.email}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Resident Identity Type</b></td>
-                                                    <td className="py-1 px-2"><b>{`${bedData && bedData.tenant_data ? bedData?.tenant_data?.kycType : tenantData?.kycType} Card`}</b></td>
+                                                    <td className="py-1 px-2"><b>{`${bedData && bedData.resident_data ? bedData?.resident_data?.kycType : residentData?.kycType} Card`}</b></td>
                                                 </tr>
 
                                                 <tr className="border-b border-black">
                                                     <td className="border-r border-black py-1 px-2"><b>Resident Identity Number</b></td>
-                                                    <td className="py-1 px-2"><b>{(bedData && bedData.tenant_data ? bedData?.tenant_data?.kycType === 'Aadhar' : tenantData?.kycType === 'Aadhar') ? (bedData && bedData.tenant_data ? bedData?.tenant_data?.aadharNumber : tenantData?.aadharNumber) : (bedData && bedData.tenant_data ? bedData?.tenant_data?.panNumber : tenantData?.panNumber)}</b></td>
+                                                    <td className="py-1 px-2"><b>{(bedData && bedData.resident_data ? bedData?.resident_data?.kycType === 'Aadhar' : residentData?.kycType === 'Aadhar') ? (bedData && bedData.resident_data ? bedData?.resident_data?.aadharNumber : residentData?.aadharNumber) : (bedData && bedData.resident_data ? bedData?.resident_data?.panNumber : residentData?.panNumber)}</b></td>
                                                 </tr>
                                             </tbody>
                                         </table>
@@ -455,7 +455,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                     </p>
 
                                     <p className="pb-5">
-                                        15.In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all tenants. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all tenants residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
+                                        15.In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all residents. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all residents residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
                                     </p>
 
                                     <p className="pb-5">
@@ -822,7 +822,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             </li>
 
                                             <li className="ps-[15px] pb-5">
-                                                In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all tenants. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all tenants residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
+                                                In the event of a water scarcity situation arising from the depletion of borewells or the unavailability of water sources, resulting in the necessity of relying on water tankers for water supply, the associated charges shall be distributed equitably among all residents. It is hereby agreed that 50% of the charges shall be borne by the service provider, while the remaining 50% shall be shared equally among all residents residing within the premises. This allocation of charges aims to ensure fairness and mutual responsibility among all parties involved, fostering cooperation and solidarity during challenging circumstances
                                             </li>
 
                                             <li className="ps-[15px] pb-5">
@@ -999,11 +999,11 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                             </p>
 
                                             <p className='pb-5'>
-                                                As the tenant, I agree to abide by these terms throughout the duration of my tenancy. I understand that failure to comply with these terms may result in penalties or forfeiture of deposit. By signing below, I confirm my acceptance of the terms and conditions and agree to adhere to them accordingly.
+                                                As the resident, I agree to abide by these terms throughout the duration of my tenancy. I understand that failure to comply with these terms may result in penalties or forfeiture of deposit. By signing below, I confirm my acceptance of the terms and conditions and agree to adhere to them accordingly.
                                             </p>
 
                                             <p className='pb-5'>
-                                                As the service provider, we “Stayease” , confirm that we have provided the tenant, [Tenant's Full Name], with a copy of the rental agreement containing all terms and conditions applicable to their tenancy. We declare that we have explained the terms to the tenant to the best of our ability and ensured that they understand their obligations as outlined in the agreement. By signing below, we affirm our commitment to uphold the terms of the rental agreement and provide the necessary support to the tenant throughout their tenancy period.
+                                                As the service provider, we “Stayease” , confirm that we have provided the resident, [resident's Full Name], with a copy of the rental agreement containing all terms and conditions applicable to their tenancy. We declare that we have explained the terms to the resident to the best of our ability and ensured that they understand their obligations as outlined in the agreement. By signing below, we affirm our commitment to uphold the terms of the rental agreement and provide the necessary support to the resident throughout their tenancy period.
                                             </p>
 
                                             <b>

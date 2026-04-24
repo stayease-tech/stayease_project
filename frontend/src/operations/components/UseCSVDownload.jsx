@@ -3,9 +3,7 @@ import { useCallback } from 'react';
 export function UseCSVDownload() {
   const downloadCSV = useCallback((data, filename = 'data.csv') => {
     if (!data || data.length === 0) {
-        if (filename === 'rawdata.csv') {
-            alert('No data has been justified yet!');
-        }
+        alert('No data available to export!');
         return;
     }
     

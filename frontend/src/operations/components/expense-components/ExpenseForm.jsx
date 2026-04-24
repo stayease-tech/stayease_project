@@ -424,7 +424,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                         {currentComponent === 'expenseForm' && <>
                             <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Create Property-wise Expense here</h3>
 
-                            <label htmlFor="propertyName" className="text-[#D4A017] max-sm:text-sm"><strong>Property Name:</strong></label>
+                            <label htmlFor="propertyName" className="text-[#D4A017] max-sm:text-sm"><strong>Property Name: <span className="text-red-500">*</span></strong></label>
                             <select id="propertyName" value={expenseData.propertyName} onChange={expenseHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="propertyName" required>
                                 <option value="" disabled>Select the property name here</option>
                                 {loadingData ? <option value="">
@@ -438,7 +438,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                 </>}
                             </select>
 
-                            <label htmlFor="headOfExpense" className="text-[#D4A017] max-sm:text-sm"><strong>Head of Expense:</strong></label>
+                            <label htmlFor="headOfExpense" className="text-[#D4A017] max-sm:text-sm"><strong>Head of Expense: <span className="text-red-500">*</span></strong></label>
                             <select id="headOfExpense" value={expenseData.headOfExpense} onChange={expenseHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="headOfExpense" required>
                                 <option value="" disabled>Select the Head of Expense here</option>
                                 <option value="Owners">Owners</option>
@@ -447,7 +447,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                 <option value="Resident">Resident</option>
                             </select>
 
-                            <label htmlFor="expenseType" className="text-[#D4A017] max-sm:text-sm"><strong>Expense Type:</strong></label>
+                            <label htmlFor="expenseType" className="text-[#D4A017] max-sm:text-sm"><strong>Expense Type: <span className="text-red-500">*</span></strong></label>
                             <select id="expenseType" value={expenseData.expenseType} onChange={expenseHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="expenseType" required>
                                 <option value="" disabled>Select the Expense Type here</option>
 
@@ -473,7 +473,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
 
                             {(expenseData.headOfExpense === 'Owners' || expenseData.headOfExpense === 'Resident') && <>
                                 {expenseData.headOfExpense === 'Owners' && <>
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Owner:</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Owner: <span className="text-red-500">*</span></strong></label>
 
                                     <select
                                         value={expenseData.owner}
@@ -495,7 +495,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                 </>}
 
                                 {((expenseData.headOfExpense === "Resident" && expenseData.propertyName !== '') || expenseData.owner !== '') && <>
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Rooms:</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Rooms: <span className="text-red-500">*</span></strong></label>
 
                                     <select
                                         value={expenseData.room}
@@ -516,7 +516,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                     </select>
 
                                     {(expenseData.room !== '' && expenseData.headOfExpense === 'Resident') && <>
-                                        <label className="text-[#D4A017] max-sm:text-sm"><strong>Resident:</strong></label>
+                                        <label className="text-[#D4A017] max-sm:text-sm"><strong>Resident: <span className="text-red-500">*</span></strong></label>
 
                                         <select
                                             value={expenseData.resident}
@@ -576,7 +576,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                 <div key={index} className="mb-8">
                                     <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">{cat.category}</h3>
 
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Amount:</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Amount: <span className="text-red-500">*</span></strong></label>
                                     <input
                                         type="text"
                                         value={cat.amount}
@@ -586,7 +586,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         required
                                     />
 
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>GST - Tax Amount (Enter 0 if not applicable):</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>GST - Tax Amount (Enter 0 if not applicable): <span className="text-red-500">*</span></strong></label>
                                     <input
                                         type="text"
                                         value={cat.gst}
@@ -605,7 +605,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                     />
 
                                     {expenseData.headOfExpense === 'Resident' && <>
-                                        <label className="text-[#D4A017] max-sm:text-sm"><strong>Remarks:</strong></label>
+                                        <label className="text-[#D4A017] max-sm:text-sm"><strong>Remarks: <span className="text-red-500">*</span></strong></label>
                                         <input
                                             type="text"
                                             value={cat.remarks}
@@ -616,7 +616,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         />
                                     </>}
 
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Payment Type:</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Payment Type: <span className="text-red-500">*</span></strong></label>
                                     <select
                                         value={cat.paymentType}
                                         onChange={(e) => expenseHandleChange(e, index, "paymentType")}
@@ -630,7 +630,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                     </select>
 
                                     {cat.paymentType === "Vendor" && <>
-                                        <label className="text-[#D4A017] max-sm:text-sm"><strong>Vendor Type:</strong></label>
+                                        <label className="text-[#D4A017] max-sm:text-sm"><strong>Vendor Type: <span className="text-red-500">*</span></strong></label>
                                         <select
                                             value={cat.vendorType}
                                             onChange={(e) => expenseHandleChange(e, index, "vendorType")}
@@ -643,7 +643,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         </select>
 
                                         {cat.vendorType === "Registered" && <>
-                                            <label className="text-[#D4A017] max-sm:text-sm"><strong>Vendor:</strong></label>
+                                            <label className="text-[#D4A017] max-sm:text-sm"><strong>Vendor: <span className="text-red-500">*</span></strong></label>
 
                                             <select
                                                 value={cat.vendor}
@@ -690,7 +690,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                                     />
 
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Priority:</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Priority: <span className="text-red-500">*</span></strong></label>
                                     <select
                                         value={cat.priority}
                                         onChange={(e) => expenseHandleChange(e, index, "priority")}
@@ -705,7 +705,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         ))}
                                     </select>
 
-                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Deadline for the Payment:</strong></label>
+                                    <label className="text-[#D4A017] max-sm:text-sm"><strong>Deadline for the Payment: <span className="text-red-500">*</span></strong></label>
                                     <select
                                         value={cat.deadline}
                                         onChange={(e) => expenseHandleChange(e, index, "deadline")}

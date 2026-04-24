@@ -110,13 +110,13 @@ function VendorForm({ isExpanded, setIsExpanded }) {
 
                         <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Create vendor data here</h3>
 
-                        <label htmlFor="vendor" className="text-[#D4A017] max-sm:text-sm"><strong>Vendor:</strong></label>
+                        <label htmlFor="vendor" className="text-[#D4A017] max-sm:text-sm"><strong>Vendor: <span className="text-red-500">*</span></strong></label>
                         <input type="text" id="vendor" value={vendorData.vendor} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="vendor" placeholder="Enter the Vendor Name here" required />
 
-                        <label htmlFor="contact" className="text-[#D4A017] max-sm:text-sm"><strong>Contact:</strong></label>
+                        <label htmlFor="contact" className="text-[#D4A017] max-sm:text-sm"><strong>Contact: <span className="text-red-500">*</span></strong></label>
                         <input type="tel" id="contact" value={vendorData.contact} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="contact" placeholder="Enter the Contact Number here" required />
 
-                        <label htmlFor="category" className="text-[#D4A017] max-sm:text-sm"><strong>Category:</strong></label>
+                        <label htmlFor="category" className="text-[#D4A017] max-sm:text-sm"><strong>Category: <span className="text-red-500">*</span></strong></label>
                         <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="category" required>
                             <option value="" disabled>Select the Category here</option>
                             <option value="Water Tanker">Water Tanker</option>
@@ -134,7 +134,7 @@ function VendorForm({ isExpanded, setIsExpanded }) {
                             <option value="Others">Others</option>
                         </select>
 
-                        <label htmlFor="billingType" className="text-[#D4A017] max-sm:text-sm"><strong>Billing Type:</strong></label>
+                        <label htmlFor="billingType" className="text-[#D4A017] max-sm:text-sm"><strong>Billing Type: <span className="text-red-500">*</span></strong></label>
                         <select id="billingType" value={vendorData.billingType} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="billingType" required>
                             <option value="" disabled>Select the Billing Type here</option>
                             <option value="Bank Transfer">Bank Transfer</option>
@@ -143,16 +143,16 @@ function VendorForm({ isExpanded, setIsExpanded }) {
                         </select>
 
                         {vendorData.billingType === 'Bank Transfer' && <>
-                            <label htmlFor="accountHolderName" className="text-[#D4A017] max-sm:text-sm"><strong>Account Holder Name:</strong></label>
+                            <label htmlFor="accountHolderName" className="text-[#D4A017] max-sm:text-sm"><strong>Account Holder Name: <span className="text-red-500">*</span></strong></label>
                             <input type="text" id="accountHolderName" value={vendorData.accountHolderName} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="accountHolderName" placeholder="Enter the Account Holder Name here" required />
 
-                            <label htmlFor="accountNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Account Number:</strong></label>
+                            <label htmlFor="accountNumber" className="text-[#D4A017] max-sm:text-sm"><strong>Account Number: <span className="text-red-500">*</span></strong></label>
                             <input type="text" id="accountNumber" value={vendorData.accountNumber} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="accountNumber" placeholder="Enter the Account Number here" required />
 
-                            <label htmlFor="bankName" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Name:</strong></label>
+                            <label htmlFor="bankName" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Name: <span className="text-red-500">*</span></strong></label>
                             <input type="text" id="bankName" value={vendorData.bankName} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="bankName" placeholder="Enter the Bank Name here" required />
 
-                            <label htmlFor="bankBranch" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Branch:</strong></label>
+                            <label htmlFor="bankBranch" className="text-[#D4A017] max-sm:text-sm"><strong>Bank Branch: <span className="text-red-500">*</span></strong></label>
                             <input type="text" id="bankBranch" value={vendorData.bankBranch} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="bankBranch" placeholder="Enter the Bank Branch here" required />
 
                             <label htmlFor="ifscCode" className="text-[#D4A017] max-sm:text-sm"><strong>IFSC Code:</strong></label>
@@ -160,13 +160,13 @@ function VendorForm({ isExpanded, setIsExpanded }) {
                         </>}
 
                         {vendorData.billingType === 'UPI' && <>
-                            <label htmlFor="upiNumber" className="text-[#D4A017] max-sm:text-sm"><strong>UPI Number:</strong></label>
+                            <label htmlFor="upiNumber" className="text-[#D4A017] max-sm:text-sm"><strong>UPI Number: <span className="text-red-500">*</span></strong></label>
 
                             <input type="text" id="upiNumber" value={vendorData.upiNumber} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="upiNumber" placeholder="Enter the UPI Number here" required />
                         </>}
 
                         {vendorData.billingType === 'Others' && <>
-                            <label htmlFor="otherBankingDetails" className="text-[#D4A017] max-sm:text-sm"><strong>Other Banking Details:</strong></label>
+                            <label htmlFor="otherBankingDetails" className="text-[#D4A017] max-sm:text-sm"><strong>Other Banking Details: <span className="text-red-500">*</span></strong></label>
 
                             <input type="text" id="otherBankingDetails" value={vendorData.otherBankingDetails} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="otherBankingDetails" placeholder="Mention the Banking Details here" required />
                         </>}

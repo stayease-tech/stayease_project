@@ -13,6 +13,7 @@ const SERVICE_LINKS = [
     { name: 'Privacy Policy', to: '/privacy-policy' },
     { name: 'Terms & Conditions', to: '/Terms-conditions' },
     { name: 'Cookie Policy', to: '/privacy-policy' },
+    { name: 'Resident Login', to: '/resident-login' },
 ]
 
 const SOCIAL_LINKS = [

@@ -40,6 +40,7 @@ function OwnerForm({ isExpanded, setIsExpanded }) {
 
     const [currentStep, setCurrentStep] = useState('ownerData');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [emailError, setEmailError] = useState('');
 
     const dataHandleToggle = (step) => {
         setCurrentStep(step);
@@ -75,10 +76,60 @@ function OwnerForm({ isExpanded, setIsExpanded }) {
         if (name === "ifscCode") nextValue = value.toUpperCase().replace(/\s/g, "").slice(0, 11);
         if (name === "accountNumber") nextValue = value.replace(/\D/g, "").slice(0, 18);
 
+        if (name === "ownerEmail") {
+            if (nextValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextValue)) {
+                setEmailError("Please enter a valid email address.");
+            } else {
+                setEmailError('');
+            }
+        }
+
         setOwnerData((prevState) => ({
             ...prevState,
             [name]: type === "file" ? files[0] : nextValue,
         }));
+    }
+
+    const validatePage1 = () => {
+        if (!ownerData.ownerName?.trim() || !/^[A-Za-z ]{2,}$/.test(ownerData.ownerName.trim())) {
+            toast.error("Please enter a valid owner name.");
+            return false;
+        }
+        if (!ownerData.memberSince) {
+            toast.error("Member since is required.");
+            return false;
+        }
+        const currentMonth = new Date().toISOString().slice(0, 7);
+        if (ownerData.memberSince > currentMonth) {
+            toast.error("Member Since cannot be a future date.");
+            return false;
+        }
+        if (!isValidIndianPhone(ownerData.ownerPhone)) {
+            toast.error("Owner phone must be exactly 10 digits.");
+            return false;
+        }
+        if (!ownerData.ownerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerData.ownerEmail)) {
+            toast.error("Please enter a valid owner email.");
+            setEmailError("Please enter a valid email address.");
+            return false;
+        }
+        if (!ownerData.ownerAddress?.trim()) {
+            toast.error("Owner address is required.");
+            return false;
+        }
+        if (!ownerData.ownerDob) {
+            toast.error("Date of birth is required.");
+            return false;
+        }
+        if (new Date(ownerData.ownerDob) > new Date()) {
+            toast.error("Date of birth cannot be in the future.");
+            return false;
+        }
+        if (!ownerData.ownerGender) {
+            toast.error("Owner gender is required.");
+            return false;
+        }
+        return true;
     }
 
     const validateOwnerData = () => {
@@ -191,10 +242,11 @@ function OwnerForm({ isExpanded, setIsExpanded }) {
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-[#D4A017]">ADD OWNER DETAILS</h1>
 
                         {currentStep === 'ownerData' && <>
-                            <OwnerData ownerData={ownerData} ownerHandleChange={ownerHandleChange} />
+                            <OwnerData ownerData={ownerData} ownerHandleChange={ownerHandleChange} emailError={emailError} />
 
                             <button
-                                className="block w-full px-4 py-2 mt-3 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle('ownerKYC')}
+                                className="block w-full px-4 py-2 mt-3 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
+                                onClick={() => { if (validatePage1()) dataHandleToggle('ownerKYC'); }}
                                 type="button">Next</button>
                         </>
                         }

@@ -103,11 +103,11 @@ function AccountsDashboard({ isExpanded, setIsExpanded }) {
                     <div className="card">
                         <div className="card-header"><h3>Quick Actions</h3></div>
                         <div className="card-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
-                            <QuickAction label="Add Vendor" onClick={() => navigate("/accounts/accounts-vendor-form")} />
-                            <QuickAction label="Add Expense" onClick={() => navigate("/accounts/accounts-expense-form")} />
-                            <QuickAction label="Upload Rawdata" onClick={() => navigate("/accounts/accounts-rawdatafile-upload")} />
-                            <QuickAction label="Upload Other Files" onClick={() => navigate("/accounts/accounts-otherfiles-upload")} />
-                            <QuickAction label="Add Liability" onClick={() => navigate("/accounts/accounts-liability-form/new")} />
+                            <QuickAction label="View Vendors" onClick={() => navigate("/accounts/accounts-vendor-table")} />
+                            <QuickAction label="View Expenses" onClick={() => navigate("/accounts/accounts-expense-table")} />
+                            <QuickAction label="View Rawdata" onClick={() => navigate("/accounts/accounts-rawdatafile-table")} />
+                            <QuickAction label="View Other Files" onClick={() => navigate("/accounts/accounts-otherfiles-table")} />
+                            <QuickAction label="View Liabilities" onClick={() => navigate("/accounts/accounts-liability-table")} />
                         </div>
                     </div>
                 </>
@@ -158,10 +158,10 @@ function OperationsDashboard({ isExpanded, setIsExpanded }) {
                         <div className="card-header"><h3>Quick Actions</h3></div>
                         <div className="card-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                             <QuickAction label="View Beds" onClick={() => navigate("/operations/operations-beds-table")} />
-                            <QuickAction label="Checklist & Feedback" onClick={() => navigate("/operations/operations-checklistfeedback-table")} />
-                            <QuickAction label="Add Expense" onClick={() => navigate("/operations/operations-expense-form")} />
+                            <QuickAction label="View Checklists" onClick={() => navigate("/operations/operations-checklistfeedback-table")} />
+                            <QuickAction label="View Expenses" onClick={() => navigate("/operations/operations-expense-table")} />
                             <QuickAction label="View Complaints" onClick={() => navigate("/operations/operations-propertycomplaint-table")} />
-                            <QuickAction label="Add Vendor" onClick={() => navigate("/operations/operations-vendor-form")} />
+                            <QuickAction label="View KYC Pending" onClick={() => navigate("/operations/operations-beds-table")} />
                         </div>
                     </div>
                 </>
@@ -212,10 +212,9 @@ function SalesDashboard({ isExpanded, setIsExpanded }) {
                         <div className="card-header"><h3>Quick Actions</h3></div>
                         <div className="card-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                             <QuickAction label="View Beds" onClick={() => navigate("/sales/sales-beds-table")} />
-                            <QuickAction label="Add Lead" onClick={() => navigate("/sales/sales-leads-form")} />
                             <QuickAction label="View Leads" onClick={() => navigate("/sales/sales-leads-table")} />
-                            <QuickAction label="Add Expense" onClick={() => navigate("/sales/sales-expense-form")} />
-                            <QuickAction label="Add Vendor" onClick={() => navigate("/sales/sales-vendor-form")} />
+                            <QuickAction label="View Expenses" onClick={() => navigate("/sales/sales-expense-table")} />
+                            <QuickAction label="View Documents" onClick={() => navigate("/sales/sales-document-table")} />
                         </div>
                     </div>
                 </>
@@ -234,13 +233,13 @@ function SupplyDashboard({ isExpanded, setIsExpanded }) {
     useEffect(() => {
         Promise.allSettled([
             axios.get("/supply/get-owner-data/"),
-            axios.get("/supply/get-property-data/"),
+            axios.get("/supply/get-property-data/0/"),
             axios.get("/accounts/get-beds-data/"),
             axios.get("/accounts/get-expense-data/"),
         ]).then(([owners, properties, beds, expenses]) => {
             setStats({
                 owners: owners.status === "fulfilled" ? owners.value.data?.supply_table?.length ?? 0 : null,
-                properties: properties.status === "fulfilled" ? properties.value.data?.property_data?.length ?? 0 : null,
+                properties: properties.status === "fulfilled" ? properties.value.data?.property_table?.length ?? 0 : null,
                 rooms: beds.status === "fulfilled" ? beds.value.data?.beds_table?.length ?? 0 : null,
                 expenses: expenses.status === "fulfilled" ? expenses.value.data?.expense_table?.length ?? 0 : null,
             });
@@ -268,11 +267,10 @@ function SupplyDashboard({ isExpanded, setIsExpanded }) {
                     <div className="card">
                         <div className="card-header"><h3>Quick Actions</h3></div>
                         <div className="card-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
-                            <QuickAction label="Add Owner" onClick={() => navigate("/supply/supply-owner-form")} />
+                            <QuickAction label="View Owners" onClick={() => navigate("/supply/supply-owner-table")} />
                             <QuickAction label="View Properties" onClick={() => navigate("/supply/supply-property-table")} />
                             <QuickAction label="View Rooms" onClick={() => navigate("/supply/supply-room-table")} />
-                            <QuickAction label="Add Expense" onClick={() => navigate("/supply/supply-expense-form")} />
-                            <QuickAction label="Add Vendor" onClick={() => navigate("/supply/supply-vendor-form")} />
+                            <QuickAction label="View Expenses" onClick={() => navigate("/supply/supply-expense-table")} />
                         </div>
                     </div>
                 </>
@@ -294,14 +292,14 @@ function AdminDashboard({ isExpanded, setIsExpanded }) {
             axios.get("/accounts/get-expense-data/"),
             axios.get("/accounts/get-beds-data/"),
             axios.get("/operations/get-propertycomplaint-data/"),
-            axios.get("/supply/get-property-data/"),
+            axios.get("/supply/get-property-data/0/"),
         ]).then(([vendors, expenses, beds, complaints, properties]) => {
             setStats({
                 vendors: vendors.status === "fulfilled" ? vendors.value.data?.vendor_table?.length ?? 0 : null,
                 expenses: expenses.status === "fulfilled" ? expenses.value.data?.expense_table?.length ?? 0 : null,
                 beds: beds.status === "fulfilled" ? beds.value.data?.beds_table?.length ?? 0 : null,
                 complaints: complaints.status === "fulfilled" ? complaints.value.data?.complaints_array?.length ?? 0 : null,
-                properties: properties.status === "fulfilled" ? properties.value.data?.property_data?.length ?? 0 : null,
+                properties: properties.status === "fulfilled" ? properties.value.data?.property_table?.length ?? 0 : null,
             });
         }).finally(() => setLoading(false));
     }, []);

@@ -40,7 +40,7 @@ const formatSubmittedAt = () => {
 // Memoized form input component
 const FormInput = memo(({ id, label, type = 'text', value, onChange, required = true, ...props }) => (
     <div className="mb-3">
-        <label className="block text-sm font-medium mb-2" htmlFor={id}>
+        <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor={id}>
             {label}
         </label>
         <input
@@ -50,7 +50,7 @@ const FormInput = memo(({ id, label, type = 'text', value, onChange, required = 
             value={value}
             onChange={onChange}
             required={required}
-            className="border rounded w-full py-2 px-3 text-[#000000] focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200"
+            className="border border-gray-600 bg-[#1a1a1a] rounded w-full py-2 px-3 text-white placeholder-gray-500 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200"
             {...props}
         />
     </div>
@@ -61,7 +61,7 @@ FormInput.displayName = 'FormInput'
 // Memoized textarea component
 const FormTextarea = memo(({ id, label, value, onChange, rows = 4, ...props }) => (
     <div className="mb-5">
-        <label className="block text-sm font-medium mb-2" htmlFor={id}>
+        <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor={id}>
             {label}
         </label>
         <textarea
@@ -70,7 +70,7 @@ const FormTextarea = memo(({ id, label, value, onChange, rows = 4, ...props }) =
             rows={rows}
             value={value}
             onChange={onChange}
-            className="border rounded w-full p-2 text-[#000000] focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200"
+            className="border border-gray-600 bg-[#1a1a1a] rounded w-full p-2 text-white placeholder-gray-500 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all duration-200"
             {...props}
         />
     </div>
@@ -140,7 +140,7 @@ const EnquirySection = forwardRef((props, ref) => {
     }, [formData])
 
     return (
-        <section ref={ref} className='py-8 md:pt-[1rem] lg:px-24 mb-[30rem] md:mb-[2.5rem] lg:mb-[5rem]'>
+        <section ref={ref} className='py-8 md:pt-[1rem] lg:px-24 mb-[4rem] md:mb-[2.5rem] lg:mb-[5rem]'>
             {/* Header */}
             <div className='text-center mb-[3rem]'>
                 <h1 className="text-2xl md:text-3xl font-semibold my-5 text-[#eba312]">
@@ -148,9 +148,9 @@ const EnquirySection = forwardRef((props, ref) => {
                 </h1>
             </div>
 
-            <div className='flex flex-col lg:flex-row lg:space-x-20'>
+            <div className='flex flex-col lg:flex-row lg:space-x-20 items-stretch'>
                 {/* Left Image Section - Desktop Only */}
-                <div className='relative lg:h-[90vh] hidden lg:block'>
+                <div className='relative lg:min-h-[90vh] hidden lg:block pointer-events-none'>
                     <img
                         src="static/img/connect-bg/connect_img.webp"
                         alt="Connect with StayEase"
@@ -165,9 +165,9 @@ const EnquirySection = forwardRef((props, ref) => {
                 </div>
 
                 {/* Form Section */}
-                <div className="relative md:w-[75vw] lg:w-[45vw] md:h-[85vh] lg:h-[90vh]">
-                    <div className="absolute left-[5%] md:left-[16%] lg:left-[10%] lg:top-[13%] w-[90%] md:w-[100%] lg:w-[85%]">
-                        <form onSubmit={handleSubmit} className='text-left mt-3' noValidate>
+                <div className="relative z-10 md:w-[75vw] lg:w-[45vw] flex items-center">
+                    <div className="w-full px-4 md:px-0 lg:w-[85%] lg:ml-[10%]">
+                        <form onSubmit={handleSubmit} className='text-left mt-3 bg-[#111111] border border-gray-700 rounded-lg p-6' noValidate>
                             <FormInput
                                 id="name"
                                 label="Name"

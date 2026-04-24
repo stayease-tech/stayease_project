@@ -63,7 +63,7 @@ function Blog2() {
                     <p>It is an alarming sign if the coordinator or property management is inciting
                         unreasonable urgency when booking the space. Some co-living operators employ
                         high-pressure sales techniques, including inflated claims about limited supply or
-                        time-restricted deals that end soon. As a result, prospective tenants are unable to
+                        time-restricted deals that end soon. As a result, prospective residents are unable to
                         reflect, pose crucial queries, or weigh their possibilities. Clear information and ample
                         time to make an informed choice without excessive pressure are hallmarks of a
                         quality co-living environment.</p>

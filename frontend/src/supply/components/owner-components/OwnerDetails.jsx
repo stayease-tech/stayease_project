@@ -169,20 +169,22 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
 
     const handleDelete = async (e) => {
         e.preventDefault();
-        setIsDeleting(true);
 
-        const confirmDelete = window.confirm("Are you sure you want to delete this item?");
+        const confirmDelete = window.confirm("Are you sure you want to delete this owner?");
         if (!confirmDelete) return;
+
+        setIsDeleting(true);
 
         try {
             const response = await axios.delete(`/supply/owner-form-delete/${id}/`, {
                 withCredentials: true,
             });
 
-            alert(response.data.message);
-
             if (response.data.success) {
+                alert(response.data.message);
                 navigate('/supply/supply-owner-table');
+            } else {
+                alert(response.data.message);
             }
         } catch (err) {
             console.error('Error deleting form:', err);
@@ -201,48 +203,76 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">SUPPLY DETAILS</h1>
-
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/supply/supply-owner-table`)}
-                                type="button">Prev</button>
-
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()}
-                                    type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
-
-                                <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving || isDeleting}
-                                    type={dataEditView ? "submit" : "button"}
-                                    onClick={!dataEditView ? handleDelete : null}
-                                >
-                                    {dataEditView ? (isSaving ? "Saving Details..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
-                                </button>
-                            </div>
+                        {/* Header */}
+                        <div className="mb-6">
+                            <h1 className="text-xl lg:text-2xl font-semibold text-[#D4A017]">
+                                {ownerData?.ownerName || 'Owner Details'}
+                            </h1>
+                            <p className="text-sm text-stone-400 mt-1">
+                                {ownerData?.memberSince && `Member since: ${ownerData.memberSince}`}
+                                {ownerData?.ownerPhone && ` | ${ownerData.ownerPhone}`}
+                            </p>
                         </div>
 
-                        {currentStep === 'ownerData' && <>
-                            <OwnerData ownerDetails={ownerDetails} dataEditView={dataEditView} ownerHandleChange={ownerHandleChange} />
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-3 mb-6">
+                            <button
+                                className="px-4 py-2 bg-gray-100 text-slate-700 text-sm font-medium rounded hover:bg-gray-200"
+                                onClick={() => navigate(`/supply/supply-owner-table`)}
+                                type="button">
+                                &#8592; Back
+                            </button>
 
                             <button
-                                className="block w-full px-4 py-2 mt-5 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
-                                onClick={() => dataHandleToggle('ownerKyc')}
-                                type="button">Next</button>
+                                className="px-4 py-2 bg-[#D4A017] text-white text-sm font-medium rounded hover:bg-[#B8860B]"
+                                onClick={() => editHandle()}
+                                type="button">
+                                {!dataEditView ? 'Edit' : 'Cancel Edit'}
+                            </button>
 
-                        </>}
-
-                        {currentStep === 'ownerKyc' && <>
-                            <OwnerKyc dataEditView={dataEditView} ownerData={ownerData} ownerDetails={ownerDetails} triggerFileInput={triggerFileInput} ownerHandleChange={ownerHandleChange} />
-
-                            <div className="flex gap-5 mt-5">
+                            {dataEditView ? (
                                 <button
-                                    className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle('ownerData')}
-                                    type="button">Prev</button>
-                            </div>
-                        </>}
-                    </form >
+                                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 disabled:opacity-50"
+                                    disabled={isSaving}
+                                    type="submit">
+                                    {isSaving ? "Saving..." : "Save Changes"}
+                                </button>
+                            ) : (
+                                <button
+                                    className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded hover:bg-red-600 disabled:opacity-50"
+                                    disabled={isDeleting}
+                                    type="button"
+                                    onClick={handleDelete}>
+                                    {isDeleting ? "Deleting..." : "Delete"}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Tab Navigation */}
+                        <div className="flex border-b border-gray-200 mb-6">
+                            <button
+                                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${currentStep === 'ownerData' ? 'border-[#D4A017] text-[#D4A017]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}
+                                onClick={() => dataHandleToggle('ownerData')}
+                                type="button">
+                                Owner Info
+                            </button>
+                            <button
+                                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${currentStep === 'ownerKyc' ? 'border-[#D4A017] text-[#D4A017]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}
+                                onClick={() => dataHandleToggle('ownerKyc')}
+                                type="button">
+                                KYC & Bank Details
+                            </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        {currentStep === 'ownerData' && (
+                            <OwnerData ownerDetails={ownerDetails} dataEditView={dataEditView} ownerHandleChange={ownerHandleChange} />
+                        )}
+
+                        {currentStep === 'ownerKyc' && (
+                            <OwnerKyc dataEditView={dataEditView} ownerData={ownerData} ownerDetails={ownerDetails} triggerFileInput={triggerFileInput} ownerHandleChange={ownerHandleChange} />
+                        )}
+                    </form>
                 </div>
             </div>
         </div >

@@ -5,32 +5,32 @@ import SalesSidebar from "../Sidebar";
 import { ShieldCheck, Check, X, Eye, ChevronDown } from "lucide-react";
 
 export default function KycManagement({ isExpanded, setIsExpanded }) {
-    const [tenants, setTenants] = useState([]);
+    const [residents, setresidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Pending");
-    const [selectedTenant, setSelectedTenant] = useState(null);
+    const [selectedresident, setSelectedresident] = useState(null);
     const [rejectReason, setRejectReason] = useState("");
     const [processing, setProcessing] = useState(false);
     const [msg, setMsg] = useState({ text: "", type: "" });
 
-    const fetchTenants = (status) => {
+    const fetchresidents = (status) => {
         setLoading(true);
         axios.get(`/operations/kyc-pending/?status=${status}`)
-            .then((res) => { if (res.data.success) setTenants(res.data.tenants); })
+            .then((res) => { if (res.data.success) setresidents(res.data.residents); })
             .catch(console.error)
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchTenants(filter); }, [filter]);
+    useEffect(() => { fetchresidents(filter); }, [filter]);
 
-    const handleApprove = async (tenantId) => {
+    const handleApprove = async (residentId) => {
         setProcessing(true);
         try {
-            const res = await axios.post(`/operations/kyc-approve/${tenantId}/`);
+            const res = await axios.post(`/operations/kyc-approve/${residentId}/`);
             if (res.data.success) {
                 setMsg({ text: res.data.message, type: "success" });
-                fetchTenants(filter);
-                setSelectedTenant(null);
+                fetchresidents(filter);
+                setSelectedresident(null);
             }
         } catch {
             setMsg({ text: "Failed to approve.", type: "error" });
@@ -38,18 +38,18 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
         setProcessing(false);
     };
 
-    const handleReject = async (tenantId) => {
+    const handleReject = async (residentId) => {
         if (!rejectReason.trim()) {
             setMsg({ text: "Please provide a rejection reason.", type: "error" });
             return;
         }
         setProcessing(true);
         try {
-            const res = await axios.post(`/operations/kyc-reject/${tenantId}/`, { reason: rejectReason });
+            const res = await axios.post(`/operations/kyc-reject/${residentId}/`, { reason: rejectReason });
             if (res.data.success) {
                 setMsg({ text: res.data.message, type: "success" });
-                fetchTenants(filter);
-                setSelectedTenant(null);
+                fetchresidents(filter);
+                setSelectedresident(null);
                 setRejectReason("");
             }
         } catch {
@@ -73,7 +73,7 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">
-                    <div><h1>KYC Management</h1><p>Review and approve tenant KYC documents</p></div>
+                    <div><h1>KYC Management</h1><p>Review and approve resident KYC documents</p></div>
                     <div className="flex items-center gap-2">
                         <select
                             className="form-input text-sm w-auto"
@@ -95,7 +95,7 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
 
                 {loading ? (
                     <div className="loading-center"><div className="spinner"></div></div>
-                ) : tenants.length === 0 ? (
+                ) : residents.length === 0 ? (
                     <div className="card">
                         <div className="card-body text-center py-12 text-gray-500">
                             <ShieldCheck size={48} className="mx-auto mb-3 text-gray-300" />
@@ -104,11 +104,11 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {tenants.map((t) => (
+                        {residents.map((t) => (
                             <div key={t.id} className="card">
                                 <div
                                     className="card-body cursor-pointer"
-                                    onClick={() => setSelectedTenant(selectedTenant?.id === t.id ? null : t)}
+                                    onClick={() => setSelectedresident(selectedresident?.id === t.id ? null : t)}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -119,11 +119,11 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                                             <p className="text-xs text-gray-500">{t.phoneNumber} &bull; {t.email}</p>
                                             <p className="text-xs text-gray-500">{t.propertyName} — Room {t.roomNo}</p>
                                         </div>
-                                        <ChevronDown size={18} className={`text-gray-400 transition-transform ${selectedTenant?.id === t.id ? "rotate-180" : ""}`} />
+                                        <ChevronDown size={18} className={`text-gray-400 transition-transform ${selectedresident?.id === t.id ? "rotate-180" : ""}`} />
                                     </div>
                                 </div>
 
-                                {selectedTenant?.id === t.id && (
+                                {selectedresident?.id === t.id && (
                                     <div className="border-t border-gray-100 p-6">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                             <DocSection label="Aadhaar" number={t.aadharNumber} frontUrl={t.aadharFrontCopy} backUrl={t.aadharBackCopy} />

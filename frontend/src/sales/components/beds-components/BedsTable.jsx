@@ -76,7 +76,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
     };
 
     const viewAgreementHandle = (bedData) => {
-        return navigate(`/sales/sales-agreement-pdf/${bedData?.tenant_data?.id}`, { state: { bedData } });
+        return navigate(`/sales/sales-agreement-pdf/${bedData?.resident_data?.id}`, { state: { bedData } });
     }
 
     const outputData = bedsData.map(data => ({
@@ -96,39 +96,39 @@ function BedsTable({ isExpanded, setIsExpanded }) {
         'DTH Number': data.tataSkyNo,
         'Wifi Number': data.wifiNo,
         'Bescom Meter Number': data.bescomMeterNo,
-        'Property Manager': data?.tenant_data?.propertyManager,
-        'Sales Manager': data?.tenant_data?.salesManager,
-        'Comfort Class': data?.tenant_data?.comfortClass,
-        'Meal Type': data?.tenant_data?.mealType,
-        'Resident Name': data?.tenant_data?.residentsName,
-        'Phone Number': data?.tenant_data?.phoneNumber,
-        'Email ID': data?.tenant_data?.email,
-        'KYC Type': data?.tenant_data?.kycType,
-        'Aadhar Number': data?.tenant_data?.aadharNumber,
-        'Aadhar Status': data?.tenant_data?.aadharStatus,
-        'PAN Number': data?.tenant_data?.panNumber,
-        'PAN Status': data?.tenant_data?.panStatus,
-        'Check-In': data?.tenant_data?.checkIn,
-        'Check-Out': data?.tenant_data?.checkOut,
-        'Total Deposit Paid': data?.tenant_data?.totalDepositPaid,
-        'Rent Per Month': data?.tenant_data?.rentPerMonth
+        'Property Manager': data?.resident_data?.propertyManager,
+        'Sales Manager': data?.resident_data?.salesManager,
+        'Comfort Class': data?.resident_data?.comfortClass,
+        'Meal Type': data?.resident_data?.mealType,
+        'Resident Name': data?.resident_data?.residentsName,
+        'Phone Number': data?.resident_data?.phoneNumber,
+        'Email ID': data?.resident_data?.email,
+        'KYC Type': data?.resident_data?.kycType,
+        'Aadhar Number': data?.resident_data?.aadharNumber,
+        'Aadhar Status': data?.resident_data?.aadharStatus,
+        'PAN Number': data?.resident_data?.panNumber,
+        'PAN Status': data?.resident_data?.panStatus,
+        'Check-In': data?.resident_data?.checkIn,
+        'Check-Out': data?.resident_data?.checkOut,
+        'Total Deposit Paid': data?.resident_data?.totalDepositPaid,
+        'Rent Per Month': data?.resident_data?.rentPerMonth
     }))
 
-    const viewTenantsDataHandle = (bedData) => {
-        if (bedData?.tenant_data && Object.keys(bedData.tenant_data).length > 0) {
+    const viewresidentsDataHandle = (bedData) => {
+        if (bedData?.resident_data && Object.keys(bedData.resident_data).length > 0) {
             const data = bedsData.filter(data => data.id === bedData.id);
-            return navigate(`/sales/sales-tenants-table/${bedData?.id}`, { state: { bedsData: data } });
+            return navigate(`/sales/sales-residents-table/${bedData?.id}`, { state: { bedsData: data } });
         }
 
         return alert('No data available!');
     };
 
-    const updateTenantDataHandle = (bedData) => {
+    const updateresidentDataHandle = (bedData) => {
         if (bedData.salesStatus === 'Completed') {
-            return navigate(`/sales/sales-tenant-details/${bedData?.tenant_data?.id}`, { state: { bedData } });
+            return navigate(`/sales/sales-resident-details/${bedData?.resident_data?.id}`, { state: { bedData } });
         }
 
-        return navigate(`/sales/sales-tenant-form/${bedData?.id}`);
+        return navigate(`/sales/sales-resident-form/${bedData?.id}`);
     };
 
     return (
@@ -139,8 +139,9 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-                    <div className="max-w-6xl mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA TABLE</h1>
+                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-2 text-[#D4A017]">BEDS DATA TABLE</h1>
+                        <p className="text-center text-xs text-gray-400 mb-6">Beds are auto-created via Supply &rarr; Rooms &rarr; Add Room (select room type to generate beds)</p>
 
                         <div className="sm:flex justify-between">
                             <button
@@ -187,8 +188,8 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Flat Number</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Flat Type</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Room Number</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Complete Tenant Data</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Current Tenant Data</th>
+                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Complete Resident Data</th>
+                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Current Resident Data</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">View Agreement</th>
                                         <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Rent Status</th>
                                     </tr>
@@ -207,33 +208,31 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                             <td className="border border-gray-300 px-4 py-2 text-center">{bedsData.bedLabel}</td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">
                                                 <div className="flex justify-evenly">
-                                                    <FaEye className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewTenantsDataHandle(bedsData)} />
+                                                    <FaEye className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewresidentsDataHandle(bedsData)} />
                                                 </div>
                                             </td>
                                             <td className="border border-gray-300 px-2 py-2 text-center">
-                                                <div className="flex justify-center">
-                                                    {(bedsData.salesStatus === 'Completed') ?
-                                                        <div className="flex justify-evenly">
-                                                            <div>
-                                                                {bedsData.salesStatus}
-                                                            </div>
-                                                            <FaEdit className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => updateTenantDataHandle(bedsData)} />
-                                                        </div>
-                                                        :
-                                                        <div className="flex justify-evenly">
-                                                            <div>
-                                                                {bedsData.salesStatus}
-                                                            </div>
-                                                            <IoMdAddCircle className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => updateTenantDataHandle(bedsData)} />
-                                                        </div>
-                                                    }
-                                                </div>
+                                                {bedsData.salesStatus === 'Completed' ? (
+                                                    <button
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                                                        onClick={() => updateresidentDataHandle(bedsData)}
+                                                    >
+                                                        <FaEdit size={11} /> Edit Resident
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#D4A017] text-white rounded-md hover:bg-[#B8860B] transition-colors cursor-pointer"
+                                                        onClick={() => updateresidentDataHandle(bedsData)}
+                                                    >
+                                                        <IoMdAddCircle size={13} /> Add Resident
+                                                    </button>
+                                                )}
                                             </td>
                                             <td className="border border-gray-300 px-4 py-2 text-center">
                                                 <div className="flex justify-center">
                                                     {(bedsData.salesStatus === 'Pending') ?
                                                         <div className="flex justify-evenly">
-                                                            <FaEye className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => alert('Currently there is no tenant allocated to generate the agreement!')} />
+                                                            <FaEye className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => alert('Currently there is no resident allocated to generate the agreement!')} />
                                                         </div>
                                                         :
                                                         <div className="flex justify-evenly">
@@ -242,8 +241,8 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                                     }
                                                 </div>
                                             </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.salesStatus === 'Completed' && bedsData?.tenant_data?.tenantStatus === 'Active' && bedsData?.tenant_data?.rent_records.length > 0
-                                                ? bedsData?.tenant_data?.rent_records[bedsData?.tenant_data?.rent_records.length - 1]?.rentStatus : 'NA'}</td>
+                                            <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.salesStatus === 'Completed' && bedsData?.resident_data?.residentStatus === 'Active' && bedsData?.resident_data?.rent_records.length > 0
+                                                ? bedsData?.resident_data?.rent_records[bedsData?.resident_data?.rent_records.length - 1]?.rentStatus : 'NA'}</td>
                                         </tr>
                                     )) : <tr>
                                         <td colSpan="12" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>

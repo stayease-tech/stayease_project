@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import TokenRefreshView
 from stayease_accounts.views import MobileLoginView, MobilePartnerLoginView
-from stayease_tenant.views import TenantLoginView
+from stayease_resident.views import residentLoginView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,16 +28,16 @@ urlpatterns = [
     path('api/token/', MobileLoginView.as_view(), name='token_obtain'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/partner-login/', MobilePartnerLoginView.as_view(), name='partner_login'),
-    path('api/tenant-login/', TenantLoginView.as_view(), name='tenant_login'),
+    path('api/resident-login/', residentLoginView.as_view(), name='resident_login'),
     # Web app routes
     path('supply/', include('stayease_supply.urls')),
     path('sales/', include('stayease_sales.urls')),
     path('accounts/', include('stayease_accounts.urls')),
     path('operations/', include('stayease_operations.urls')),
     path('partners/', include('stayease_partners.urls')),
-    path('tenant-portal/', include('stayease_tenant.urls')),
+    path('resident-portal/', include('stayease_resident.urls')),
     path('contract/', include('property_details.urls')),
-    path('tenant-details/', include('tenant_details.urls')),
+    path('resident-details/', include('resident_details.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

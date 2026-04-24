@@ -1,6 +1,6 @@
 from django.db import models
 from stayease_supply.models import Owner_Data
-from stayease_sales.models import Tenant_Data
+from stayease_sales.models import resident_Data
     
 class User_Activity_Data(models.Model):
     username = models.CharField(max_length=100)
@@ -115,7 +115,7 @@ class Fixed_Expense_Detail(models.Model):
         ]
 
 class Liability_Detail(models.Model):
-    liability_tenant = models.ForeignKey(Tenant_Data, related_name="liability_tenant", on_delete=models.CASCADE, blank=True, null=True)
+    liability_resident = models.ForeignKey(resident_Data, related_name="liability_resident", on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(max_length=100)
     checkSendEmail = models.BooleanField(blank=True, null=True)
     amount = models.CharField(max_length=100, blank=True, null=True)

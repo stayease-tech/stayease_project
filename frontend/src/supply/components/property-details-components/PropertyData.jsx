@@ -3,6 +3,34 @@ import { City, Country, State } from 'country-state-city';
 import { FaUpload } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
+function getFileName(fileValue) {
+    if (!fileValue) return 'No file uploaded';
+    if (typeof fileValue === 'object' && fileValue.name) return fileValue.name;
+    if (typeof fileValue === 'string' && fileValue.length > 0) {
+        const parts = fileValue.split('/');
+        return parts[parts.length - 1] || 'View file';
+    }
+    return 'No file uploaded';
+}
+
+function getFileUrl(fileValue) {
+    if (!fileValue) return '#';
+    if (typeof fileValue === 'string') return fileValue;
+    if (typeof fileValue === 'object') return URL.createObjectURL(fileValue);
+    return '#';
+}
+
+function DetailRow({ label, value, editMode, children }) {
+    return (
+        <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 py-3 border-b border-gray-100 last:border-b-0">
+            <dt className="text-sm font-medium text-[#D4A017] sm:w-40 sm:min-w-[10rem] sm:flex-shrink-0">{label}</dt>
+            <dd className="text-sm text-slate-700 sm:flex-1 min-w-0">
+                {editMode ? children : value}
+            </dd>
+        </div>
+    );
+}
+
 function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, triggerFileInput }) {
     const country = Country.getCountryByCode('IN');
     const states = State.getStatesOfCountry(country.isoCode);
@@ -12,433 +40,202 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
     const mealTypes = ["Veg", "Non-Veg"];
     const amenities = ["Prime Locations", "Fully Furnished", "Parking Space", "Regular Housekeeping", "Free Wi-Fi", "Modular Kitchen", "CCTV Surveillance", "Washing Machine", "Workspace Setup", "Common Area", "Digital Lock Access", "Water Purifier", "OTT Subscriptions", "Community Intercom"];
 
+    const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
+    const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
+
     return (
-        <div>
-            <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">Property Details</h3>
+        <div className="space-y-6">
+            {/* Basic Info Card */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Basic Information</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="Property ID" value={propertyDetails.serial_number}>
+                        <span className="text-slate-500">{propertyDetails.serial_number}</span>
+                    </DetailRow>
 
-            <div className="w-full overflow-x-auto">
-                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded text-xs sm:text-sm text-xs sm:text-sm-lg max-sm:text-xs">
-                    <tbody className='text-xs sm:text-sm'>
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Property ID</th>
-                            <td className="flex">
-                                <span className="py-1 px-2 w-full">{propertyDetails.serial_number}</span>
-                            </td>
-                        </tr>
+                    <DetailRow label="Property Name *" value={propertyDetails.propertyName} editMode={dataEditView}>
+                        <input type="text" name="propertyName" value={propertyDetails.propertyName}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter property name" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Property Name</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.propertyName}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="propertyName"
-                                            value={propertyDetails.propertyName}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="propertyName"
-                                            placeholder="Enter the Property Name here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Property Type *" value={propertyDetails.propertyType} editMode={dataEditView}>
+                        <select name="propertyType" value={propertyDetails.propertyType}
+                            onChange={propertyHandleChange} className={selectClass} required>
+                            <option value="" disabled>Select property type</option>
+                            <option value="PG/Hostel">PG/Hostel</option>
+                            <option value="Apartment">Apartment</option>
+                        </select>
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Property Type</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.propertyType}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="propertyType"
-                                            value={propertyDetails.propertyType}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                            name="propertyType"
-                                            required
-                                        >
-                                            <option value="" disabled>Select the Property type here</option>
-                                            <option value="PG/Hostel">PG/Hostel</option>
-                                            <option value="Apartment">Apartment</option>
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Founded Year *" value={propertyDetails.foundedYear} editMode={dataEditView}>
+                        <input type="text" name="foundedYear" value={propertyDetails.foundedYear}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter founded year" inputMode="numeric" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Founded Year</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.foundedYear}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="foundedYear"
-                                            value={propertyDetails.foundedYear}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            min="1900" max="2100" step="1"
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="foundedYear"
-                                            placeholder="Enter the Founded Year here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Status" value={propertyDetails.status || '—'} editMode={dataEditView}>
+                        <input type="text" name="status" value={propertyDetails.status}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter status" />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Door/Building</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.doorBuilding}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="doorBuilding"
-                                            value={propertyDetails.doorBuilding}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="doorBuilding"
-                                            placeholder="Enter the Door/Building here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Rating" value={propertyDetails.rating || '—'} editMode={dataEditView}>
+                        <input type="number" name="rating" value={propertyDetails.rating}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter rating (1-5)" min="1" max="5" />
+                    </DetailRow>
+                </dl>
+            </div>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Street Address</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.streetAddress}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="streetAddress"
-                                            value={propertyDetails.streetAddress}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="streetAddress"
-                                            placeholder="Enter the Street Address here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+            {/* Location Card */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Location</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="Door/Building *" value={propertyDetails.doorBuilding} editMode={dataEditView}>
+                        <input type="text" name="doorBuilding" value={propertyDetails.doorBuilding}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter door/building number" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Area</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.area}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="area"
-                                            value={propertyDetails.area}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="area"
-                                            placeholder="Enter the Area here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Street Address *" value={propertyDetails.streetAddress} editMode={dataEditView}>
+                        <input type="text" name="streetAddress" value={propertyDetails.streetAddress}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter street address" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Landmark (Optional)</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.landmark}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="landmark"
-                                            value={propertyDetails.landmark}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="landmark"
-                                            placeholder="Enter the Landmark here" />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Area *" value={propertyDetails.area} editMode={dataEditView}>
+                        <input type="text" name="area" value={propertyDetails.area}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter area" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">State</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.state}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="state"
-                                            value={propertyDetails.state}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                            name="state"
-                                            required
-                                        >
-                                            <option value="" disabled>Select the State here</option>
-                                            {states.map((state) => (
-                                                <option key={state.name} value={state.name}>
-                                                    {state.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Landmark" value={propertyDetails.landmark || '—'} editMode={dataEditView}>
+                        <input type="text" name="landmark" value={propertyDetails.landmark}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter landmark (optional)" />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">City</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.city}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="city"
-                                            value={propertyDetails.city}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                            name="city"
-                                            required
-                                        >
-                                            <option value="" disabled>Select the State here</option>
-                                            {cities.map((city) => (
-                                                <option key={city.name} value={city.name}>
-                                                    {city.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="State *" value={propertyDetails.state} editMode={dataEditView}>
+                        <select name="state" value={propertyDetails.state}
+                            onChange={propertyHandleChange} className={selectClass} required>
+                            <option value="" disabled>Select state</option>
+                            {states.map((s) => (
+                                <option key={s.name} value={s.name}>{s.name}</option>
+                            ))}
+                        </select>
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Pincode</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.pincode}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="pincode"
-                                            value={propertyDetails.pincode}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="pincode"
-                                            placeholder="Enter the Pincode here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="City *" value={propertyDetails.city} editMode={dataEditView}>
+                        <select name="city" value={propertyDetails.city}
+                            onChange={propertyHandleChange} className={selectClass} required>
+                            <option value="" disabled>Select city</option>
+                            {cities.map((c) => (
+                                <option key={c.name} value={c.name}>{c.name}</option>
+                            ))}
+                        </select>
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Meal Type</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.selectedMealTypes.join(", ")}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        {mealTypes.map((mealType) => (
-                                            <label
-                                                key={mealType}
-                                                className="relative inline-flex items-center space-x-2 cursor-pointer pe-5"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    className="peer hidden"
-                                                    name="selectedMealTypes"
-                                                    value={mealType}
-                                                    checked={propertyDetails.selectedMealTypes.includes(mealType)}
-                                                    onChange={(e) => propertyHandleChange(e)}
-                                                />
-                                                <span
-                                                    className="w-5 h-5 border-2 border-gray-500 rounded text-xs sm:text-sm-md flex items-center justify-center peer-checked:bg-[#eba312] peer-checked:border-black"
-                                                >{propertyDetails.selectedMealTypes.includes(mealType) && "✔"}</span>
-                                                <span className="peer-checked:text-[#D4A017]">{mealType}</span>
-                                            </label>
-                                        ))}
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Pincode *" value={propertyDetails.pincode} editMode={dataEditView}>
+                        <input type="text" name="pincode" value={propertyDetails.pincode}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter pincode" inputMode="numeric" required />
+                    </DetailRow>
+                </dl>
+            </div>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Rent</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.rent}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="rent"
-                                            value={propertyDetails.rent}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="rent"
-                                            placeholder="Enter the Landmark here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+            {/* Financial Card */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Financial Details</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="Rent *" value={propertyDetails.rent ? `₹${propertyDetails.rent}` : '—'} editMode={dataEditView}>
+                        <input type="text" name="rent" value={propertyDetails.rent}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter rent amount" inputMode="numeric" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Deposit</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.deposit}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="deposit"
-                                            value={propertyDetails.deposit}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="deposit"
-                                            placeholder="Enter the Landmark here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Deposit *" value={propertyDetails.deposit ? `₹${propertyDetails.deposit}` : '—'} editMode={dataEditView}>
+                        <input type="text" name="deposit" value={propertyDetails.deposit}
+                            onChange={propertyHandleChange} className={inputClass}
+                            placeholder="Enter deposit amount" inputMode="numeric" required />
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Rent Free</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.rentFree}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <select
-                                            id="rentFree"
-                                            value={propertyDetails.rentFree}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm text-sm"
-                                            name="rentFree"
-                                            required
-                                        >
-                                            <option value="" disabled>Select the Rent Free type here</option>
-                                            <option value="0">0</option>
-                                            <option value="15000">15000</option>
-                                            <option value="25000">25000</option>
-                                        </select>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Rent Free *" value={propertyDetails.rentFree ? `₹${propertyDetails.rentFree}` : '—'} editMode={dataEditView}>
+                        <select name="rentFree" value={propertyDetails.rentFree}
+                            onChange={propertyHandleChange} className={selectClass} required>
+                            <option value="" disabled>Select rent free amount</option>
+                            <option value="0">0</option>
+                            <option value="15000">15,000</option>
+                            <option value="25000">25,000</option>
+                        </select>
+                    </DetailRow>
+                </dl>
+            </div>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Property Rating</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.rating}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="text"
-                                            id="rating"
-                                            value={propertyDetails.rating}
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                            name="rating"
-                                            placeholder="Enter the Property Name here"
-                                            required />
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+            {/* Meals & Amenities Card */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Meals & Amenities</h3>
+                <dl className="divide-y divide-gray-100">
+                    <DetailRow label="Meal Type"
+                        value={propertyDetails.selectedMealTypes?.length > 0 ? propertyDetails.selectedMealTypes.join(", ") : '—'}
+                        editMode={dataEditView}>
+                        <div className="flex flex-wrap gap-4">
+                            {mealTypes.map((mealType) => (
+                                <label key={mealType} className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="selectedMealTypes" value={mealType}
+                                        checked={propertyDetails.selectedMealTypes?.includes(mealType)}
+                                        onChange={propertyHandleChange}
+                                        className="w-4 h-4 accent-[#D4A017]" />
+                                    <span className="text-sm">{mealType}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </DetailRow>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Amenities</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">{propertyDetails.selectedAmenities.join(", ")}</span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        {amenities.map((amenity) => (
-                                            <label
-                                                key={amenity}
-                                                className="relative inline-flex items-center space-x-2 cursor-pointer pe-5"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    className="peer hidden"
-                                                    name="selectedAmenities"
-                                                    value={amenity}
-                                                    checked={propertyDetails.selectedAmenities.includes(amenity)}
-                                                    onChange={(e) => propertyHandleChange(e)}
-                                                />
-                                                <span
-                                                    className="w-5 h-5 border-2 border-gray-500 rounded text-xs sm:text-sm-md flex items-center justify-center peer-checked:bg-[#eba312] peer-checked:border-black"
-                                                >{propertyDetails.selectedAmenities.includes(amenity) && "✔"}</span>
-                                                <span className="peer-checked:text-[#D4A017]">{amenity}</span>
-                                            </label>
-                                        ))}
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
+                    <DetailRow label="Amenities"
+                        value={propertyDetails.selectedAmenities?.length > 0 ? propertyDetails.selectedAmenities.join(", ") : '—'}
+                        editMode={dataEditView}>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {amenities.map((amenity) => (
+                                <label key={amenity} className="inline-flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" name="selectedAmenities" value={amenity}
+                                        checked={propertyDetails.selectedAmenities?.includes(amenity)}
+                                        onChange={propertyHandleChange}
+                                        className="w-4 h-4 accent-[#D4A017]" />
+                                    <span className="text-sm">{amenity}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </DetailRow>
+                </dl>
+            </div>
 
-                        <tr className="border-b border-white">
-                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Property Image</th>
-                            <td className="flex">
-                                {!dataEditView ? <>
-                                    <span className="py-1 px-2 w-full">
-                                        <Link to={
-                                            typeof propertyDetails.image === 'string'
-                                                ? propertyDetails.image
-                                                : propertyDetails.image
-                                                    ? URL.createObjectURL(propertyDetails.image)
-                                                    : '#'
-                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                            {propertyDetails.image?.name || propertyDetails.image.split('/')[8]}
-                                        </Link>
-                                    </span>
-                                </> : <>
-                                    <span className="py-1 px-2 w-full">
-                                        <input
-                                            type="file"
-                                            id="image"
-                                            name="image"
-                                            accept="image/*, .pdf"
-                                            onChange={(e) => propertyHandleChange(e)}
-                                            className="hidden"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerFileInput('image')}
-                                            className="p-2 text-black w-full border border-gray-300 rounded text-sm bg-white text-left flex gap-3"
-                                        >
-                                            <span className="mt-1 text-lg"><FaUpload /></span> <span className="mt-1 text-sm truncate w-64">{propertyDetails.image?.name || propertyDetails.image.split('/')[8]}</span>
-                                        </button>
-                                    </span>
-                                </>}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            {/* Property Image Card */}
+            <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wide mb-4">Property Image</h3>
+                {!dataEditView ? (
+                    <div>
+                        {propertyDetails.image ? (
+                            <Link to={getFileUrl(propertyDetails.image)}
+                                target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 text-sm text-[#D4A017] hover:underline">
+                                📄 {getFileName(propertyDetails.image)}
+                            </Link>
+                        ) : (
+                            <span className="text-sm text-gray-400">No image uploaded</span>
+                        )}
+                    </div>
+                ) : (
+                    <div>
+                        <input type="file" id="image" name="image" accept="image/*, .pdf"
+                            onChange={propertyHandleChange} className="hidden" />
+                        <button type="button" onClick={() => triggerFileInput('image')}
+                            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded text-sm bg-white hover:bg-gray-50">
+                            <FaUpload className="text-[#D4A017]" />
+                            <span className="truncate max-w-xs">{getFileName(propertyDetails.image)}</span>
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )

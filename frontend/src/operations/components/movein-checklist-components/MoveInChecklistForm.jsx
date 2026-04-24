@@ -20,7 +20,7 @@ function MoveInChecklistForm({ isExpanded, setIsExpanded }) {
     const [itemCategory, setItemCategory] = useState([]);
     const [currentComponent, setCurrentComponent] = useState('MoveInChecklistForm');
     const [moveInChecklistData, setMoveInChecklistData] = useState({
-        tenantId: bedsData?.tenant_data?.id,
+        residentId: bedsData?.resident_data?.id,
         moveInPropertyCondition: [],
         moveInPropertyConditionComments: "",
         moveInElectricalLighting: [],
@@ -153,7 +153,7 @@ function MoveInChecklistForm({ isExpanded, setIsExpanded }) {
                             <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Fill up the details here...</h3>
 
                             <label htmlFor="residentName" className="text-[#D4A017] max-sm:text-sm"><strong>Resident Name:</strong></label>
-                            <input type="text" value={bedsData?.tenant_data?.residentsName || ""} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" readOnly />
+                            <input type="text" value={bedsData?.resident_data?.residentsName || ""} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" readOnly />
 
                             <label htmlFor="roomNo" className="text-[#D4A017] max-sm:text-sm"><strong>Flat Number:</strong></label>
                             <input type="text" value={bedsData?.roomNo || ""} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" readOnly />
@@ -167,12 +167,12 @@ function MoveInChecklistForm({ isExpanded, setIsExpanded }) {
                             <label htmlFor="checkIn" className="text-[#D4A017] max-sm:text-sm"><strong>Move-In Date:</strong></label>
                             <input
                                 type="text"
-                                value={bedsData?.tenant_data?.checkIn ? formatDateToDDMonYYYY(bedsData?.tenant_data?.checkIn) : ""}
+                                value={bedsData?.resident_data?.checkIn ? formatDateToDDMonYYYY(bedsData?.resident_data?.checkIn) : ""}
                                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm text-xs sm:text-sm"
                                 readOnly />
 
                             <label htmlFor="propertyManager" className="text-[#D4A017] max-sm:text-sm"><strong>Audit Done By:</strong></label>
-                            <input type="text" value={bedsData?.tenant_data?.propertyManager || ""} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" readOnly />
+                            <input type="text" value={bedsData?.resident_data?.propertyManager || ""} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" readOnly />
 
                             <button
                                 className="block w-full mt-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle('PropertyCondition')}

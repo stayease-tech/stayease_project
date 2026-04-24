@@ -29,7 +29,7 @@ const BackgroundImages = memo(({ currentIndex }) => {
                     loading="eager"
                     decoding="async"
                     // FIX: Set high priority ONLY for current image
-                    fetchpriority={index === currentIndex ? "high" : "low"}
+                    fetchPriority={index === currentIndex ? "high" : "low"}
                     width="1920"
                     height="1080"
                     aria-hidden="true"
@@ -61,17 +61,6 @@ const EnquiryButton = memo(({ onClick }) => (
 ))
 
 EnquiryButton.displayName = 'EnquiryButton'
-
-const TenantLoginButton = memo(() => (
-    <Link
-        to="/tenant-login"
-        className="py-5 px-8 border border-white/70 text-white hover:bg-white hover:text-black transition-all duration-500 ease-in-out"
-    >
-        Tenant Login
-    </Link>
-))
-
-TenantLoginButton.displayName = 'TenantLoginButton'
 
 const Banner = memo(({ scrollToEnquiry }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -109,9 +98,8 @@ const Banner = memo(({ scrollToEnquiry }) => {
                     </p>
                 </div>
 
-                <div className="mt-8 animate-slide-up flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="mt-8 animate-slide-up flex items-center justify-center">
                     <EnquiryButton onClick={handleEnquiryClick} />
-                    <TenantLoginButton />
                 </div>
             </div>
         </section>

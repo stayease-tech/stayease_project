@@ -95,6 +95,22 @@ def get_user_activity_data(request):
 def owner_form_submit(request):
     if request.method == 'POST':
         try:
+            import re
+            from datetime import datetime
+
+            member_since = request.POST.get('memberSince', '')
+            current_month = datetime.now().strftime('%Y-%m')
+            if member_since and member_since > current_month:
+                return JsonResponse({'success': False, 'message': 'Member Since cannot be a future date.'})
+
+            owner_email = request.POST.get('ownerEmail', '')
+            if owner_email and not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', owner_email):
+                return JsonResponse({'success': False, 'message': 'Please enter a valid email address.'})
+
+            aadhar = request.POST.get('aadharNumber', '')
+            if aadhar and not re.match(r'^\d{12}$', aadhar):
+                return JsonResponse({'success': False, 'message': 'Aadhaar number must be exactly 12 digits.'})
+
             owner_instance = Owner_Data(
                 ownerName=request.POST.get('ownerName'),
                 memberSince=request.POST.get('memberSince'),
@@ -222,13 +238,23 @@ def owner_form_delete(request, id):
     if request.method == 'DELETE':
         try:
             owner_data = Owner_Data.objects.get(id=id)
+
+            property_count = Property_Data.objects.filter(owner_id=id).count()
+            if property_count > 0:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'Cannot delete owner. {property_count} {"property is" if property_count == 1 else "properties are"} still assigned to this owner. Please delete all properties first.'
+                })
+
             owner_data.delete()
             return JsonResponse({'success': True, 'message': 'Owner data deleted successfully!'})
-                
+
+        except Owner_Data.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Owner not found!'})
         except Exception as e:
             print (e)
             return JsonResponse({'success': False, 'message': 'Error deleting owner data. Please try again later!'})
-        
+
     return JsonResponse({'success': False, 'message': 'Invalid request method. DELETE expected!'})
 
 @csrf_exempt
@@ -236,6 +262,33 @@ def property_data_submit(request, id):
     if request.method == 'POST':
         try:
             owner_instance = Owner_Data.objects.get(id=id)
+
+            property_name = request.POST.get('propertyName', '').strip()
+            property_city = request.POST.get('city')
+            property_area = request.POST.get('area')
+
+            if not property_name:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Property name cannot be empty.'
+                })
+
+            pincode = request.POST.get('pincode', '')
+            import re
+            if not re.match(r'^[1-9]\d{5}$', pincode):
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Please enter a valid 6-digit Indian pincode.'
+                })
+
+            if Property_Data.objects.filter(
+                owner=owner_instance,
+                propertyName=property_name
+            ).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': f'A property named "{property_name}" already exists under this owner. Please use a different name.'
+                })
 
             property_instance = Property_Data(
                 owner=owner_instance,
@@ -292,7 +345,7 @@ def property_data_submit(request, id):
                 room_count = item.get("rooms")
                 for _ in range(int(room_count)):
                     room_data.append(Room_Data(
-                        buildingLevel=f"Basement -{basement}",
+                        buildingLevel=f"Basement {basement}",
                         is_basement=True,
                         property=property_instance
                     ))
@@ -366,11 +419,25 @@ def property_form_update(request, id):
         try:
             property_data = Property_Data.objects.get(id=id)
 
+            # Validate property name uniqueness under the same owner on update
+            if 'propertyName' in request.POST:
+                new_name = request.POST['propertyName'].strip()
+                if not new_name:
+                    return JsonResponse({'success': False, 'message': 'Property name cannot be empty.'})
+                if Property_Data.objects.filter(
+                    owner=property_data.owner,
+                    propertyName=new_name
+                ).exclude(id=id).exists():
+                    return JsonResponse({
+                        'success': False,
+                        'message': f'A property named "{new_name}" already exists under this owner. Please use a different name.'
+                    })
+
             uploaded_files = request.FILES
 
             updated_fields = []
 
-            for field in ['propertyName', 'propertyType', 'foundedYear', 'doorBuilding', 'streetAddress', 'area', 'landmark', 'state', 'city', 'pincode', 'rent', 'deposit', 'rentFree', 'rating', 'status']:
+            for field in ['propertyName', 'propertyType', 'foundedYear', 'doorBuilding', 'streetAddress', 'area', 'landmark', 'state', 'city', 'pincode', 'rent', 'deposit', 'rentFree', 'rating', 'status', 'noOfBasements', 'noOfFloors', 'noOfRooms']:
                 if field in request.POST:
                     new_value = request.POST[field]
                     current_value = getattr(property_data, field)
@@ -424,16 +491,13 @@ def property_form_delete(request, id):
         try:
             property_data = Property_Data.objects.get(id=id)
 
-            file_fields = ['saleDeed', 'ebill', 'taxReceipt', 'waterBill', 'loi', 'agreement']
-
-            for field_name in file_fields:
-                file_field = getattr(property_data, field_name)
-                if file_field:
-                    file_field.delete()
-
-            property_data.property.all().delete()
-
+            # Update owner's property count before deletion
+            owner = property_data.owner
             property_data.delete()
+
+            if owner:
+                owner.noOfProperties = Property_Data.objects.filter(owner=owner).count()
+                owner.save()
 
             return JsonResponse({'success': True, 'message': 'Property data deleted successfully!'})
                 

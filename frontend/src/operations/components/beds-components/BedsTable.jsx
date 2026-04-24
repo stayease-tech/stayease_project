@@ -46,7 +46,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
 
                 setBedsData(
                     (response?.data?.beds_table || [])
-                        .filter(item => item?.salesStatus === "Completed" && item?.tenant_data?.tenantStatus === 'Active')
+                        .filter(item => item?.salesStatus === "Completed" && item?.resident_data?.residentStatus === 'Active')
                         .sort((a, b) => {
                             if (a.roomNo !== b.roomNo) {
                                 return a.roomNo.localeCompare(b.roomNo);
@@ -65,7 +65,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
     }, []);
 
     const viewAgreementHandle = (bedsData) => {
-        navigate(`/operations/operations-agreement-pdf/${bedsData?.tenant_data?.id}`, { state: { bedsData, type: 'BedsTable' } });
+        navigate(`/operations/operations-agreement-pdf/${bedsData?.resident_data?.id}`, { state: { bedsData, type: 'BedsTable' } });
     }
 
     // const outputData = bedsData.map(data => ({
@@ -85,26 +85,26 @@ function BedsTable({ isExpanded, setIsExpanded }) {
     //     ['DTH Number']: data.tataSkyNo,
     //     ['Wifi Number']: data.wifiNo,
     //     ['Bescom Meter Number']: data.bescomMeterNo,
-    //     ['Property Manager']: data?.tenant_data.propertyManager,
-    //     ['Sales Manager']: data?.tenant_data.salesManager,
-    //     ['Comfort Class']: data?.tenant_data.comfortClass,
-    //     ['Meal Type']: data?.tenant_data.mealType,
-    //     ['Resident Name']: data?.tenant_data.residentsName,
-    //     ['Phone Number']: data?.tenant_data.phoneNumber,
-    //     ['Email ID']: data?.tenant_data.email,
-    //     ['KYC Type']: data?.tenant_data.kycType,
-    //     ['Aadhar Number']: data?.tenant_data.aadharNumber,
-    //     ['Aadhar Status']: data?.tenant_data.aadharStatus,
-    //     ['PAN Number']: data?.tenant_data.panNumber,
-    //     ['PAN Status']: data?.tenant_data.panStatus,
-    //     ['Check-In']: data?.tenant_data.checkIn,
-    //     ['Check-Out']: data?.tenant_data.checkOut,
-    //     ['Total Deposit Paid']: data?.tenant_data.totalDepositPaid,
-    //     ['Rent Per Month']: data?.tenant_data.rentPerMonth
+    //     ['Property Manager']: data?.resident_data.propertyManager,
+    //     ['Sales Manager']: data?.resident_data.salesManager,
+    //     ['Comfort Class']: data?.resident_data.comfortClass,
+    //     ['Meal Type']: data?.resident_data.mealType,
+    //     ['Resident Name']: data?.resident_data.residentsName,
+    //     ['Phone Number']: data?.resident_data.phoneNumber,
+    //     ['Email ID']: data?.resident_data.email,
+    //     ['KYC Type']: data?.resident_data.kycType,
+    //     ['Aadhar Number']: data?.resident_data.aadharNumber,
+    //     ['Aadhar Status']: data?.resident_data.aadharStatus,
+    //     ['PAN Number']: data?.resident_data.panNumber,
+    //     ['PAN Status']: data?.resident_data.panStatus,
+    //     ['Check-In']: data?.resident_data.checkIn,
+    //     ['Check-Out']: data?.resident_data.checkOut,
+    //     ['Total Deposit Paid']: data?.resident_data.totalDepositPaid,
+    //     ['Rent Per Month']: data?.resident_data.rentPerMonth
     // }))
 
     const updateBedsDataHandle = (bedsData, status) => {
-        status === 'Pending' ? navigate(`/operations/operations-moveinchecklist-form/${bedsData?.tenant_data?.id}`, { state: { bedsData } }) : navigate(`/operations/operations-checklistfeedback-table`, { state: { bedsData } });
+        status === 'Pending' ? navigate(`/operations/operations-moveinchecklist-form/${bedsData?.resident_data?.id}`, { state: { bedsData } }) : navigate(`/operations/operations-checklistfeedback-table`, { state: { bedsData } });
     };
 
     const generateLink = (bedData) => {
@@ -112,11 +112,11 @@ function BedsTable({ isExpanded, setIsExpanded }) {
             id: bedData?.id,
             roomNo: bedData?.roomNo,
             bedLabel: bedData?.bedLabel,
-            residentsName: bedData?.tenant_data?.residentsName,
-            phoneNumber: bedData?.tenant_data?.phoneNumber
+            residentsName: bedData?.resident_data?.residentsName,
+            phoneNumber: bedData?.resident_data?.phoneNumber
         }).toString();
 
-        return (`${window.location.origin}/operations/operations-propertycomplaint-form/${bedData?.tenant_data?.id}?${params}`);
+        return (`${window.location.origin}/operations/operations-propertycomplaint-form/${bedData?.resident_data?.id}?${params}`);
     }
 
     const copyLinkHandle = async (data) => {
@@ -134,7 +134,7 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                 <Navbar isExpanded={isExpanded} />
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-                    <div className="max-w-6xl mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA TABLE</h1>
 
                         <div className="sm:flex justify-end">
@@ -189,17 +189,17 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                             </td>
                                             <td className="border border-gray-300 px-2 py-2 text-center">
                                                 <div className="flex justify-center">
-                                                    {(bedData?.tenant_data?.moveInChecklistStatus === 'Pending') ?
+                                                    {(bedData?.resident_data?.moveInChecklistStatus === 'Pending') ?
                                                         <div className="flex justify-evenly">
                                                             <div>
-                                                                {bedData?.tenant_data?.moveInChecklistStatus}
+                                                                {bedData?.resident_data?.moveInChecklistStatus}
                                                             </div>
                                                             <IoMdAddCircle className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => updateBedsDataHandle(bedData, 'Pending')} />
                                                         </div>
                                                         :
                                                         <div className="flex justify-evenly">
                                                             <div>
-                                                                {bedData?.tenant_data?.moveInChecklistStatus}
+                                                                {bedData?.resident_data?.moveInChecklistStatus}
                                                             </div>
                                                             <FaEye className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => updateBedsDataHandle(bedData, 'Completed')} />
                                                         </div>

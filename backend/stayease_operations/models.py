@@ -1,5 +1,5 @@
 from django.db import models
-from stayease_sales.models import Tenant_Data
+from stayease_sales.models import resident_Data
 from stayease_accounts.models import Vendor_Detail
 
 class User_Activity_Data(models.Model):
@@ -12,7 +12,7 @@ class User_Login_Data(models.Model):
     logout_time = models.DateTimeField(blank=True, null=True)
     
 class MoveInChecklistDetail(models.Model):
-    moveInChecklist_bed = models.ForeignKey(Tenant_Data, related_name="moveInChecklist_bed", on_delete=models.CASCADE)
+    moveInChecklist_bed = models.ForeignKey(resident_Data, related_name="moveInChecklist_bed", on_delete=models.CASCADE)
     moveInPropertyCondition = models.CharField(blank=True, null=True)
     moveInPropertyConditionComments = models.TextField(blank=True, null=True)
     moveInElectricalLighting = models.CharField(blank=True, null=True)
@@ -29,7 +29,7 @@ class MoveInChecklistDetail(models.Model):
     last_activity = models.DateTimeField(auto_now=True)
 
 class MoveInFeedback(models.Model):
-    moveInFeedback_bed = models.ForeignKey(Tenant_Data, related_name="moveInFeedback_bed", on_delete=models.CASCADE)
+    moveInFeedback_bed = models.ForeignKey(resident_Data, related_name="moveInFeedback_bed", on_delete=models.CASCADE)
     cleanlinessRoomWashroom = models.IntegerField(blank=True, null=True)
     functionalityAppliancesUtilities = models.IntegerField(blank=True, null=True)
     comfortSetupRoom = models.IntegerField(blank=True, null=True)
@@ -41,7 +41,7 @@ class MoveInFeedback(models.Model):
     last_activity = models.DateTimeField(auto_now=True)
 
 class MoveOutChecklistDetail(models.Model):
-    moveOutChecklist_bed = models.ForeignKey(Tenant_Data, related_name="moveOutChecklist_bed", on_delete=models.CASCADE)
+    moveOutChecklist_bed = models.ForeignKey(resident_Data, related_name="moveOutChecklist_bed", on_delete=models.CASCADE)
     moveOutPropertyCondition = models.CharField(blank=True, null=True)
     moveOutPropertyConditionComments = models.TextField(blank=True, null=True)
     moveOutElectricalLighting = models.CharField(blank=True, null=True)
@@ -58,7 +58,7 @@ class MoveOutChecklistDetail(models.Model):
     last_activity = models.DateTimeField(auto_now=True)
 
 class MoveOutFeedback(models.Model):
-    moveOutFeedback_bed = models.ForeignKey(Tenant_Data, related_name="moveOutFeedback_bed", on_delete=models.CASCADE)
+    moveOutFeedback_bed = models.ForeignKey(resident_Data, related_name="moveOutFeedback_bed", on_delete=models.CASCADE)
     overallStayExperience = models.IntegerField(blank=True, null=True)
     cleanlinessPropertyStay = models.IntegerField(blank=True, null=True)
     responsivenessPropertyTeam = models.IntegerField(blank=True, null=True)
@@ -79,7 +79,7 @@ class EmailThread(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class PropertyComplaintDetail(models.Model):
-    propertyComplaint_bed = models.ForeignKey(Tenant_Data, related_name="propertyComplaint_bed", on_delete=models.CASCADE)
+    propertyComplaint_bed = models.ForeignKey(resident_Data, related_name="propertyComplaint_bed", on_delete=models.CASCADE)
     residentsName = models.TextField(blank=True, null=True)
     phoneNumber = models.TextField(blank=True, null=True)
     issueDesc = models.TextField(blank=True, null=True)

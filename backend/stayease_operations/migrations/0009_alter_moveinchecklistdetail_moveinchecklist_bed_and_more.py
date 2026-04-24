@@ -8,33 +8,33 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('stayease_operations', '0008_propertycomplaintdetail_phonenumber_and_more'),
-        ('stayease_sales', '0006_remove_tenant_data_salesstatus'),
+        ('stayease_sales', '0006_remove_resident_data_salesstatus'),
     ]
 
     operations = [
         migrations.AlterField(
             model_name='moveinchecklistdetail',
             name='moveInChecklist_bed',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveInChecklist_bed', to='stayease_sales.tenant_data'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveInChecklist_bed', to='stayease_sales.resident_data'),
         ),
         migrations.AlterField(
             model_name='moveinfeedback',
             name='moveInFeedback_bed',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveInFeedback_bed', to='stayease_sales.tenant_data'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveInFeedback_bed', to='stayease_sales.resident_data'),
         ),
         migrations.AlterField(
             model_name='moveoutchecklistdetail',
             name='moveOutChecklist_bed',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveOutChecklist_bed', to='stayease_sales.tenant_data'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveOutChecklist_bed', to='stayease_sales.resident_data'),
         ),
         migrations.AlterField(
             model_name='moveoutfeedback',
             name='moveOutFeedback_bed',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveOutFeedback_bed', to='stayease_sales.tenant_data'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='moveOutFeedback_bed', to='stayease_sales.resident_data'),
         ),
         migrations.AlterField(
             model_name='propertycomplaintdetail',
             name='propertyComplaint_bed',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='propertyComplaint_bed', to='stayease_sales.tenant_data'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='propertyComplaint_bed', to='stayease_sales.resident_data'),
         ),
     ]

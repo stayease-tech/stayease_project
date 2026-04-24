@@ -41,14 +41,18 @@ index.html
 - API requests proxied to Django backend at `http://127.0.0.1:8000` in dev (Vite proxy)
 - Smart proxy logic: frontend routes (dashboards, table pages) stay in SPA; API calls pass through to Django
 
-## Recent Progress (2026-04-22)
+## Recent Progress (2026-04-23)
 
-- Added global date input guard (`src/shared/dateInput.js`) to prevent browser date overflow edge cases (for example year 275760) and enforce a common range (`1900-01-01` to `2099-12-31`).
-- Enabled app-wide date guard bootstrap in `src/main.jsx`.
-- Added explicit date-range validation + min/max constraints in:
-      - `src/sales/components/beds-components/TenantForm.jsx`
-      - `src/sales/components/beds-components/TenantDetails.jsx`
-- Fixed Vite proxy route classification so `/sales/tenant-form-submit/` is always proxied to Django (no frontend 404 due to route-prefix collision).
+- **Completed resident refactoring** across all frontend code (formerly "tenant"):
+  - All route definitions use `/resident/*`, `/resident-login`
+  - All component files named `Resident*.jsx` (ResidentForm, ResidentsTable, ResidentDetails, ResidentDashboard, etc.)
+  - All folder paths use `/src/resident/`, related templates updated
+  - Updated `src/auth/AuthContext.jsx`: `loginresident()` function, resident token keys, API_PREFIX_MAP
+  - Updated `src/resident/residentApi.js`: Base URL `/resident-portal/`, JWT interceptors, token refresh logic
+  - All lazy-imported components corrected to match actual renamed file paths
+  - Frontend build validated: 2352 modules transformed successfully
+- Date validation: Global date input guard enforces range `1900-01-01` to `2099-12-31` across all forms
+- Resident portal UX: Discreet login via footer/mobile nav at `/resident-login`, full portal access at `/resident/*`
 
 ---
 
@@ -96,7 +100,7 @@ src/
 │
 ├── sales/                  # Sales Portal
 │   └── components/
-│       ├── beds-components/         # Beds, tenants, rent, agreements
+│       ├── beds-components/         # Beds, residents, rent, agreements
 │       ├── lead-components/         # Lead tracking (form, table, details)
 │       └── expense-components/      # Expense forms
 │
@@ -193,9 +197,9 @@ src/
 |-------|---------|
 | `dashboard` | Sales dashboard |
 | `sales-beds-table` | Beds overview |
-| `sales-tenants-table` | Tenants list |
-| `sales-tenant-form/:id` | Add/edit tenant |
-| `sales-tenant-details/:id` | Tenant details |
+| `sales-residents-table` | Residents list |
+| `sales-resident-form/:id` | Add/edit resident |
+| `sales-resident-details/:id` | Resident details |
 | `sales-lead-form` | Add lead |
 | `sales-lead-table` | Leads list |
 | `sales-lead-details/:id` | Lead details |
@@ -278,7 +282,7 @@ npm install
 npm run dev       # Starts at http://localhost:5173
 ```
 
-Vite proxies API requests (`/accounts/`, `/operations/`, `/sales/`, `/supply/`, `/partners/`, `/contract/`, `/tenant-details/`) to Django. Frontend routes (dashboards, table pages) are served by the SPA.
+Vite proxies API requests (`/accounts/`, `/operations/`, `/sales/`, `/supply/`, `/partners/`, `/contract/`, `/resident-details/`, `/resident-portal/`, `/api/`) to Django. Frontend routes (dashboards, table pages) are served by the SPA.
 
 ### Testing on iPhone (Safari)
 

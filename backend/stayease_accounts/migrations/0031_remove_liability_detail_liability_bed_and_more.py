@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('stayease_accounts', '0030_expense_detail_email_thread_id'),
-        ('stayease_sales', '0007_tenant_data_tenantstatus'),
+        ('stayease_sales', '0007_resident_data_residentstatus'),
     ]
 
     operations = [
@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='liability_detail',
-            name='liability_tenant',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='liability_tenant', to='stayease_sales.tenant_data'),
+            name='liability_resident',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='liability_resident', to='stayease_sales.resident_data'),
         ),
     ]

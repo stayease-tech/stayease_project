@@ -9,21 +9,21 @@ import Cookies from 'js-cookie';
 function LiabilityData({ isExpanded, setIsExpanded }) {
     const navigate = useNavigate();
     const location = useLocation();
-    const tenantData = location.state?.tenantData;
+    const residentData = location.state?.residentData;
     const { id } = useParams();
 
     const [liabiltyData, setLiabiltyData] = useState({
-        status: tenantData?.status || '',
-        checkSendEmail: tenantData?.checkSendEmail || false,
-        amount: tenantData?.amount || '',
-        utrNumber: tenantData?.utrNumber || '',
-        transferredDate: tenantData?.transferredDate || ''
+        status: residentData?.status || '',
+        checkSendEmail: residentData?.checkSendEmail || false,
+        amount: residentData?.amount || '',
+        utrNumber: residentData?.utrNumber || '',
+        transferredDate: residentData?.transferredDate || ''
     });
 
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    const [originalData, setOriginalData] = useState(tenantData || {});
+    const [originalData, setOriginalData] = useState(residentData || {});
 
     const editHandle = () => {
         setDataEditView(!dataEditView)
@@ -47,8 +47,8 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
         return `${day}-${month}-${year}`;
     }
 
-    const viewAgreementHandle = (tenantData) => {
-        navigate(`/accounts/accounts-agreement-pdf/${tenantData?.id}`, { state: { tenantData, type: 'LiabilityData' } });
+    const viewAgreementHandle = (residentData) => {
+        navigate(`/accounts/accounts-agreement-pdf/${residentData?.id}`, { state: { residentData, type: 'LiabilityData' } });
     }
 
     const getChangedData = () => {
@@ -84,7 +84,7 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
 
         setIsSaving(true);
 
-        changedData['tenantId'] = tenantData?.tenantId;
+        changedData['residentId'] = residentData?.residentId;
 
         try {
             const response = await axios.put(
@@ -147,51 +147,51 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
                                 <tbody>
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Name</th>
-                                        <td className="py-1 px-2">{tenantData?.propertyName || '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.propertyName || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Guest Name</th>
-                                        <td className="py-1 px-2">{tenantData?.residentsName || '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.residentsName || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Check‑in Date</th>
-                                        <td className="py-1 px-2">{tenantData?.checkIn ? formatDateToDDMonYYYY(tenantData?.checkIn) : '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.checkIn ? formatDateToDDMonYYYY(residentData?.checkIn) : '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Check‑out Date</th>
-                                        <td className="py-1 px-2">{tenantData?.checkOut ? formatDateToDDMonYYYY(tenantData?.checkOut) : '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.checkOut ? formatDateToDDMonYYYY(residentData?.checkOut) : '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">View Agreement</th>
-                                        <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(tenantData)}>{tenantData?.residentsName ? `${tenantData?.residentsName.replace(/\s+/g, '')}_Contract.pdf` : '-'}</td>
+                                        <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(residentData)}>{residentData?.residentsName ? `${residentData?.residentsName.replace(/\s+/g, '')}_Contract.pdf` : '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">KYC Type</th>
-                                        <td className="py-1 px-2">{tenantData?.kycType || '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.kycType || '-'}</td>
                                     </tr>
 
-                                    {tenantData?.kycType === 'Aadhar' && <>
+                                    {residentData?.kycType === 'Aadhar' && <>
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Aadhar Number</th>
-                                            <td className="py-1 px-2">{tenantData?.aadharNumber || '-'}</td>
+                                            <td className="py-1 px-2">{residentData?.aadharNumber || '-'}</td>
                                         </tr>
 
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Front Copy</th>
                                             <td className="py-1 px-2">
                                                 <Link to={
-                                                    typeof tenantData?.aadharFrontCopy === 'string'
-                                                        ? tenantData?.aadharFrontCopy
-                                                        : tenantData?.aadharFrontCopy
-                                                            ? URL.createObjectURL(tenantData?.aadharFrontCopy)
+                                                    typeof residentData?.aadharFrontCopy === 'string'
+                                                        ? residentData?.aadharFrontCopy
+                                                        : residentData?.aadharFrontCopy
+                                                            ? URL.createObjectURL(residentData?.aadharFrontCopy)
                                                             : '#'
                                                 } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(tenantData?.aadharFrontCopy || '').split('/')[8] || '-'}
+                                                    {(residentData?.aadharFrontCopy || '').split('/')[8] || '-'}
                                                 </Link>
                                             </td>
                                         </tr>
@@ -200,35 +200,35 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Back Copy</th>
                                             <td className="py-1 px-2">
                                                 <Link to={
-                                                    typeof tenantData?.aadharBackCopy === 'string'
-                                                        ? tenantData?.aadharBackCopy
-                                                        : tenantData?.aadharBackCopy
-                                                            ? URL.createObjectURL(tenantData?.aadharBackCopy)
+                                                    typeof residentData?.aadharBackCopy === 'string'
+                                                        ? residentData?.aadharBackCopy
+                                                        : residentData?.aadharBackCopy
+                                                            ? URL.createObjectURL(residentData?.aadharBackCopy)
                                                             : '#'
                                                 } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(tenantData?.aadharBackCopy || '').split('/')[8] || '-'}
+                                                    {(residentData?.aadharBackCopy || '').split('/')[8] || '-'}
                                                 </Link>
                                             </td>
                                         </tr>
                                     </>}
 
-                                    {tenantData?.kycType === 'PAN' && <>
+                                    {residentData?.kycType === 'PAN' && <>
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">PAN Number</th>
-                                            <td className="py-1 px-2">{tenantData?.panNumber || '-'}</td>
+                                            <td className="py-1 px-2">{residentData?.panNumber || '-'}</td>
                                         </tr>
 
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Front Copy</th>
                                             <td className="py-1 px-2">
                                                 <Link to={
-                                                    typeof tenantData?.panFrontCopy === 'string'
-                                                        ? tenantData?.panFrontCopy
-                                                        : tenantData?.panFrontCopy
-                                                            ? URL.createObjectURL(tenantData?.panFrontCopy)
+                                                    typeof residentData?.panFrontCopy === 'string'
+                                                        ? residentData?.panFrontCopy
+                                                        : residentData?.panFrontCopy
+                                                            ? URL.createObjectURL(residentData?.panFrontCopy)
                                                             : '#'
                                                 } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(tenantData?.panFrontCopy || '').split('/')[8] || '-'}
+                                                    {(residentData?.panFrontCopy || '').split('/')[8] || '-'}
                                                 </Link>
                                             </td>
                                         </tr>
@@ -237,13 +237,13 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Back Copy</th>
                                             <td className="py-1 px-2">
                                                 <Link to={
-                                                    typeof tenantData?.panBackCopy === 'string'
-                                                        ? tenantData?.panBackCopy
-                                                        : tenantData?.panBackCopy
-                                                            ? URL.createObjectURL(tenantData?.panBackCopy)
+                                                    typeof residentData?.panBackCopy === 'string'
+                                                        ? residentData?.panBackCopy
+                                                        : residentData?.panBackCopy
+                                                            ? URL.createObjectURL(residentData?.panBackCopy)
                                                             : '#'
                                                 } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(tenantData?.panBackCopy || '').split('/')[8] || '-'}
+                                                    {(residentData?.panBackCopy || '').split('/')[8] || '-'}
                                                 </Link>
                                             </td>
                                         </tr>
@@ -251,22 +251,22 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deposit</th>
-                                        <td className="py-1 px-2">{tenantData?.totalDepositPaid || '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.totalDepositPaid || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deductions</th>
-                                        <td className="py-1 px-2">{tenantData?.residentDeductions || '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.residentDeductions || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Net Payout</th>
-                                        <td className="py-1 px-2">{(Number(tenantData?.totalDepositPaid) - Number(tenantData?.residentDeductions)) || 0}</td>
+                                        <td className="py-1 px-2">{(Number(residentData?.totalDepositPaid) - Number(residentData?.residentDeductions)) || 0}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Payout Date</th>
-                                        <td className="py-1 px-2">{tenantData?.payoutDate ? formatDateToDDMonYYYY(tenantData?.payoutDate) : '-'}</td>
+                                        <td className="py-1 px-2">{residentData?.payoutDate ? formatDateToDDMonYYYY(residentData?.payoutDate) : '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
@@ -308,7 +308,7 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
                                                     </span>
 
                                                     <span className="text-xs sm:text-sm">
-                                                        {tenantData?.checkSendEmail === true ? 'Send email again' : 'Send email'}
+                                                        {residentData?.checkSendEmail === true ? 'Send email again' : 'Send email'}
                                                     </span>
                                                 </label>
                                             </td>

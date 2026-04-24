@@ -36,14 +36,17 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
         rentFree: propertyData?.rentFree || '',
         rating: propertyData?.rating || '',
         selectedAmenities: propertyData?.selectedAmenities || [],
-        image: propertyData?.image || '',
+        image: propertyData?.image || null,
         status: propertyData?.status || '',
-        saleDeed: propertyData?.saleDeed || '',
-        ebill: propertyData?.ebill || '',
-        taxReceipt: propertyData?.taxReceipt || '',
-        waterBill: propertyData?.waterBill || '',
-        loi: propertyData?.loi || '',
-        agreement: propertyData?.agreement || '',
+        noOfBasements: propertyData?.noOfBasements || '0',
+        noOfFloors: propertyData?.noOfFloors || '0',
+        noOfRooms: propertyData?.noOfRooms || '0',
+        saleDeed: propertyData?.saleDeed || null,
+        ebill: propertyData?.ebill || null,
+        taxReceipt: propertyData?.taxReceipt || null,
+        waterBill: propertyData?.waterBill || null,
+        loi: propertyData?.loi || null,
+        agreement: propertyData?.agreement || null,
     });
 
     const [currentStep, setCurrentStep] = useState('propertyData');
@@ -126,6 +129,27 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
                 };
             }
 
+            if (name === 'pincode') {
+                return {
+                    ...prevState,
+                    [name]: value.replace(/\D/g, '').slice(0, 6)
+                };
+            }
+
+            if (name === 'foundedYear') {
+                return {
+                    ...prevState,
+                    [name]: value.replace(/\D/g, '').slice(0, 4)
+                };
+            }
+
+            if (name === 'rent' || name === 'deposit' || name === 'rentFree' || name === 'noOfBasements' || name === 'noOfFloors' || name === 'noOfRooms') {
+                return {
+                    ...prevState,
+                    [name]: value.replace(/\D/g, '')
+                };
+            }
+
             return {
                 ...prevState,
                 [name]: value
@@ -192,10 +216,11 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
 
     const handlePropertyDelete = async (e) => {
         e.preventDefault();
-        setIsDeleting(true);
 
         const confirmDelete = window.confirm("Are you sure you want to delete this item?");
         if (!confirmDelete) return;
+
+        setIsDeleting(true);
 
         try {
             const response = await axios.delete(`/supply/property-form-delete/${id}/`, {
@@ -227,48 +252,78 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
 
                 <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handlePropertyUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">SUPPLY PROPERTY DETAILS</h1>
-
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => (propertyId === 0) ?
-                                    navigate(`/supply/supply-property-table`)
-                                    :
-                                    navigate(`/supply/supply-property-table/${propertyData.owner_id}`)}
-                                type="button">Prev</button>
-
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()}
-                                    type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
-
-                                <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving || isDeleting}
-                                    type={dataEditView ? "submit" : "button"}
-                                    onClick={!dataEditView ? handlePropertyDelete : null}
-                                >
-                                    {dataEditView ? (isSaving ? "Saving Details..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
-                                </button>
-                            </div>
+                        {/* Header */}
+                        <div className="mb-6">
+                            <h1 className="text-xl lg:text-2xl font-semibold text-[#D4A017]">
+                                {propertyData?.propertyName || 'Property Details'}
+                            </h1>
+                            <p className="text-sm text-stone-400 mt-1">
+                                {propertyData?.serial_number && `ID: ${propertyData.serial_number}`}
+                                {propertyData?.ownerName && ` • Owner: ${propertyData.ownerName}`}
+                                {propertyData?.city && ` • ${propertyData.area}, ${propertyData.city}`}
+                            </p>
                         </div>
 
-                        {currentStep === 'propertyData' && <>
-                            <PropertyData dataEditView={dataEditView} propertyDetails={propertyDetails} propertyHandleChange={propertyHandleChange} triggerFileInput={triggerFileInput} />
+                        {/* Action Buttons */}
+                        <div className="flex flex-wrap gap-3 mb-6">
+                            <button
+                                className="px-4 py-2 bg-gray-100 text-slate-700 text-sm font-medium rounded hover:bg-gray-200"
+                                onClick={() => (propertyId === 0)
+                                    ? navigate(`/supply/supply-property-table`)
+                                    : navigate(`/supply/supply-property-table/${propertyData.owner_id}`)}
+                                type="button">
+                                ← Back
+                            </button>
 
                             <button
-                                className="block w-full px-4 py-2 mt-5 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
-                                onClick={() => dataHandleToggle('propertyKyc')}
-                                type="button">Next</button>
-                        </>}
+                                className="px-4 py-2 bg-[#D4A017] text-white text-sm font-medium rounded hover:bg-[#B8860B]"
+                                onClick={() => editHandle()}
+                                type="button">
+                                {!dataEditView ? 'Edit' : 'Cancel Edit'}
+                            </button>
 
-                        {currentStep === 'propertyKyc' && <>
-                            <PropertyKyc dataEditView={dataEditView} propertyDetails={propertyDetails} propertyData={propertyData} propertyHandleChange={propertyHandleChange} triggerFileInput={triggerFileInput} />
+                            {dataEditView ? (
+                                <button
+                                    className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 disabled:opacity-50"
+                                    disabled={isSaving}
+                                    type="submit">
+                                    {isSaving ? "Saving..." : "Save Changes"}
+                                </button>
+                            ) : (
+                                <button
+                                    className="px-4 py-2 bg-red-500 text-white text-sm font-medium rounded hover:bg-red-600 disabled:opacity-50"
+                                    disabled={isDeleting}
+                                    type="button"
+                                    onClick={handlePropertyDelete}>
+                                    {isDeleting ? "Deleting..." : "Delete"}
+                                </button>
+                            )}
+                        </div>
 
+                        {/* Tab Navigation */}
+                        <div className="flex border-b border-gray-200 mb-6">
                             <button
-                                className="block w-full px-4 py-2 mt-5 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
+                                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${currentStep === 'propertyData' ? 'border-[#D4A017] text-[#D4A017]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}
                                 onClick={() => dataHandleToggle('propertyData')}
-                                type="button">Prev</button>
-                        </>}
+                                type="button">
+                                Property Info
+                            </button>
+                            <button
+                                className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${currentStep === 'propertyKyc' ? 'border-[#D4A017] text-[#D4A017]' : 'border-transparent text-stone-400 hover:text-stone-600'}`}
+                                onClick={() => dataHandleToggle('propertyKyc')}
+                                type="button">
+                                Documents & Building
+                            </button>
+                        </div>
+
+                        {/* Tab Content */}
+                        {currentStep === 'propertyData' && (
+                            <PropertyData dataEditView={dataEditView} propertyDetails={propertyDetails} propertyHandleChange={propertyHandleChange} triggerFileInput={triggerFileInput} />
+                        )}
+
+                        {currentStep === 'propertyKyc' && (
+                            <PropertyKyc dataEditView={dataEditView} propertyDetails={propertyDetails} propertyData={propertyData} propertyHandleChange={propertyHandleChange} triggerFileInput={triggerFileInput} />
+                        )}
                     </form>
                 </div>
             </div>

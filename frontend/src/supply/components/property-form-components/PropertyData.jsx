@@ -15,7 +15,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
         <div className="mb-[20px]">
             <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Add Property Name, Address, Amenities and more...</h3>
 
-            <label htmlFor={`propertyName`} className="text-[#D4A017] max-sm:text-sm"><strong>Property Name:</strong></label>
+            <label htmlFor={`propertyName`} className="text-[#D4A017] max-sm:text-sm"><strong>Property Name: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`propertyName`}
@@ -26,7 +26,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 placeholder="Enter the Property Name here"
                 required />
 
-            <label htmlFor={`propertyType`} className="text-[#D4A017] max-sm:text-sm"><strong>Property Type:</strong></label>
+            <label htmlFor={`propertyType`} className="text-[#D4A017] max-sm:text-sm"><strong>Property Type: <span className="text-red-500">*</span></strong></label>
             <select
                 id={`propertyType`}
                 value={propertyData.propertyType}
@@ -40,7 +40,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 <option value="Apartment">Apartment</option>
             </select>
 
-            <label htmlFor={`foundedYear`} className="text-[#D4A017] max-sm:text-sm"><strong>Founded Year:</strong></label>
+            <label htmlFor={`foundedYear`} className="text-[#D4A017] max-sm:text-sm"><strong>Founded Year: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`foundedYear`}
@@ -52,7 +52,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 placeholder="Enter the Founded Year here"
                 required />
 
-            <label htmlFor={`doorBuilding`} className="text-[#D4A017] max-sm:text-sm"><strong>Building Number:</strong></label>
+            <label htmlFor={`doorBuilding`} className="text-[#D4A017] max-sm:text-sm"><strong>Building Number: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`doorBuilding`}
@@ -63,7 +63,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 placeholder="Enter the Building Number here"
                 required />
 
-            <label htmlFor={`streetAddress`} className="text-[#D4A017] max-sm:text-sm"><strong>Street Address:</strong></label>
+            <label htmlFor={`streetAddress`} className="text-[#D4A017] max-sm:text-sm"><strong>Street Address: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`streetAddress`}
@@ -74,7 +74,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 placeholder="Enter the Street Address here"
                 required />
 
-            <label htmlFor={`area`} className="text-[#D4A017] max-sm:text-sm"><strong>Area:</strong></label>
+            <label htmlFor={`area`} className="text-[#D4A017] max-sm:text-sm"><strong>Area: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`area`}
@@ -95,7 +95,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 name={`landmark`}
                 placeholder="Enter your Landmark here" />
 
-            <label htmlFor={`state`} className="text-[#D4A017] max-sm:text-sm"><strong>State:</strong></label>
+            <label htmlFor={`state`} className="text-[#D4A017] max-sm:text-sm"><strong>State: <span className="text-red-500">*</span></strong></label>
             <select
                 id={`state`}
                 value={propertyData.state}
@@ -112,7 +112,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 ))}
             </select>
 
-            <label htmlFor={`city`} className="text-[#D4A017] max-sm:text-sm"><strong>City:</strong></label>
+            <label htmlFor={`city`} className="text-[#D4A017] max-sm:text-sm"><strong>City: <span className="text-red-500">*</span></strong></label>
             <select
                 id={`city`}
                 value={propertyData.city}
@@ -129,7 +129,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 ))}
             </select>
 
-            <label htmlFor={`pincode`} className="text-[#D4A017] max-sm:text-sm"><strong>Pincode:</strong></label>
+            <label htmlFor={`pincode`} className="text-[#D4A017] max-sm:text-sm"><strong>Pincode: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`pincode`}
@@ -137,7 +137,9 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 onChange={propertyHandleChange}
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name={`pincode`}
-                placeholder="Enter the Pincode here"
+                placeholder="Enter 6-digit Indian Pincode"
+                maxLength={6}
+                inputMode="numeric"
                 required />
 
             <div className="mb-3">
@@ -164,7 +166,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 ))}
             </div>
 
-            <label htmlFor={`rent`} className="text-[#D4A017] max-sm:text-sm"><strong>Rent:</strong></label>
+            <label htmlFor={`rent`} className="text-[#D4A017] max-sm:text-sm"><strong>Rent: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`rent`}
@@ -173,9 +175,10 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name={`rent`}
                 placeholder="Enter the Rent here"
+                inputMode="numeric"
                 required />
 
-            <label htmlFor={`deposit`} className="text-[#D4A017] max-sm:text-sm"><strong>Deposit:</strong></label>
+            <label htmlFor={`deposit`} className="text-[#D4A017] max-sm:text-sm"><strong>Deposit: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`deposit`}
@@ -184,9 +187,10 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name={`deposit`}
                 placeholder="Enter the Deposit here"
+                inputMode="numeric"
                 required />
 
-            <label htmlFor={`rentFree`} className="text-[#D4A017] max-sm:text-sm"><strong>Rent Free Period:</strong></label>
+            <label htmlFor={`rentFree`} className="text-[#D4A017] max-sm:text-sm"><strong>Rent Free Period: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id={`rentFree`}
@@ -195,9 +199,10 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name={`rentFree`}
                 placeholder="Enter the number of days"
+                inputMode="numeric"
                 required />
 
-            <label htmlFor={`rating`} className="text-[#D4A017] max-sm:text-sm"><strong>Rating:</strong></label>
+            <label htmlFor={`rating`} className="text-[#D4A017] max-sm:text-sm"><strong>Rating: <span className="text-red-500">*</span></strong></label>
             <input
                 type="number"
                 id={`rating`}
@@ -205,7 +210,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 onChange={propertyHandleChange}
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name={`rating`}
-                placeholder="Enter the Property Name here"
+                placeholder="Enter the rating (1-5)"
                 required />
 
             <div className="mb-3">
@@ -253,7 +258,7 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 </button>
             </div>
 
-            <label htmlFor={`status`} className="text-[#D4A017] max-sm:text-sm"><strong>Property Type:</strong></label>
+            <label htmlFor={`status`} className="text-[#D4A017] max-sm:text-sm"><strong>Status: <span className="text-red-500">*</span></strong></label>
             <select
                 id={`status`}
                 value={propertyData.status}

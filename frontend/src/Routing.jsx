@@ -18,7 +18,7 @@ const WebMainAbout = lazy(() => import("./website/components/pages/MainAbout"));
 const WebProperties = lazy(() => import("./website/components/pages/Properties"));
 const WebBlog = lazy(() => import("./website/components/pages/Blog"));
 const WebContact = lazy(() => import("./website/components/pages/Contact"));
-const WebTenantLogin = lazy(() => import("./website/components/pages/TenantLogin"));
+const WebResidentLogin = lazy(() => import("./website/components/pages/ResidentLogin"));
 const WebPrivacyPolicy = lazy(() => import("./website/components/pages/PrivacyPolicyPage"));
 const WebTermsConditions = lazy(() => import("./website/components/pages/TermsConditionsPage"));
 const WebNotFound = lazy(() => import("./website/components/pages/NotFound"));
@@ -82,9 +82,9 @@ const OpsVendorForm = lazy(() => import("./operations/components/expense-compone
 const SalesActivityStats = lazy(() => import("./sales/components/activity-components/ActivityStats"));
 const SalesLoginData = lazy(() => import("./sales/components/activity-components/LoginData"));
 const SalesBedsTable = lazy(() => import("./sales/components/beds-components/BedsTable"));
-const SalesTenantsTable = lazy(() => import("./sales/components/beds-components/TenantsTable"));
-const SalesTenantForm = lazy(() => import("./sales/components/beds-components/TenantForm"));
-const SalesTenantDetails = lazy(() => import("./sales/components/beds-components/TenantDetails"));
+const SalesResidentsTable = lazy(() => import("./sales/components/beds-components/ResidentsTable"));
+const SalesResidentForm = lazy(() => import("./sales/components/beds-components/ResidentForm"));
+const SalesResidentDetails = lazy(() => import("./sales/components/beds-components/ResidentDetails"));
 const SalesAgreementPdf = lazy(() => import("./sales/components/beds-components/AgreementPdf"));
 const SalesLeadForm = lazy(() => import("./sales/components/lead-components/LeadForm"));
 const SalesLeadTable = lazy(() => import("./sales/components/lead-components/LeadTable"));
@@ -119,17 +119,17 @@ const PartnersKycDetails = lazy(() => import("./partners/pages/KycDetails"));
 const PartnersBankDetails = lazy(() => import("./partners/pages/BankDetails"));
 const PartnersOwnerDetails = lazy(() => import("./partners/pages/OwnerDetails"));
 
-// === TENANT - lazy loaded ===
-const TenantDashboard = lazy(() => import("./tenant/components/TenantDashboard"));
-const TenantProfile = lazy(() => import("./tenant/components/TenantProfile"));
-const TenantKyc = lazy(() => import("./tenant/components/TenantKyc"));
-const TenantRentHistory = lazy(() => import("./tenant/components/TenantRentHistory"));
-const TenantInvoice = lazy(() => import("./tenant/components/TenantInvoice"));
-const TenantComplaints = lazy(() => import("./tenant/components/TenantComplaints"));
-const TenantComplaintDetail = lazy(() => import("./tenant/components/TenantComplaintDetail"));
-const TenantLease = lazy(() => import("./tenant/components/TenantLease"));
-const TenantPayments = lazy(() => import("./tenant/components/TenantPayments"));
-const TenantChangePassword = lazy(() => import("./tenant/components/TenantChangePassword"));
+// === resident - lazy loaded ===
+const ResidentDashboard = lazy(() => import("./resident/components/ResidentDashboard"));
+const ResidentProfile = lazy(() => import("./resident/components/ResidentProfile"));
+const ResidentKyc = lazy(() => import("./resident/components/ResidentKyc"));
+const ResidentRentHistory = lazy(() => import("./resident/components/ResidentRentHistory"));
+const ResidentInvoice = lazy(() => import("./resident/components/ResidentInvoice"));
+const ResidentComplaints = lazy(() => import("./resident/components/ResidentComplaints"));
+const ResidentComplaintDetail = lazy(() => import("./resident/components/ResidentComplaintDetail"));
+const ResidentLease = lazy(() => import("./resident/components/ResidentLease"));
+const ResidentPayments = lazy(() => import("./resident/components/ResidentPayments"));
+const ResidentChangePassword = lazy(() => import("./resident/components/ResidentChangePassword"));
 
 // === OPERATIONS KYC - lazy loaded ===
 const OpsKycManagement = lazy(() => import("./operations/components/kyc-components/KycManagement"));
@@ -182,7 +182,7 @@ function Routing() {
                 <Route path="/blog/why-co-living-best-for-young-professionals" element={<PublicLayout><Blog7 /></PublicLayout>} />
                 <Route path="/blog/top-amenities-in-modern-co-living" element={<PublicLayout><Blog8 /></PublicLayout>} />
                 <Route path="/contact" element={<PublicLayout><WebContact /></PublicLayout>} />
-                <Route path="/tenant-login" element={<PublicLayout><WebTenantLogin /></PublicLayout>} />
+                <Route path="/resident-login" element={<PublicLayout><WebResidentLogin /></PublicLayout>} />
                 <Route path="/privacy-policy" element={<PublicLayout><WebPrivacyPolicy /></PublicLayout>} />
                 <Route path="/Terms-conditions" element={<PublicLayout><WebTermsConditions /></PublicLayout>} />
 
@@ -239,9 +239,9 @@ function Routing() {
                 <Route path="/sales/sales-user-activity-data" element={<Protected type="sales"><SalesActivityStats {...sp} /></Protected>} />
                 <Route path="/sales/sales-login-data/:id" element={<Protected type="sales"><SalesLoginData {...sp} /></Protected>} />
                 <Route path="/sales/sales-beds-table" element={<Protected type="sales"><SalesBedsTable {...sp} /></Protected>} />
-                <Route path="/sales/sales-tenants-table/:id" element={<Protected type="sales"><SalesTenantsTable {...sp} /></Protected>} />
-                <Route path="/sales/sales-tenant-form/:id" element={<Protected type="sales"><SalesTenantForm {...sp} /></Protected>} />
-                <Route path="/sales/sales-tenant-details/:id" element={<Protected type="sales"><SalesTenantDetails {...sp} /></Protected>} />
+                <Route path="/sales/sales-residents-table/:id" element={<Protected type="sales"><SalesResidentsTable {...sp} /></Protected>} />
+                <Route path="/sales/sales-resident-form/:id" element={<Protected type="sales"><SalesResidentForm {...sp} /></Protected>} />
+                <Route path="/sales/sales-resident-details/:id" element={<Protected type="sales"><SalesResidentDetails {...sp} /></Protected>} />
                 <Route path="/sales/sales-agreement-pdf/:id" element={<Protected type="sales"><SalesAgreementPdf {...sp} /></Protected>} />
                 <Route path="/sales/sales-leads-form" element={<Protected type="sales"><SalesLeadForm {...sp} /></Protected>} />
                 <Route path="/sales/sales-leads-table" element={<Protected type="sales"><SalesLeadTable {...sp} /></Protected>} />
@@ -278,17 +278,17 @@ function Routing() {
                 <Route path="/partners/partners-bank-details" element={<Protected type="partners"><PartnersBankDetails /></Protected>} />
                 <Route path="/partners/partners-owner-details" element={<Protected type="partners"><PartnersOwnerDetails /></Protected>} />
 
-                {/* ========== TENANT PORTAL (PROTECTED) ========== */}
-                <Route path="/tenant/dashboard" element={<Protected type="tenant"><TenantDashboard {...sp} /></Protected>} />
-                <Route path="/tenant/profile" element={<Protected type="tenant"><TenantProfile {...sp} /></Protected>} />
-                <Route path="/tenant/kyc" element={<Protected type="tenant"><TenantKyc {...sp} /></Protected>} />
-                <Route path="/tenant/rent-history" element={<Protected type="tenant"><TenantRentHistory {...sp} /></Protected>} />
-                <Route path="/tenant/invoice/:id" element={<Protected type="tenant"><TenantInvoice {...sp} /></Protected>} />
-                <Route path="/tenant/complaints" element={<Protected type="tenant"><TenantComplaints {...sp} /></Protected>} />
-                <Route path="/tenant/complaint/:id" element={<Protected type="tenant"><TenantComplaintDetail {...sp} /></Protected>} />
-                <Route path="/tenant/lease" element={<Protected type="tenant"><TenantLease {...sp} /></Protected>} />
-                <Route path="/tenant/payments" element={<Protected type="tenant"><TenantPayments {...sp} /></Protected>} />
-                <Route path="/tenant/change-password" element={<Protected type="tenant"><TenantChangePassword {...sp} /></Protected>} />
+                {/* ========== RESIDENT PORTAL (PROTECTED) ========== */}
+                <Route path="/resident/dashboard" element={<Protected type="resident"><ResidentDashboard {...sp} /></Protected>} />
+                <Route path="/resident/profile" element={<Protected type="resident"><ResidentProfile {...sp} /></Protected>} />
+                <Route path="/resident/kyc" element={<Protected type="resident"><ResidentKyc {...sp} /></Protected>} />
+                <Route path="/resident/rent-history" element={<Protected type="resident"><ResidentRentHistory {...sp} /></Protected>} />
+                <Route path="/resident/invoice/:id" element={<Protected type="resident"><ResidentInvoice {...sp} /></Protected>} />
+                <Route path="/resident/complaints" element={<Protected type="resident"><ResidentComplaints {...sp} /></Protected>} />
+                <Route path="/resident/complaint/:id" element={<Protected type="resident"><ResidentComplaintDetail {...sp} /></Protected>} />
+                <Route path="/resident/lease" element={<Protected type="resident"><ResidentLease {...sp} /></Protected>} />
+                <Route path="/resident/payments" element={<Protected type="resident"><ResidentPayments {...sp} /></Protected>} />
+                <Route path="/resident/change-password" element={<Protected type="resident"><ResidentChangePassword {...sp} /></Protected>} />
 
                 {/* ========== OLD LOGIN REDIRECTS ========== */}
                 {/* Redirect old per-app login URLs to unified login */}

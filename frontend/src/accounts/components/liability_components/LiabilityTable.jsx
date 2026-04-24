@@ -74,12 +74,12 @@ function LiabilityTable({ isExpanded, setIsExpanded }) {
         fetchData();
     }, []);
 
-    const viewAgreementHandle = (tenantData) => {
-        navigate(`/accounts/accounts-agreement-pdf/${tenantData?.tenantId}`, { state: { tenantData, type: 'LiabilityTable' } });
+    const viewAgreementHandle = (residentData) => {
+        navigate(`/accounts/accounts-agreement-pdf/${residentData?.residentId}`, { state: { residentData, type: 'LiabilityTable' } });
     }
 
-    const updateLiabilityStatus = async (tenantData) => {
-        (!tenantData?.status) ? navigate(`/accounts/accounts-liability-form/${tenantData?.tenantId}`, { state: { tenantData } }) : navigate(`/accounts/accounts-liability-data/${tenantData?.id}`, { state: { tenantData } });
+    const updateLiabilityStatus = async (residentData) => {
+        (!residentData?.status) ? navigate(`/accounts/accounts-liability-form/${residentData?.residentId}`, { state: { residentData } }) : navigate(`/accounts/accounts-liability-data/${residentData?.id}`, { state: { residentData } });
     }
 
     return (

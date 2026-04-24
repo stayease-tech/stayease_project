@@ -8,15 +8,10 @@ function NoOfFloors({ propertyData, setPropertyData }) {
             return {
                 ...prev,
                 floorNos: newFloorNos,
-                roomsPerFloor: [
-                    ...(prev.roomsPerFloor.some(f => f.floor === 0) ?
-                        [prev.roomsPerFloor.find(f => f.floor === 0)] :
-                        []),
-                    ...Array.from({ length: newFloorNos }, (_, i) => {
-                        const existingFloor = prev.roomsPerFloor.find(f => f.floor === i + 1);
-                        return existingFloor || { floor: i + 1, rooms: 0 };
-                    })
-                ]
+                roomsPerFloor: Array.from({ length: newFloorNos }, (_, i) => {
+                    const existingFloor = prev.roomsPerFloor.find(f => f.floor === i + 1);
+                    return existingFloor || { floor: i + 1, rooms: 0 };
+                })
             };
         });
     };
@@ -28,12 +23,9 @@ function NoOfFloors({ propertyData, setPropertyData }) {
             return {
                 ...prev,
                 floorNos: newFloorNos,
-                roomsPerFloor: [
-                    ...prev.roomsPerFloor.filter(f => f.floor === 0),
-                    ...prev.roomsPerFloor
-                        .filter(f => f.floor > 0 && f.floor <= newFloorNos)
-                        .map(f => ({ ...f }))
-                ]
+                roomsPerFloor: prev.roomsPerFloor
+                    .filter(f => f.floor >= 1 && f.floor <= newFloorNos)
+                    .map(f => ({ ...f }))
             };
         });
     };
@@ -44,18 +36,14 @@ function NoOfFloors({ propertyData, setPropertyData }) {
         if (/^\d*$/.test(value)) {
             setPropertyData(prev => {
                 const num = value === "" ? 0 : Math.max(0, parseInt(value, 10));
-                const hasGroundFloor = prev.roomsPerFloor.some(f => f.floor === 0);
 
                 return {
                     ...prev,
                     floorNos: num,
-                    roomsPerFloor: [
-                        ...(hasGroundFloor ? [prev.roomsPerFloor.find(f => f.floor === 0)] : []),
-                        ...Array.from({ length: num }, (_, i) => {
-                            const existingFloor = prev.roomsPerFloor.find(f => f.floor === i + 1);
-                            return existingFloor || { floor: i + 1, rooms: 0 };
-                        })
-                    ]
+                    roomsPerFloor: Array.from({ length: num }, (_, i) => {
+                        const existingFloor = prev.roomsPerFloor.find(f => f.floor === i + 1);
+                        return existingFloor || { floor: i + 1, rooms: 0 };
+                    })
                 };
             });
         }

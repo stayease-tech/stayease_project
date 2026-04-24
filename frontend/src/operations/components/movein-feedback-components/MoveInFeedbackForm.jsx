@@ -36,7 +36,7 @@ function MoveInFeedbackForm() {
     const [lastScrollPosition, setLastScrollPosition] = useState(0);
 
     const [moveInFeedbackData, setMoveInFeedbackData] = useState({
-        tenantId: searchParams.get('tenantId'),
+        residentId: searchParams.get('residentId'),
         cleanlinessRoomWashroom: 0,
         functionalityAppliancesUtilities: 0,
         comfortSetupRoom: 0,

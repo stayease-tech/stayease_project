@@ -32,7 +32,7 @@ function CommonPropertyComplaintForm() {
     const getCurrentBedId = () => {
         const foundRoom = roomData.find(room => room.roomNo === roomNo);
         const foundBed = foundRoom?.bed_details.find(bed => bed.bedLabel === bedLabel);
-        return foundBed?.tenantId || '';
+        return foundBed?.residentId || '';
     };
 
     const [propertyComplaintData, setPropertyComplaintData] = useState({
@@ -202,8 +202,8 @@ function CommonPropertyComplaintForm() {
         e.preventDefault();
         setIsSubmitting(true);
 
-        const tenantId = getCurrentBedId();
-        propertyComplaintData.tenantId = tenantId;
+        const residentId = getCurrentBedId();
+        propertyComplaintData.residentId = residentId;
 
         try {
             const response = await axios.post('/operations/propertycomplaint-form-submit/', propertyComplaintData, {
@@ -217,7 +217,7 @@ function CommonPropertyComplaintForm() {
             if (response.data.success) {
                 setPropertyComplaintData(prev => ({
                     ...prev,
-                    tenantId: '',
+                    residentId: '',
                     roomNo: '',
                     bedLabel: '',
                     residentsName: '',
@@ -306,7 +306,7 @@ function CommonPropertyComplaintForm() {
                             Loading room data...
                         </option> : <>
                             {(((roomData || []).find(room => room.roomNo === roomNo)?.bed_details) || []).map((bed) => {
-                                if (bed?.tenantId) {
+                                if (bed?.residentId) {
                                     return <option key={bed.id} value={bed.bedLabel}>
                                         {bed.bedLabel}
                                     </option>

@@ -20,7 +20,7 @@ const API_PREFIX_MAP = {
     sales: '/sales',
     supply: '/supply',
     partners: '/partners',
-    tenant: '/tenant-portal',
+    resident: '/resident-portal',
 };
 
 // Maps user types to their default landing pages after login
@@ -31,7 +31,7 @@ const DEFAULT_ROUTES = {
     sales: '/sales/dashboard',
     supply: '/supply/dashboard',
     partners: '/partners/partners-home',
-    tenant: '/tenant/dashboard',
+    resident: '/resident/dashboard',
 };
 
 function detectUserType(permissions) {
@@ -93,12 +93,12 @@ export const AuthProvider = ({ children }) => {
                 return;
             }
 
-            // Tenants use JWT auth
-            if (storedType === 'tenant') {
-                const token = localStorage.getItem("tenantAccessToken");
+            // Residents use JWT auth
+            if (storedType === 'resident') {
+                const token = localStorage.getItem("residentAccessToken");
                 if (token) {
                     setUser(localStorage.getItem("phone"));
-                    setUserType('tenant');
+                    setUserType('resident');
                 } else {
                     clearAuth();
                 }
@@ -141,9 +141,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("userType");
         localStorage.removeItem("isLoggedIn");
         localStorage.removeItem("phone");
-        localStorage.removeItem("tenantAccessToken");
-        localStorage.removeItem("tenantRefreshToken");
-        localStorage.removeItem("tenantData");
+        localStorage.removeItem("residentAccessToken");
+        localStorage.removeItem("residentRefreshToken");
+        localStorage.removeItem("residentData");
     }
 
     const login = async (username, password) => {
@@ -206,28 +206,28 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const loginTenant = async (phone, password) => {
+    const loginresident = async (phone, password) => {
         try {
-            const response = await axios.post("/api/tenant-login/", { phone, password });
+            const response = await axios.post("/api/resident-login/", { phone, password });
 
             if (response.data.success) {
                 setUser(phone);
-                setUserType('tenant');
-                localStorage.setItem("tenantAccessToken", response.data.access);
-                localStorage.setItem("tenantRefreshToken", response.data.refresh);
+                setUserType('resident');
+                localStorage.setItem("residentAccessToken", response.data.access);
+                localStorage.setItem("residentRefreshToken", response.data.refresh);
                 localStorage.setItem("phone", phone);
-                localStorage.setItem("userType", "tenant");
-                localStorage.setItem("tenantData", JSON.stringify({
-                    tenant_id: response.data.tenant_id,
+                localStorage.setItem("userType", "resident");
+                localStorage.setItem("residentData", JSON.stringify({
+                    resident_id: response.data.resident_id,
                     residentsName: response.data.residentsName,
                     kycApprovalStatus: response.data.kycApprovalStatus,
                 }));
 
-                return { success: true, redirect: DEFAULT_ROUTES.tenant };
+                return { success: true, redirect: DEFAULT_ROUTES.resident };
             }
             return { success: false, message: response.data.message || "Invalid credentials." };
         } catch (error) {
-            console.error("Tenant login failed:", error);
+            console.error("resident login failed:", error);
             const msg = error.response?.data?.message || "Login failed. Please try again.";
             return { success: false, message: msg };
         }
@@ -253,7 +253,7 @@ export const AuthProvider = ({ children }) => {
         if (currentType && currentType !== 'partners') {
             const prefix = API_PREFIX_MAP[currentType];
             try {
-                await axios.post(`${prefix}/logout/`, { loginId });
+                await axios.post(`${prefix}/logout/`, { loginId }, { skipGlobalErrorToast: true });
             } catch (error) {
                 console.error("Logout failed:", error);
             }
@@ -269,7 +269,7 @@ export const AuthProvider = ({ children }) => {
             isLoading,
             login,
             loginPartner,
-            loginTenant,
+            loginresident,
             sendOtp,
             logout,
             DEFAULT_ROUTES,

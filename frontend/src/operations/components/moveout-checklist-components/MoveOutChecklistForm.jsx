@@ -20,7 +20,7 @@ function MoveOutChecklistForm({ isExpanded, setIsExpanded }) {
     const [itemCategory, setItemCategory] = useState([]);
     const [currentComponent, setCurrentComponent] = useState('MoveOutChecklistForm');
     const [moveOutChecklistData, setMoveOutChecklistData] = useState({
-        tenantId: bedsData?.tenantId,
+        residentId: bedsData?.residentId,
         moveOutDate: "",
         moveOutPropertyCondition: [],
         moveOutPropertyConditionComments: "",

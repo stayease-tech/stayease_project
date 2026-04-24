@@ -87,7 +87,7 @@ function Blog7() {
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>Prevents Arbitrary Rent Increases &amp; Evictions:</h3>
-                    <p>In the absence of a contract, landlords have the right to raise rent or remove tenants at any time. Clear terms and conditions are established in a written contract.</p>
+                    <p>In the absence of a contract, landlords have the right to raise rent or remove residents at any time. Clear terms and conditions are established in a written contract.</p>
                 </li>
 
                 <li className='pb-8'>
@@ -103,7 +103,7 @@ function Blog7() {
 
                 <li className='pb-8'>
                     <h3 className='font-semibold'>1. Draft the Agreement</h3>
-                    <p>Include key details like rent amount, security deposit, lease duration, and tenant-landlord responsibilities.</p>
+                    <p>Include key details like rent amount, security deposit, lease duration, and resident-landlord responsibilities.</p>
                 </li>
 
                 <li className='pb-8'>

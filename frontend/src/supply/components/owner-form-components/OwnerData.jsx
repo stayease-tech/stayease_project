@@ -1,12 +1,13 @@
 import React from 'react'
 
-function OwnerData({ ownerData, ownerHandleChange }) {
+function OwnerData({ ownerData, ownerHandleChange, emailError }) {
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
     return (
         <div>
             <h3 className="font-semibold mb-4 text-stone-400 max-sm:text-sm">Add Owner Details</h3>
 
-            <label htmlFor="ownerName" className="text-[#D4A017] max-sm:text-sm"><strong>Name:</strong></label>
+            <label htmlFor="ownerName" className="text-[#D4A017] max-sm:text-sm"><strong>Name: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="ownerName"
@@ -17,17 +18,18 @@ function OwnerData({ ownerData, ownerHandleChange }) {
                 placeholder="Enter the Owner Name here"
                 required />
 
-            <label htmlFor="memberSince" className="text-[#D4A017] max-sm:text-sm"><strong>Member Since:</strong></label>
+            <label htmlFor="memberSince" className="text-[#D4A017] max-sm:text-sm"><strong>Member Since: <span className="text-red-500">*</span></strong></label>
             <input
                 type="month"
                 id="memberSince"
                 value={ownerData.memberSince}
                 onChange={ownerHandleChange}
+                max={currentMonth}
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400"
                 name="memberSince"
                 required />
 
-            <label htmlFor="ownerPhone" className="text-[#D4A017] max-sm:text-sm"><strong>Phone:</strong></label>
+            <label htmlFor="ownerPhone" className="text-[#D4A017] max-sm:text-sm"><strong>Phone: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="ownerPhone"
@@ -40,18 +42,19 @@ function OwnerData({ ownerData, ownerHandleChange }) {
                 maxLength={11}
                 required />
 
-            <label htmlFor="ownerEmail" className="text-[#D4A017] max-sm:text-sm"><strong>Email:</strong></label>
+            <label htmlFor="ownerEmail" className="text-[#D4A017] max-sm:text-sm"><strong>Email: <span className="text-red-500">*</span></strong></label>
             <input
                 type="email"
                 id="ownerEmail"
                 value={ownerData.ownerEmail}
                 onChange={ownerHandleChange}
-                className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
+                className={`mt-2 ${emailError ? 'mb-1' : 'mb-3'} text-black w-full p-2 border ${emailError ? 'border-red-500' : 'border-gray-300'} rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm`}
                 name="ownerEmail"
                 placeholder="Enter the Owner Email Id here"
                 required />
+            {emailError && <p className="text-red-500 text-xs mb-3">{emailError}</p>}
 
-            <label htmlFor="ownerAddress" className="text-[#D4A017] max-sm:text-sm"><strong>Address:</strong></label>
+            <label htmlFor="ownerAddress" className="text-[#D4A017] max-sm:text-sm"><strong>Address: <span className="text-red-500">*</span></strong></label>
             <input
                 type="text"
                 id="ownerAddress"
@@ -62,17 +65,18 @@ function OwnerData({ ownerData, ownerHandleChange }) {
                 placeholder="Enter the Owner Address here"
                 required />
 
-            <label htmlFor="ownerDob" className="text-[#D4A017] max-sm:text-sm"><strong>Date of Birth:</strong></label>
+            <label htmlFor="ownerDob" className="text-[#D4A017] max-sm:text-sm"><strong>Date of Birth: <span className="text-red-500">*</span></strong></label>
             <input
                 type="date"
                 id="ownerDob"
                 value={ownerData.ownerDob}
                 onChange={ownerHandleChange}
+                max={new Date().toISOString().split('T')[0]}
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name="ownerDob"
                 required />
 
-            <label htmlFor="ownerGender" className="text-[#D4A017] max-sm:text-sm"><strong>Gender:</strong></label>
+            <label htmlFor="ownerGender" className="text-[#D4A017] max-sm:text-sm"><strong>Gender: <span className="text-red-500">*</span></strong></label>
             <select
                 id="ownerGender"
                 value={ownerData.ownerGender}

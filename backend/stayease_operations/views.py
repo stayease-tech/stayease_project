@@ -10,9 +10,11 @@ from email.utils import formatdate
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from .models import User_Activity_Data, User_Login_Data, MoveInChecklistDetail, MoveInFeedback, MoveOutChecklistDetail, MoveOutFeedback, PropertyComplaintDetail, ComplaintCategory, Feedback
 from stayease_supply.models import Room_Data
-from stayease_sales.models import Tenant_Data
+from stayease_sales.models import resident_Data
 from stayease_accounts.models import Vendor_Detail
 
 # Create your views here.
@@ -146,20 +148,20 @@ def get_checklistfeedback_data(request):
             moveOutFeedback_data=[]
 
             for detail in moveIn_checklists:
-                tenant = detail.moveInChecklist_bed
-                bed = tenant.bed_data_instance if hasattr(tenant, 'bed_data_instance') else None
+                resident = detail.moveInChecklist_bed
+                bed = resident.bed_data_instance if hasattr(resident, 'bed_data_instance') else None
                 room = bed.room if bed else None
                 
                 moveInChecklist_data.append({
                     'roomNo': room.roomNo if room else None,
                     'roomType': room.roomType if room else None,
                     'bedLabel': bed.bedLabel,
-                    'tenantId': tenant.id,
-                    'residentsName': tenant.residentsName,
-                    'checkIn': tenant.checkIn,
-                    'checkOut': tenant.checkOut,
-                    'propertyManager': tenant.propertyManager,
-                    'moveInChecklistStatus': tenant.moveInChecklistStatus,
+                    'residentId': resident.id,
+                    'residentsName': resident.residentsName,
+                    'checkIn': resident.checkIn,
+                    'checkOut': resident.checkOut,
+                    'propertyManager': resident.propertyManager,
+                    'moveInChecklistStatus': resident.moveInChecklistStatus,
                     'moveInPropertyCondition': detail.moveInPropertyCondition,
                     'moveInPropertyConditionComments': detail.moveInPropertyConditionComments,
                     'moveInElectricalLighting': detail.moveInElectricalLighting,
@@ -176,16 +178,16 @@ def get_checklistfeedback_data(request):
                 })
 
             for detail in moveIn_feedbacks:
-                tenant = detail.moveInFeedback_bed
-                bed = tenant.bed_data_instance if hasattr(tenant, 'bed_data_instance') else None
+                resident = detail.moveInFeedback_bed
+                bed = resident.bed_data_instance if hasattr(resident, 'bed_data_instance') else None
                 room = bed.room if bed else None
 
                 moveInFeedback_data.append({
                     'roomNo': room.roomNo,
                     'roomType': room.roomType,
-                    'residentsName': tenant.residentsName,
-                    'checkIn': tenant.checkIn,
-                    'moveInFeedbackStatus': tenant.moveInFeedbackStatus,
+                    'residentsName': resident.residentsName,
+                    'checkIn': resident.checkIn,
+                    'moveInFeedbackStatus': resident.moveInFeedbackStatus,
                     'cleanlinessRoomWashroom': detail.cleanlinessRoomWashroom,
                     'functionalityAppliancesUtilities': detail.functionalityAppliancesUtilities,
                     'comfortSetupRoom': detail.comfortSetupRoom,
@@ -197,18 +199,18 @@ def get_checklistfeedback_data(request):
                 })
 
             for detail in moveOut_checklists:
-                tenant = detail.moveOutChecklist_bed
-                bed = tenant.bed_data_instance if hasattr(tenant, 'bed_data_instance') else None
+                resident = detail.moveOutChecklist_bed
+                bed = resident.bed_data_instance if hasattr(resident, 'bed_data_instance') else None
                 room = bed.room if bed else None
 
                 moveOutChecklist_data.append({
                     'roomNo': room.roomNo,
                     'roomType': room.roomType,
                     'bedLabel': bed.bedLabel,
-                    'residentsName': tenant.residentsName,
-                    'checkIn': tenant.checkIn,
-                    'checkOut': tenant.checkOut,
-                    'moveOutChecklistStatus': tenant.moveOutChecklistStatus,
+                    'residentsName': resident.residentsName,
+                    'checkIn': resident.checkIn,
+                    'checkOut': resident.checkOut,
+                    'moveOutChecklistStatus': resident.moveOutChecklistStatus,
                     'moveOutPropertyCondition': detail.moveOutPropertyCondition,
                     'moveOutPropertyConditionComments': detail.moveOutPropertyConditionComments,
                     'moveOutElectricalLighting': detail.moveOutElectricalLighting,
@@ -225,16 +227,16 @@ def get_checklistfeedback_data(request):
                 })
 
             for detail in moveOut_feedbacks:
-                tenant = detail.moveOutFeedback_bed
-                bed = tenant.bed_data_instance if hasattr(tenant, 'bed_data_instance') else None
+                resident = detail.moveOutFeedback_bed
+                bed = resident.bed_data_instance if hasattr(resident, 'bed_data_instance') else None
                 room = bed.room if bed else None
 
                 moveOutFeedback_data.append({
                     'roomNo': room.roomNo,
                     'roomType': room.roomType,
-                    'residentsName': tenant.residentsName,
-                    'checkIn': tenant.checkIn,
-                    'moveOutFeedbackStatus': tenant.moveOutFeedbackStatus,
+                    'residentsName': resident.residentsName,
+                    'checkIn': resident.checkIn,
+                    'moveOutFeedbackStatus': resident.moveOutFeedbackStatus,
                     'overallStayExperience': detail.overallStayExperience,
                     'cleanlinessPropertyStay': detail.cleanlinessPropertyStay,
                     'responsivenessPropertyTeam': detail.responsivenessPropertyTeam,
@@ -308,7 +310,7 @@ def send_email_check_in(data):
             <p>We have personally inspected your room to ensure it meets our standards of cleanliness and comfort, and we have prepared it according to your reservation details. You can proceed directly to the front desk upon arrival for a quick and efficient check-in experience.</p>
 
             <p><strong>After your stay, we would greatly value your feedback to help us continue improving our service. Please share your experience with us via this link:<br>
-            http://127.0.0.1:8000/operations/operations-moveinfeedback-form/{data.id}?tenantId={data.id}</strong></p>
+            http://127.0.0.1:8000/operations/operations-moveinfeedback-form/{data.id}?residentId={data.id}</strong></p>
             
             <p>If you need anything before your arrival or have any special requests, feel free to reach out to us by replying to this email.</p>
             
@@ -337,10 +339,10 @@ def moveinchecklist_form_submit(request):
     if request.method == 'POST':
         try:
             moveinchecklist_data = json.loads(request.body)
-            tenant_instance = Tenant_Data.objects.get(id=moveinchecklist_data.get('tenantId'))
+            resident_instance = resident_Data.objects.get(id=moveinchecklist_data.get('residentId'))
 
             MoveInChecklistDetail.objects.create(
-                moveInChecklist_bed=tenant_instance,
+                moveInChecklist_bed=resident_instance,
                 moveInPropertyCondition=moveinchecklist_data.get('moveInPropertyCondition', ''),
                 moveInPropertyConditionComments=moveinchecklist_data.get('moveInPropertyConditionComments', ''),
                 moveInElectricalLighting=moveinchecklist_data.get('moveInElectricalLighting', ''),
@@ -354,10 +356,10 @@ def moveinchecklist_form_submit(request):
                 moveInRemarks=moveinchecklist_data.get('moveInRemarks', ''),
             )
 
-            tenant_instance.moveInChecklistStatus='Completed'
-            tenant_instance.save()
+            resident_instance.moveInChecklistStatus='Completed'
+            resident_instance.save()
 
-            send_email_check_in(tenant_instance)
+            send_email_check_in(resident_instance)
 
             return JsonResponse({'success': True, 'message': 'Move-In checklist submitted successfully!'})
             
@@ -372,7 +374,7 @@ def moveinfeedback_form_submit(request):
     if request.method == 'POST':
         try:
             moveinfeedback_data = json.loads(request.body)
-            bed_instance = Tenant_Data.objects.get(id=moveinfeedback_data.get('tenantId'))
+            bed_instance = resident_Data.objects.get(id=moveinfeedback_data.get('residentId'))
 
             exists = MoveInFeedback.objects.filter(
                 moveInFeedback_bed=bed_instance
@@ -444,7 +446,7 @@ def send_email_check_out(data):
             </ol>
             
             <p>We would greatly appreciate your feedback about your stay. Your insights help us improve our services for future guests:<br>
-            <strong><a href="http://127.0.0.1:8000/operations/operations-moveoutfeedback-form/{data.id}?tenantId={data.id}">Share Your Experience Here</a></strong></p>
+            <strong><a href="http://127.0.0.1:8000/operations/operations-moveoutfeedback-form/{data.id}?residentId={data.id}">Share Your Experience Here</a></strong></p>
             
             <p>Safe travels, and we hope to welcome you back to {property_name} in the future!</p>
             
@@ -471,7 +473,7 @@ def moveoutchecklist_form_submit(request):
     if request.method == 'POST':
         try:
             moveoutchecklist_data = json.loads(request.body)
-            bed_instance = Tenant_Data.objects.get(id=moveoutchecklist_data.get('tenantId'))
+            bed_instance = resident_Data.objects.get(id=moveoutchecklist_data.get('residentId'))
 
             exists = MoveOutChecklistDetail.objects.filter(
                 moveOutChecklist_bed=bed_instance
@@ -514,7 +516,7 @@ def moveoutfeedback_form_submit(request):
         try:
             moveoutfeedback_data = json.loads(request.body)
 
-            bed_instance = Tenant_Data.objects.get(id=moveoutfeedback_data.get('tenantId'))
+            bed_instance = resident_Data.objects.get(id=moveoutfeedback_data.get('residentId'))
 
             exists = MoveOutFeedback.objects.filter(
                 moveOutFeedback_bed=bed_instance
@@ -775,7 +777,7 @@ def propertycomplaint_form_submit(request):
         try:
             propertyComplaint_data = json.loads(request.body)
 
-            bed_instance = Tenant_Data.objects.get(id = propertyComplaint_data.get('tenantId'))
+            bed_instance = resident_Data.objects.get(id = propertyComplaint_data.get('residentId'))
 
             complaint = PropertyComplaintDetail.objects.create(
                 propertyComplaint_bed=bed_instance,
@@ -965,14 +967,14 @@ def get_room_data(request):
                 bed_details = []
                 
                 for bed in beds_in_room:
-                    recent_tenant = Tenant_Data.objects.filter(
+                    recent_resident = resident_Data.objects.filter(
                         bed_data_instance=bed
                     ).order_by('-checkIn').first()
                     
                     bed_details.append({
                         'id': bed.id,
                         'bedLabel': bed.bedLabel,
-                        'tenantId': recent_tenant.id if recent_tenant else None,
+                        'residentId': recent_resident.id if recent_resident else None,
                     })
                 
                 if bed_details:
@@ -991,19 +993,19 @@ def get_room_data(request):
 
 # ─── KYC Management (Operations) ──────────────────────────────────
 
-@login_required
-@csrf_exempt
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_kyc_pending(request):
-    """List all tenants with pending/rejected KYC for operations review."""
+    """List all residents with pending/rejected KYC for operations review."""
     if request.method == 'GET':
         try:
             status_filter = request.GET.get('status', 'Pending')
-            tenants = Tenant_Data.objects.filter(
+            residents = resident_Data.objects.filter(
                 kycApprovalStatus=status_filter
             ).select_related('bed_data_instance__room__property').order_by('-id')
 
             data = []
-            for t in tenants:
+            for t in residents:
                 bed = t.bed_data_instance
                 prop_name = room_no = ''
                 if bed and hasattr(bed, 'room') and bed.room:
@@ -1031,7 +1033,7 @@ def get_kyc_pending(request):
                     'kycRejectionReason': t.kycRejectionReason,
                 })
 
-            return JsonResponse({'success': True, 'tenants': data})
+            return JsonResponse({'success': True, 'residents': data})
         except Exception as e:
             print(e)
             return JsonResponse({'success': False, 'message': str(e)})
@@ -1039,21 +1041,21 @@ def get_kyc_pending(request):
     return JsonResponse({'success': False, 'message': 'GET expected.'})
 
 
-@login_required
-@csrf_exempt
-def kyc_approve(request, tenant_id):
-    """Approve a tenant's KYC."""
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def kyc_approve(request, resident_id):
+    """Approve a resident's KYC."""
     if request.method == 'POST':
         try:
-            tenant = Tenant_Data.objects.get(id=tenant_id)
-            tenant.kycApprovalStatus = 'Approved'
-            tenant.kycApprovedBy = request.user.get_full_name() or request.user.username
-            tenant.kycApprovalDate = timezone.now()
-            tenant.kycRejectionReason = None
-            tenant.save()
-            return JsonResponse({'success': True, 'message': f'KYC approved for {tenant.residentsName}.'})
-        except Tenant_Data.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Tenant not found.'})
+            resident = resident_Data.objects.get(id=resident_id)
+            resident.kycApprovalStatus = 'Approved'
+            resident.kycApprovedBy = request.user.get_full_name() or request.user.username
+            resident.kycApprovalDate = timezone.now()
+            resident.kycRejectionReason = None
+            resident.save()
+            return JsonResponse({'success': True, 'message': f'KYC approved for {resident.residentsName}.'})
+        except resident_Data.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'resident not found.'})
         except Exception as e:
             print(e)
             return JsonResponse({'success': False, 'message': str(e)})
@@ -1061,10 +1063,10 @@ def kyc_approve(request, tenant_id):
     return JsonResponse({'success': False, 'message': 'POST expected.'})
 
 
-@login_required
-@csrf_exempt
-def kyc_reject(request, tenant_id):
-    """Reject a tenant's KYC with a reason."""
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def kyc_reject(request, resident_id):
+    """Reject a resident's KYC with a reason."""
     if request.method == 'POST':
         try:
             body = json.loads(request.body)
@@ -1072,15 +1074,15 @@ def kyc_reject(request, tenant_id):
             if not reason:
                 return JsonResponse({'success': False, 'message': 'Rejection reason is required.'})
 
-            tenant = Tenant_Data.objects.get(id=tenant_id)
-            tenant.kycApprovalStatus = 'Rejected'
-            tenant.kycRejectionReason = reason
-            tenant.kycApprovedBy = None
-            tenant.kycApprovalDate = None
-            tenant.save()
-            return JsonResponse({'success': True, 'message': f'KYC rejected for {tenant.residentsName}.'})
-        except Tenant_Data.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'Tenant not found.'})
+            resident = resident_Data.objects.get(id=resident_id)
+            resident.kycApprovalStatus = 'Rejected'
+            resident.kycRejectionReason = reason
+            resident.kycApprovedBy = None
+            resident.kycApprovalDate = None
+            resident.save()
+            return JsonResponse({'success': True, 'message': f'KYC rejected for {resident.residentsName}.'})
+        except resident_Data.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'resident not found.'})
         except Exception as e:
             print(e)
             return JsonResponse({'success': False, 'message': str(e)})

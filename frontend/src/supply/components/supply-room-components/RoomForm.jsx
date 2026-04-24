@@ -170,7 +170,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
             <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-[#D4A017]">ADD ROOM DETAILS</h1>
 
             {isBedDataVisible ? <div className="mb-[20px]">
-              <label htmlFor="roomNo" className="text-[#D4A017] max-sm:text-sm"><strong>Room Number:</strong></label>
+              <label htmlFor="roomNo" className="text-[#D4A017] max-sm:text-sm"><strong>Room Number: <span className="text-red-500">*</span></strong></label>
               <input
                 type="text"
                 id="roomNo"
@@ -181,7 +181,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                 placeholder="Enter the Room Number here"
                 required />
 
-              <label htmlFor="roomType" className="text-[#D4A017] max-sm:text-sm"><strong>Room Type:</strong></label>
+              <label htmlFor="roomType" className="text-[#D4A017] max-sm:text-sm"><strong>Room Type: <span className="text-red-500">*</span></strong></label>
               <select
                 id="roomType"
                 value={roomDetails.roomType}
@@ -212,7 +212,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   <label htmlFor={`bed${data}`} className="text-[#D4A017] block max-sm:text-sm"><strong>{(numberOfBedData.length === 1) ? numberOfBedData[index] : `Bed ${numberOfBedData[index]}`}</strong></label>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-5">
-                    <label htmlFor={`balconyAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Balcony Access:</label>
+                    <label htmlFor={`balconyAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Balcony Access: <span className="text-red-500">*</span></label>
 
                     <select
                       id={`balconyAccess_${data.id}`}
@@ -229,7 +229,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`bathAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Bath Access:</label>
+                    <label htmlFor={`bathAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Bath Access: <span className="text-red-500">*</span></label>
 
                     <select
                       id={`bathAccess_${data.id}`}
@@ -246,7 +246,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`roomType_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Room Type:</label>
+                    <label htmlFor={`roomType_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Room Type: <span className="text-red-500">*</span></label>
 
                     <select
                       id={`roomType_${data.id}`}
@@ -265,7 +265,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`energyPlan_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Energy Plan:</label>
+                    <label htmlFor={`energyPlan_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Energy Plan: <span className="text-red-500">*</span></label>
 
                     <select
                       id={`energyPlan_${data.id}`}
@@ -283,7 +283,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`hallAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Hall Access:</label>
+                    <label htmlFor={`hallAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Hall Access: <span className="text-red-500">*</span></label>
 
                     <select
                       id={`hallAccess_${data.id}`}
@@ -301,7 +301,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`kitchenAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Kitchen Access:</label>
+                    <label htmlFor={`kitchenAccess_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Kitchen Access: <span className="text-red-500">*</span></label>
 
                     <select
                       id={`kitchenAccess_${data.id}`}
@@ -319,7 +319,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`roomSqft_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Room Sqft:</label>
+                    <label htmlFor={`roomSqft_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Room Sqft: <span className="text-red-500">*</span></label>
 
                     <input
                       type="text"
@@ -333,7 +333,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`tataSkyNo_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">DTH Number:</label>
+                    <label htmlFor={`tataSkyNo_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">DTH Number: <span className="text-red-500">*</span></label>
 
                     <input
                       type="text"
@@ -347,7 +347,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`wifiNo_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Wifi Number:</label>
+                    <label htmlFor={`wifiNo_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Wifi Number: <span className="text-red-500">*</span></label>
 
                     <input
                       type="text"
@@ -361,7 +361,7 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between mt-3">
-                    <label htmlFor={`bescomMeterNo_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Bescom Meter Number:</label>
+                    <label htmlFor={`bescomMeterNo_${data.id}`} className="mt-1 text-stone-400 max-sm:text-sm sm:w-[20%]">Bescom Meter Number: <span className="text-red-500">*</span></label>
 
                     <input
                       type="text"

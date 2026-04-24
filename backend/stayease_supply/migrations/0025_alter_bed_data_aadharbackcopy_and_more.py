@@ -13,21 +13,21 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='bed_data',
             name='aadharBackCopy',
-            field=models.FileField(blank=True, null=True, upload_to='documents/tenant-documents/%Y/%m/%d/'),
+            field=models.FileField(blank=True, null=True, upload_to='documents/resident-documents/%Y/%m/%d/'),
         ),
         migrations.AlterField(
             model_name='bed_data',
             name='aadharFrontCopy',
-            field=models.FileField(blank=True, null=True, upload_to='documents/tenant-documents/%Y/%m/%d/'),
+            field=models.FileField(blank=True, null=True, upload_to='documents/resident-documents/%Y/%m/%d/'),
         ),
         migrations.AlterField(
             model_name='bed_data',
             name='panBackCopy',
-            field=models.FileField(blank=True, null=True, upload_to='documents/tenant-documents/%Y/%m/%d/'),
+            field=models.FileField(blank=True, null=True, upload_to='documents/resident-documents/%Y/%m/%d/'),
         ),
         migrations.AlterField(
             model_name='bed_data',
             name='panFrontCopy',
-            field=models.FileField(blank=True, null=True, upload_to='documents/tenant-documents/%Y/%m/%d/'),
+            field=models.FileField(blank=True, null=True, upload_to='documents/resident-documents/%Y/%m/%d/'),
         ),
     ]

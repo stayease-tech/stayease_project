@@ -14,21 +14,21 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
     const location = useLocation();
     const bedData = location?.state?.bedData || {};
 
-    const [rentMonth, setRentMonth] = useState(bedData?.tenant_data?.rent_records.slice(-1)?.[0]?.month);
+    const [rentMonth, setRentMonth] = useState(bedData?.resident_data?.rent_records.slice(-1)?.[0]?.month);
     const [bedsDetails, setBedsDetails] = useState({
-        rentStatus: bedData?.tenant_data?.rent_records.slice(-1)?.[0]?.rentStatus || '',
-        transferType: bedData?.tenant_data?.rent_records.slice(-1)?.[0]?.transferType || '',
-        utrNumber: bedData?.tenant_data?.rent_records.slice(-1)?.[0]?.utrNumber || '',
-        transferredDate: bedData?.tenant_data?.rent_records.slice(-1)?.[0]?.transferredDate || '',
+        rentStatus: bedData?.resident_data?.rent_records.slice(-1)?.[0]?.rentStatus || '',
+        transferType: bedData?.resident_data?.rent_records.slice(-1)?.[0]?.transferType || '',
+        utrNumber: bedData?.resident_data?.rent_records.slice(-1)?.[0]?.utrNumber || '',
+        transferredDate: bedData?.resident_data?.rent_records.slice(-1)?.[0]?.transferredDate || '',
     });
 
     useEffect(() => {
         setBedsDetails(prev => ({
             ...prev,
-            rentStatus: bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.rentStatus || '',
-            transferType: bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.transferType || '',
-            utrNumber: bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.utrNumber || '',
-            transferredDate: bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.transferredDate || '',
+            rentStatus: bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.rentStatus || '',
+            transferType: bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.transferType || '',
+            utrNumber: bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.utrNumber || '',
+            transferredDate: bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.transferredDate || '',
         }))
     }, [rentMonth])
 
@@ -96,7 +96,7 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
 
         try {
             const response = await axios.put(
-                `/sales/rent-data-update/${bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.id}/`,
+                `/sales/rent-data-update/${bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.id}/`,
                 formData,
                 {
                     withCredentials: true,
@@ -169,54 +169,54 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Manager</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.propertyManager || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.propertyManager || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Sales Manager</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.salesManager || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.salesManager || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comfort Class</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.comfortClass || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.comfortClass || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Meal Type</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.mealType || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.mealType || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Name</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.residentsName || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.residentsName || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Phone Number</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.phoneNumber || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.phoneNumber || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Email</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.email || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.email || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Permanent Address</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.permanentAddress || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.permanentAddress || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">KYC</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.kycType || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.kycType || '-'}</td>
                                     </tr>
 
-                                    {bedData?.tenant_data?.kycType === 'Aadhar' && <>
+                                    {bedData?.resident_data?.kycType === 'Aadhar' && <>
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar Number</th>
                                             <td className="flex">
-                                                <span className="py-1 px-2 w-full">{bedData?.tenant_data?.aadharNumber || '-'}</span>
+                                                <span className="py-1 px-2 w-full">{bedData?.resident_data?.aadharNumber || '-'}</span>
                                             </td>
                                         </tr>
 
@@ -225,13 +225,13 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                             <td className="flex">
                                                 <span className="py-1 px-2 w-full">
                                                     <Link to={
-                                                        typeof bedData?.tenant_data?.aadharFrontCopy === 'string'
+                                                        typeof bedData?.resident_data?.aadharFrontCopy === 'string'
                                                             ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.aadharFrontCopy}`
-                                                            : bedData?.tenant_data?.aadharFrontCopy
-                                                                ? URL.createObjectURL(bedData?.tenant_data?.aadharFrontCopy)
+                                                            : bedData?.resident_data?.aadharFrontCopy
+                                                                ? URL.createObjectURL(bedData?.resident_data?.aadharFrontCopy)
                                                                 : '#'
                                                     } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.tenant_data?.aadharFrontCopy || '').split('/')[5]) || '-'}
+                                                        {((bedData?.resident_data?.aadharFrontCopy || '').split('/')[5]) || '-'}
                                                     </Link>
                                                 </span>
                                             </td>
@@ -241,13 +241,13 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                             <td className="flex">
                                                 <span className="py-1 px-2 w-full">
                                                     <Link to={
-                                                        typeof bedData?.tenant_data?.aadharBackCopy === 'string'
-                                                            ? bedData?.tenant_data?.aadharBackCopy
+                                                        typeof bedData?.resident_data?.aadharBackCopy === 'string'
+                                                            ? bedData?.resident_data?.aadharBackCopy
                                                             : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.aadharBackCopy}`
-                                                                ? URL.createObjectURL(bedData?.tenant_data?.aadharBackCopy)
+                                                                ? URL.createObjectURL(bedData?.resident_data?.aadharBackCopy)
                                                                 : '#'
                                                     } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.tenant_data?.aadharBackCopy || '').split('/')[5]) || '-'}
+                                                        {((bedData?.resident_data?.aadharBackCopy || '').split('/')[5]) || '-'}
                                                     </Link>
                                                 </span>
                                             </td>
@@ -255,7 +255,7 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
 
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Aadhar Status</th>
-                                            <td className="py-1 px-2">{bedData?.tenant_data?.aadharStatus || '-'}</td>
+                                            <td className="py-1 px-2">{bedData?.resident_data?.aadharStatus || '-'}</td>
                                         </tr>
                                     </>}
 
@@ -263,7 +263,7 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN Number</th>
                                             <td className="flex">
-                                                <span className="py-1 px-2 w-full">{bedData?.tenant_data?.panNumber || '-'}</span>
+                                                <span className="py-1 px-2 w-full">{bedData?.resident_data?.panNumber || '-'}</span>
                                             </td>
                                         </tr>
 
@@ -272,13 +272,13 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                             <td className="flex">
                                                 <span className="py-1 px-2 w-full">
                                                     <Link to={
-                                                        typeof bedData?.tenant_data?.panFrontCopy === 'string'
+                                                        typeof bedData?.resident_data?.panFrontCopy === 'string'
                                                             ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.panFrontCopy}`
-                                                            : bedData?.tenant_data?.panFrontCopy
-                                                                ? URL.createObjectURL(bedData?.tenant_data?.panFrontCopy)
+                                                            : bedData?.resident_data?.panFrontCopy
+                                                                ? URL.createObjectURL(bedData?.resident_data?.panFrontCopy)
                                                                 : '#'
                                                     } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.tenant_data?.panFrontCopy || '').split('/')[5]) || '-'}
+                                                        {((bedData?.resident_data?.panFrontCopy || '').split('/')[5]) || '-'}
                                                     </Link>
                                                 </span>
                                             </td>
@@ -288,13 +288,13 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                             <td className="flex">
                                                 <span className="py-1 px-2 w-full">
                                                     <Link to={
-                                                        typeof bedData?.tenant_data?.panBackCopy === 'string'
+                                                        typeof bedData?.resident_data?.panBackCopy === 'string'
                                                             ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.panBackCopy}`
-                                                            : bedData?.tenant_data?.panBackCopy
-                                                                ? URL.createObjectURL(bedData?.tenant_data?.panBackCopy)
+                                                            : bedData?.resident_data?.panBackCopy
+                                                                ? URL.createObjectURL(bedData?.resident_data?.panBackCopy)
                                                                 : '#'
                                                     } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.tenant_data?.panBackCopy || '').split('/')[5]) || '-'}
+                                                        {((bedData?.resident_data?.panBackCopy || '').split('/')[5]) || '-'}
                                                     </Link>
                                                 </span>
                                             </td>
@@ -302,37 +302,37 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
 
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">PAN Status</th>
-                                            <td className="py-1 px-2">{bedData?.tenant_data?.panStatus || '-'}</td>
+                                            <td className="py-1 px-2">{bedData?.resident_data?.panStatus || '-'}</td>
                                         </tr>
                                     </>}
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">check-In</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.checkIn ? new Date(bedData?.tenant_data?.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.checkIn ? new Date(bedData?.resident_data?.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">check-Out</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.checkOut ? new Date(bedData?.tenant_data?.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.checkOut ? new Date(bedData?.resident_data?.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Total Deposit Paid</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.totalDepositPaid || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.totalDepositPaid || '-'}</td>
                                     </tr>
 
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Per Month</th>
-                                        <td className="py-1 px-2">{bedData?.tenant_data?.rentPerMonth || '-'}</td>
+                                        <td className="py-1 px-2">{bedData?.resident_data?.rentPerMonth || '-'}</td>
                                     </tr>
 
                                     {bedData?.salesStatus === 'Completed' && <>
                                         <tr className="border-b border-white">
                                             <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Agreement</th>
-                                            <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(bedData)}>{`${bedData?.tenant_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`}</td>
+                                            <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(bedData)}>{`${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`}</td>
                                         </tr>
 
-                                        {bedData?.tenant_data?.rent_records.length && bedData?.tenant_data?.rent_records.length > 0 ?
+                                        {bedData?.resident_data?.rent_records.length && bedData?.resident_data?.rent_records.length > 0 ?
                                             <>
                                                 <tr className="border-b border-white">
                                                     <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Month</th>
@@ -343,7 +343,7 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                                             <span className="py-1 px-2 w-full">
                                                                 <select id="rentMonth" value={rentMonth} onChange={(e) => setRentMonth(e.target.value)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="rentMonth" required>
                                                                     <option value="" disabled>Select the month here</option>
-                                                                    {bedData?.tenant_data?.rent_records.map(record => <>
+                                                                    {bedData?.resident_data?.rent_records.map(record => <>
                                                                         <option key={record.id} value={record.month}>{record.month}</option>
                                                                     </>)}
                                                                 </select>
@@ -354,12 +354,12 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
 
                                                 <tr className="border-b border-white">
                                                     <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Delay Charges</th>
-                                                    <td className="py-1 px-2">{bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges}</td>
+                                                    <td className="py-1 px-2">{bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges}</td>
                                                 </tr>
 
                                                 <tr className="border-b border-white">
                                                     <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent after Delay Charges</th>
-                                                    <td className="py-1 px-2">{Number(((bedsDetails?.tenant_data?.rentPerMonth || '').match(/^\d+/))) + Number(bedData?.tenant_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges)}</td>
+                                                    <td className="py-1 px-2">{Number(((bedsDetails?.resident_data?.rentPerMonth || '').match(/^\d+/))) + Number(bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges)}</td>
                                                 </tr>
 
                                                 <tr className="border-b border-white">
