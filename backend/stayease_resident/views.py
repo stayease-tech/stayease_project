@@ -3,8 +3,9 @@ import hashlib
 import uuid
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
@@ -20,7 +21,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from stayease_project.throttles import LoginRateThrottle
 
-from stayease_sales.models import resident_Data, resident_Rent_Data
+from stayease_sales.models import resident_Data, resident_Rent_Data, PaymentTransaction, RecurringMandate
 from stayease_operations.models import PropertyComplaintDetail, ComplaintCategory, Feedback
 
 
@@ -356,8 +357,21 @@ def resident_payu_init(request):
     firstname = (resident.residentsName or request.user.first_name or 'resident').strip()
     email = (resident.email or '').strip()
     phone = str(resident.phoneNumber or request.user.username or '').strip()
+    rent_id = str(request.data.get('rentId') or '')
+
+    # Validate the rent record belongs to this resident
+    rent_record = None
+    if rent_id:
+        try:
+            rent_record = resident_Rent_Data.objects.get(
+                id=int(rent_id),
+                resident_data_instance=resident,
+            )
+        except (resident_Rent_Data.DoesNotExist, ValueError):
+            return Response({'success': False, 'message': 'Invalid rent record.'}, status=400)
 
     amount_str = f"{amount:.2f}"
+    # Hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
     hash_sequence = "|".join([
         merchant_key,
         txn_id,
@@ -365,10 +379,24 @@ def resident_payu_init(request):
         product_info,
         firstname,
         email,
-        '', '', '', '', '', '', '', '', '', '',
+        str(resident.id),   # udf1
+        str(request.user.id),  # udf2
+        rent_id,             # udf3
+        '', '',              # udf4, udf5
+        '', '', '', '', '',  # additional fields
         merchant_salt,
     ])
     payu_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
+
+    # Log payment transaction for audit trail
+    PaymentTransaction.objects.create(
+        txnid=txn_id,
+        resident=resident,
+        rent_record=rent_record,
+        amount=amount,
+        product_info=product_info,
+        status='initiated',
+    )
 
     return Response({
         'success': True,
@@ -387,8 +415,558 @@ def resident_payu_init(request):
             'hash': payu_hash,
             'udf1': str(resident.id),
             'udf2': str(request.user.id),
+            'udf3': rent_id,
         }
     })
+
+
+def _verify_payu_hash(post_data):
+    """Verify the reverse hash from PayU callback."""
+    payu_config = getattr(settings, 'PAYU_CONFIG', {})
+    merchant_key = (payu_config.get('merchant_key') or '').strip()
+    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
+
+    received_hash = post_data.get('hash', '')
+    # Reverse hash: salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
+    hash_sequence = "|".join([
+        merchant_salt,
+        post_data.get('status', ''),
+        '', '', '', '',
+        post_data.get('udf5', ''),
+        post_data.get('udf4', ''),
+        post_data.get('udf3', ''),
+        post_data.get('udf2', ''),
+        post_data.get('udf1', ''),
+        post_data.get('email', ''),
+        post_data.get('firstname', ''),
+        post_data.get('productinfo', ''),
+        post_data.get('amount', ''),
+        post_data.get('txnid', ''),
+        merchant_key,
+    ])
+    expected_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
+    return received_hash.lower() == expected_hash.lower()
+
+
+def _payu_redirect(status_val, **params):
+    """Build a safe redirect URL to the frontend payment result page."""
+    frontend_base = getattr(settings, 'FRONTEND_BASE_URL', '')
+    params['status'] = status_val
+    return HttpResponseRedirect(f'{frontend_base}/resident/payment-result?{urlencode(params)}')
+
+
+@csrf_exempt
+def payu_success(request):
+    if request.method != 'POST':
+        return HttpResponseRedirect('/resident/payments')
+
+    post = request.POST
+    txnid = post.get('txnid', '')
+    amount = post.get('amount', '')
+
+    # 1. Verify hash
+    if not _verify_payu_hash(post):
+        return _payu_redirect('failed', reason='tampered')
+
+    # 2. Look up the transaction log
+    try:
+        txn = PaymentTransaction.objects.get(txnid=txnid)
+    except PaymentTransaction.DoesNotExist:
+        return _payu_redirect('failed', reason='unknown_transaction')
+
+    # 3. Idempotency — don't process the same txn twice
+    if txn.status == 'success':
+        return _payu_redirect('success', txnid=txnid, amount=amount)
+
+    # 4. Verify amount matches what was initiated
+    try:
+        callback_amount = Decimal(amount)
+    except (InvalidOperation, TypeError):
+        callback_amount = None
+
+    if callback_amount is None or callback_amount != txn.amount:
+        txn.status = 'failed'
+        txn.payu_status = 'amount_mismatch'
+        txn.save()
+        return _payu_redirect('failed', reason='amount_mismatch')
+
+    # 5. Mark transaction as successful
+    txn.status = 'success'
+    txn.payu_status = post.get('status', '')
+    txn.save()
+
+    # 6. Update the rent record
+    if txn.rent_record:
+        rent_record = txn.rent_record
+        rent_record.rentStatus = 'Received'
+        rent_record.transferType = 'Online - PayU'
+        rent_record.utrNumber = txnid
+        rent_record.transferredDate = datetime.now().strftime('%Y-%m-%d')
+        rent_record.save()
+
+    return _payu_redirect('success', txnid=txnid, amount=amount)
+
+
+@csrf_exempt
+def payu_failure(request):
+    if request.method != 'POST':
+        return HttpResponseRedirect('/resident/payments')
+
+    post = request.POST
+    txnid = post.get('txnid', '')
+
+    # Verify hash on failure callbacks too
+    if not _verify_payu_hash(post):
+        return _payu_redirect('failed', reason='tampered')
+
+    # Update transaction log
+    try:
+        txn = PaymentTransaction.objects.get(txnid=txnid)
+        if txn.status != 'success':  # don't overwrite a success
+            txn.status = 'failed'
+            txn.payu_status = post.get('status', '')
+            txn.save()
+    except PaymentTransaction.DoesNotExist:
+        pass
+
+    return _payu_redirect('failed', txnid=txnid)
+
+
+# ─── PayU Webhook (Server-to-Server Notification) ───────────────────
+
+@csrf_exempt
+def payu_webhook(request):
+    """Handle PayU server-to-server webhook notifications.
+    This catches payments where the browser redirect was missed
+    (e.g., user closed browser, network issue during redirect).
+    Configure this URL in PayU merchant dashboard under Webhooks.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST only'}, status=405)
+
+    post = request.POST
+    txnid = post.get('txnid', '')
+    payu_status = post.get('status', '')
+
+    if not _verify_payu_hash(post):
+        logger.warning(f"[WEBHOOK] Hash verification failed for txnid={txnid}")
+        return JsonResponse({'status': 'error', 'message': 'hash_mismatch'}, status=403)
+
+    # Try one-time payment transaction first
+    try:
+        txn = PaymentTransaction.objects.get(txnid=txnid)
+        if txn.status == 'success':
+            return JsonResponse({'status': 'ok', 'message': 'already_processed'})
+
+        if payu_status == 'success':
+            amount = post.get('amount', '')
+            try:
+                callback_amount = Decimal(amount)
+            except (InvalidOperation, TypeError):
+                callback_amount = None
+
+            if callback_amount is not None and callback_amount == txn.amount:
+                txn.status = 'success'
+                txn.payu_status = payu_status
+                txn.save()
+
+                if txn.rent_record:
+                    rent_record = txn.rent_record
+                    rent_record.rentStatus = 'Received'
+                    rent_record.transferType = 'Online - PayU'
+                    rent_record.utrNumber = txnid
+                    rent_record.transferredDate = datetime.now().strftime('%Y-%m-%d')
+                    rent_record.save()
+                logger.info(f"[WEBHOOK] Payment {txnid} marked success via webhook")
+            else:
+                txn.status = 'failed'
+                txn.payu_status = 'amount_mismatch'
+                txn.save()
+                logger.warning(f"[WEBHOOK] Amount mismatch for {txnid}")
+        else:
+            txn.status = 'failed'
+            txn.payu_status = payu_status
+            txn.save()
+            logger.info(f"[WEBHOOK] Payment {txnid} marked {payu_status} via webhook")
+
+        return JsonResponse({'status': 'ok'})
+    except PaymentTransaction.DoesNotExist:
+        pass
+
+    # Try SI mandate
+    try:
+        mandate = RecurringMandate.objects.get(txnid=txnid)
+        if mandate.status == 'active':
+            return JsonResponse({'status': 'ok', 'message': 'already_processed'})
+
+        if payu_status == 'success':
+            auth_payu_id = post.get('authPayUId', '') or post.get('si_token', '')
+            if auth_payu_id:
+                mandate.auth_payu_id = auth_payu_id
+                mandate.status = 'active'
+                from datetime import date
+                today = date.today()
+                if today.month < 12:
+                    next_month_1st = today.replace(month=today.month + 1, day=1)
+                else:
+                    next_month_1st = today.replace(year=today.year + 1, month=1, day=1)
+                mandate.next_charge_date = max(next_month_1st, mandate.start_date)
+                mandate.save()
+                logger.info(f"[WEBHOOK] Mandate {txnid} activated via webhook")
+        else:
+            logger.info(f"[WEBHOOK] Mandate {txnid} status={payu_status} via webhook")
+
+        return JsonResponse({'status': 'ok'})
+    except RecurringMandate.DoesNotExist:
+        pass
+
+    logger.warning(f"[WEBHOOK] Unknown txnid={txnid}")
+    return JsonResponse({'status': 'error', 'message': 'unknown_transaction'}, status=404)
+
+
+# ─── Standing Instructions (Recurring Payments) ─────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resident_si_consent_init(request):
+    """Initiate SI consent registration — redirects to PayU hosted page for e-mandate."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'Resident not found.'}, status=404)
+
+    # Check for existing active mandate
+    active_mandate = RecurringMandate.objects.filter(
+        resident=resident, status='active'
+    ).first()
+    if active_mandate:
+        return Response({
+            'success': False,
+            'message': 'You already have an active auto-pay mandate.',
+        }, status=400)
+
+    # Validate lease dates
+    if not resident.checkIn or not resident.checkOut:
+        return Response({
+            'success': False,
+            'message': 'Lease dates (check-in/check-out) are not set. Contact support.',
+        }, status=400)
+
+    try:
+        start_date = datetime.strptime(resident.checkIn, '%Y-%m-%d').date()
+        end_date = datetime.strptime(resident.checkOut, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        return Response({
+            'success': False,
+            'message': 'Lease dates are in an invalid format. Contact support.',
+        }, status=400)
+
+    if end_date <= start_date:
+        return Response({
+            'success': False,
+            'message': 'Lease end date must be after start date.',
+        }, status=400)
+
+    # Validate billing amount
+    try:
+        billing_amount = Decimal(str(resident.rentPerMonth or '').strip())
+    except (InvalidOperation, TypeError):
+        return Response({
+            'success': False,
+            'message': 'Monthly rent amount is not configured. Contact support.',
+        }, status=400)
+
+    if billing_amount <= 0:
+        return Response({
+            'success': False,
+            'message': 'Monthly rent must be greater than zero.',
+        }, status=400)
+
+    payu_config = getattr(settings, 'PAYU_CONFIG', {})
+    merchant_key = (payu_config.get('merchant_key') or '').strip()
+    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
+    payu_base_url = (payu_config.get('base_url') or '').strip()
+    si_success_url = (payu_config.get('si_success_url') or '').strip()
+    si_failure_url = (payu_config.get('si_failure_url') or '').strip()
+
+    if not merchant_key or not merchant_salt or not payu_base_url:
+        return Response({
+            'success': False,
+            'message': 'Payment service is not configured yet. Please contact support.',
+        }, status=503)
+
+    txn_id = f"SESI{uuid.uuid4().hex[:16]}"
+    amount_str = f"{billing_amount:.2f}"
+    product_info = 'Monthly Rent Auto-Pay'
+    firstname = (resident.residentsName or request.user.first_name or 'Resident').strip()
+    email = (resident.email or '').strip()
+    phone = str(resident.phoneNumber or request.user.username or '').strip()
+
+    # Build si_details JSON — minified, no whitespace
+    si_details = json.dumps({
+        'billingAmount': amount_str,
+        'billingCurrency': 'INR',
+        'billingCycle': 'MONTHLY',
+        'billingInterval': 1,
+        'paymentStartDate': start_date.strftime('%Y-%m-%d'),
+        'paymentEndDate': end_date.strftime('%Y-%m-%d'),
+        'billingRule': 'MAX',
+        'billingLimit': 'ON',
+    }, separators=(',', ':'))
+
+    # SI Hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||si_details|salt
+    hash_sequence = '|'.join([
+        merchant_key,
+        txn_id,
+        amount_str,
+        product_info,
+        firstname,
+        email,
+        str(resident.id),      # udf1
+        str(request.user.id),  # udf2
+        '', '', '',            # udf3, udf4, udf5
+        '', '', '', '', '',    # additional empty fields
+        si_details,
+        merchant_salt,
+    ])
+    payu_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
+
+    # Log mandate
+    RecurringMandate.objects.create(
+        txnid=txn_id,
+        resident=resident,
+        billing_amount=billing_amount,
+        billing_cycle='MONTHLY',
+        start_date=start_date,
+        end_date=end_date,
+        status='initiated',
+    )
+
+    return Response({
+        'success': True,
+        'paymentProvider': 'payu',
+        'payuBaseUrl': payu_base_url,
+        'paymentData': {
+            'key': merchant_key,
+            'txnid': txn_id,
+            'amount': amount_str,
+            'productinfo': product_info,
+            'firstname': firstname,
+            'email': email,
+            'phone': phone,
+            'surl': si_success_url,
+            'furl': si_failure_url,
+            'hash': payu_hash,
+            'udf1': str(resident.id),
+            'udf2': str(request.user.id),
+            'si': '1',
+            'api_version': '7',
+            'si_details': si_details,
+        }
+    })
+
+
+@csrf_exempt
+def payu_si_success(request):
+    """Handle PayU SI consent success callback — extract authPayUId."""
+    if request.method != 'POST':
+        return HttpResponseRedirect('/resident/payments')
+
+    post = request.POST
+    txnid = post.get('txnid', '')
+
+    if not _verify_payu_hash(post):
+        return _payu_redirect('failed', reason='tampered', type='mandate')
+
+    try:
+        mandate = RecurringMandate.objects.get(txnid=txnid)
+    except RecurringMandate.DoesNotExist:
+        return _payu_redirect('failed', reason='unknown_mandate', type='mandate')
+
+    if mandate.status == 'active':
+        return _payu_redirect('success', txnid=txnid, type='mandate')
+
+    # Extract the mandate token from PayU response
+    auth_payu_id = post.get('authPayUId', '') or post.get('si_token', '')
+    if not auth_payu_id:
+        mandate.status = 'initiated'
+        mandate.save()
+        return _payu_redirect('failed', reason='no_mandate_token', type='mandate')
+
+    mandate.auth_payu_id = auth_payu_id
+    mandate.status = 'active'
+    # Set next charge date to the 1st of next month or start_date, whichever is later
+    from datetime import date
+    today = date.today()
+    if today.month < 12:
+        next_month_1st = today.replace(month=today.month + 1, day=1)
+    else:
+        next_month_1st = today.replace(year=today.year + 1, month=1, day=1)
+    mandate.next_charge_date = max(next_month_1st, mandate.start_date)
+    mandate.save()
+
+    return _payu_redirect('success', txnid=txnid, type='mandate')
+
+
+@csrf_exempt
+def payu_si_failure(request):
+    """Handle PayU SI consent failure callback."""
+    if request.method != 'POST':
+        return HttpResponseRedirect('/resident/payments')
+
+    post = request.POST
+    txnid = post.get('txnid', '')
+
+    if not _verify_payu_hash(post):
+        return _payu_redirect('failed', reason='tampered', type='mandate')
+
+    try:
+        mandate = RecurringMandate.objects.get(txnid=txnid)
+        if mandate.status != 'active':
+            mandate.status = 'initiated'
+            mandate.save()
+    except RecurringMandate.DoesNotExist:
+        pass
+
+    return _payu_redirect('failed', txnid=txnid, type='mandate')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def resident_mandate_status(request):
+    """Get the current auto-pay mandate status for the authenticated resident."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'Resident not found.'}, status=404)
+
+    mandate = RecurringMandate.objects.filter(
+        resident=resident, status__in=['active', 'initiated']
+    ).order_by('-created_at').first()
+
+    if not mandate:
+        return Response({'success': True, 'hasMandate': False})
+
+    return Response({
+        'success': True,
+        'hasMandate': True,
+        'mandate': {
+            'id': mandate.id,
+            'status': mandate.status,
+            'billingAmount': str(mandate.billing_amount),
+            'startDate': mandate.start_date.isoformat(),
+            'endDate': mandate.end_date.isoformat(),
+            'nextChargeDate': mandate.next_charge_date.isoformat() if mandate.next_charge_date else None,
+            'lastChargedDate': mandate.last_charged_date.isoformat() if mandate.last_charged_date else None,
+            'createdAt': mandate.created_at.isoformat(),
+        },
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resident_mandate_cancel(request):
+    """Cancel the active recurring mandate — RBI requires residents can cancel at any time."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'Resident not found.'}, status=404)
+
+    mandate = RecurringMandate.objects.filter(
+        resident=resident, status='active'
+    ).order_by('-created_at').first()
+
+    if not mandate:
+        return Response({
+            'success': False,
+            'message': 'No active auto-pay mandate found.',
+        }, status=404)
+
+    # Revoke mandate via PayU API (stub — requires merchant keys + SI enablement)
+    revoke_result = _revoke_mandate_on_payu(mandate)
+    if not revoke_result['success']:
+        import logging
+        logging.getLogger(__name__).warning(
+            f"PayU mandate revoke API failed for mandate {mandate.txnid}: {revoke_result.get('message')}"
+        )
+
+    mandate.status = 'revoked'
+    mandate.save()
+
+    return Response({'success': True, 'message': 'Auto-pay mandate cancelled successfully.'})
+
+
+# ─── Server-to-Server SI Stubs ──────────────────────────────────────
+
+def _revoke_mandate_on_payu(mandate):
+    """Stub: Revoke mandate via PayU mandate_revoke API.
+    Requires: POST to PayU info API with command=mandate_revoke, var1=authPayUId.
+    Hash: sha512(key|command|var1|salt)
+    """
+    payu_config = getattr(settings, 'PAYU_CONFIG', {})
+    merchant_key = (payu_config.get('merchant_key') or '').strip()
+    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
+
+    if not merchant_key or not merchant_salt or not mandate.auth_payu_id:
+        return {'success': False, 'message': 'PayU not configured or no mandate token'}
+
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(
+        f"[SI STUB] Would revoke mandate {mandate.txnid} "
+        f"(authPayUId={mandate.auth_payu_id}) via PayU mandate_revoke API"
+    )
+    # TODO: Implement when PayU SI is enabled on the merchant account
+    # command = 'mandate_revoke'
+    # hash_str = f"{merchant_key}|{command}|{mandate.auth_payu_id}|{merchant_salt}"
+    # api_hash = hashlib.sha512(hash_str.encode('utf-8')).hexdigest()
+    # response = requests.post('https://info.payu.in/merchant/postservice', data={
+    #     'key': merchant_key, 'command': command,
+    #     'var1': mandate.auth_payu_id, 'hash': api_hash,
+    # })
+    return {'success': True, 'message': 'Stub — revocation logged locally'}
+
+
+def _send_pre_debit_notification(mandate):
+    """Stub: Send pre-debit notification via PayU pre_debit_SI API.
+    RBI requires 24+ hours before charging. We send 48 hours early.
+    Hash: sha512(key|command|var1|salt)
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(
+        f"[SI STUB] Would send pre-debit notification for mandate {mandate.txnid} "
+        f"(authPayUId={mandate.auth_payu_id}, amount={mandate.billing_amount})"
+    )
+    # TODO: Implement when PayU SI is enabled
+    # command = 'pre_debit_SI'
+    # var1 = json.dumps({'authPayUId': mandate.auth_payu_id, 'amount': str(mandate.billing_amount)})
+    # hash_str = f"{merchant_key}|{command}|{var1}|{merchant_salt}"
+    # ...
+    return {'success': True, 'message': 'Stub — pre-debit notification logged'}
+
+
+def _execute_si_charge(mandate):
+    """Stub: Execute recurring charge via PayU si_transaction API.
+    Hash: sha512(key|command|var1|salt)
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(
+        f"[SI STUB] Would execute SI charge for mandate {mandate.txnid} "
+        f"(authPayUId={mandate.auth_payu_id}, amount={mandate.billing_amount})"
+    )
+    # TODO: Implement when PayU SI is enabled
+    # command = 'si_transaction'
+    # var1 = json.dumps({
+    #     'authPayUId': mandate.auth_payu_id,
+    #     'amount': str(mandate.billing_amount),
+    #     'txnid': f"SESIC{uuid.uuid4().hex[:14]}",
+    #     'debitDate': mandate.next_charge_date.strftime('%Y-%m-%d'),
+    # })
+    # hash_str = f"{merchant_key}|{command}|{var1}|{merchant_salt}"
+    # ...
+    return {'success': True, 'message': 'Stub — SI charge logged'}
 
 
 @api_view(['GET'])

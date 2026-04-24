@@ -47,6 +47,7 @@ frontend/build/
 
 # AI / Agent files — do not push
 CLAUDE.md
+.claude/
 .cursorrules
 .cursor/
 tasks/

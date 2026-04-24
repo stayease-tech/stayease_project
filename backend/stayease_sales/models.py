@@ -71,6 +71,84 @@ class resident_Rent_Data(models.Model):
     updatedDateAndTime = models.DateTimeField(auto_now=True)
     last_activity = models.DateTimeField(auto_now=True)
 
+class PaymentTransaction(models.Model):
+    STATUS_CHOICES = [
+        ('initiated', 'Initiated'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    txnid = models.CharField(max_length=64, unique=True)
+    resident = models.ForeignKey(resident_Data, on_delete=models.CASCADE, related_name='payment_transactions')
+    rent_record = models.ForeignKey(resident_Rent_Data, on_delete=models.SET_NULL, null=True, blank=True, related_name='payment_transactions')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    product_info = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='initiated')
+    payu_status = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['txnid']),
+        ]
+
+
+class RecurringMandate(models.Model):
+    STATUS_CHOICES = [
+        ('initiated', 'Initiated'),
+        ('active', 'Active'),
+        ('paused', 'Paused'),
+        ('revoked', 'Revoked'),
+        ('expired', 'Expired'),
+    ]
+    txnid = models.CharField(max_length=64, unique=True)
+    resident = models.ForeignKey(resident_Data, on_delete=models.CASCADE, related_name='recurring_mandates')
+    auth_payu_id = models.CharField(max_length=128, blank=True, null=True)
+    billing_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    billing_cycle = models.CharField(max_length=20, default='MONTHLY')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='initiated')
+    next_charge_date = models.DateField(blank=True, null=True)
+    last_charged_date = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['txnid']),
+            models.Index(fields=['status', 'next_charge_date']),
+        ]
+
+    def __str__(self):
+        return f"Mandate {self.txnid} - {self.resident.residentsName} ({self.status})"
+
+
+class PaymentRefund(models.Model):
+    STATUS_CHOICES = [
+        ('initiated', 'Initiated'),
+        ('processing', 'Processing'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+    ]
+    transaction = models.ForeignKey(PaymentTransaction, on_delete=models.CASCADE, related_name='refunds')
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='initiated')
+    payu_refund_id = models.CharField(max_length=128, blank=True, null=True)
+    initiated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='initiated_refunds')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Refund {self.id} — ₹{self.refund_amount} on txn {self.transaction.txnid}"
+
+
 class Leads_Detail(models.Model):
     leadDate = models.CharField()
     leadSource = models.CharField()

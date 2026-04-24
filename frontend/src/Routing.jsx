@@ -21,6 +21,7 @@ const WebContact = lazy(() => import("./website/components/pages/Contact"));
 const WebResidentLogin = lazy(() => import("./website/components/pages/ResidentLogin"));
 const WebPrivacyPolicy = lazy(() => import("./website/components/pages/PrivacyPolicyPage"));
 const WebTermsConditions = lazy(() => import("./website/components/pages/TermsConditionsPage"));
+const WebRefundPolicy = lazy(() => import("./website/components/pages/RefundPolicyPage"));
 const WebNotFound = lazy(() => import("./website/components/pages/NotFound"));
 const Blog1 = lazy(() => import("./website/components/blog-components/Blog1"));
 const Blog2 = lazy(() => import("./website/components/blog-components/Blog2"));
@@ -129,6 +130,7 @@ const ResidentComplaints = lazy(() => import("./resident/components/ResidentComp
 const ResidentComplaintDetail = lazy(() => import("./resident/components/ResidentComplaintDetail"));
 const ResidentLease = lazy(() => import("./resident/components/ResidentLease"));
 const ResidentPayments = lazy(() => import("./resident/components/ResidentPayments"));
+const ResidentPaymentResult = lazy(() => import("./resident/components/ResidentPaymentResult"));
 const ResidentChangePassword = lazy(() => import("./resident/components/ResidentChangePassword"));
 
 // === OPERATIONS KYC - lazy loaded ===
@@ -185,6 +187,7 @@ function Routing() {
                 <Route path="/resident-login" element={<PublicLayout><WebResidentLogin /></PublicLayout>} />
                 <Route path="/privacy-policy" element={<PublicLayout><WebPrivacyPolicy /></PublicLayout>} />
                 <Route path="/Terms-conditions" element={<PublicLayout><WebTermsConditions /></PublicLayout>} />
+                <Route path="/refund-policy" element={<PublicLayout><WebRefundPolicy /></PublicLayout>} />
 
                 {/* ========== ACCOUNTS (PROTECTED) ========== */}
                 <Route path="/accounts/accounts-user-activity-data" element={<Protected type="accounts"><AccActivityStats {...sp} /></Protected>} />
@@ -288,6 +291,7 @@ function Routing() {
                 <Route path="/resident/complaint/:id" element={<Protected type="resident"><ResidentComplaintDetail {...sp} /></Protected>} />
                 <Route path="/resident/lease" element={<Protected type="resident"><ResidentLease {...sp} /></Protected>} />
                 <Route path="/resident/payments" element={<Protected type="resident"><ResidentPayments {...sp} /></Protected>} />
+                <Route path="/resident/payment-result" element={<ResidentPaymentResult />} />
                 <Route path="/resident/change-password" element={<Protected type="resident"><ResidentChangePassword {...sp} /></Protected>} />
 
                 {/* ========== OLD LOGIN REDIRECTS ========== */}

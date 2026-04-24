@@ -229,6 +229,13 @@ X_FRAME_OPTIONS = 'DENY'
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 
+# TLS / HSTS enforcement (production only)
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_HSTS_SECONDS = 0 if DEBUG else 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # JWT settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
@@ -242,6 +249,10 @@ PAYU_CONFIG = {
     'merchant_key': os.getenv('PAYU_MERCHANT_KEY', ''),
     'merchant_salt': os.getenv('PAYU_MERCHANT_SALT', ''),
     'base_url': os.getenv('PAYU_BASE_URL', 'https://test.payu.in/_payment'),
-    'success_url': os.getenv('PAYU_SUCCESS_URL', 'https://localhost/payu/success'),
-    'failure_url': os.getenv('PAYU_FAILURE_URL', 'https://localhost/payu/failure'),
+    'success_url': os.getenv('PAYU_SUCCESS_URL', 'http://localhost:8000/resident-portal/payments/payu/success/'),
+    'failure_url': os.getenv('PAYU_FAILURE_URL', 'http://localhost:8000/resident-portal/payments/payu/failure/'),
+    'si_success_url': os.getenv('PAYU_SI_SUCCESS_URL', 'http://localhost:8000/resident-portal/payments/payu/si-success/'),
+    'si_failure_url': os.getenv('PAYU_SI_FAILURE_URL', 'http://localhost:8000/resident-portal/payments/payu/si-failure/'),
 }
+
+FRONTEND_BASE_URL = os.getenv('FRONTEND_BASE_URL', 'http://localhost:5173')

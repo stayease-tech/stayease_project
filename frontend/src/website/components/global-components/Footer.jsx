@@ -12,6 +12,7 @@ const COMPANY_LINKS = [
 const SERVICE_LINKS = [
     { name: 'Privacy Policy', to: '/privacy-policy' },
     { name: 'Terms & Conditions', to: '/Terms-conditions' },
+    { name: 'Refund & Cancellation Policy', to: '/refund-policy' },
     { name: 'Cookie Policy', to: '/privacy-policy' },
     { name: 'Resident Login', to: '/resident-login' },
 ]

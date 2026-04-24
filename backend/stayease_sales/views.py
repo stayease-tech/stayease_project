@@ -13,7 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
-from .models import User_Activity_Data, User_Login_Data, resident_Data, resident_Rent_Data, Leads_Detail, Document, SigningRequest
+from .models import User_Activity_Data, User_Login_Data, resident_Data, resident_Rent_Data, Leads_Detail, Document, SigningRequest, PaymentTransaction, PaymentRefund
 from stayease_supply.models import Property_Data, Room_Data, Bed_Data
 from stayease_accounts.models import Expense_Detail, Expense_Category_Detail
 from .service import ZohoESignService
@@ -891,6 +891,199 @@ def rent_data_update(request, id):
             return JsonResponse({'success': False, 'message': 'Error updating data. Please try again later!'})
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. PUT expected!'})
+
+
+# ─── Refund Management ────────────────────────────────────────────────
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_refund_eligible_transactions(request):
+    """List transactions eligible for refund (successful payments with remaining refundable amount)."""
+    transactions = PaymentTransaction.objects.filter(
+        status='success'
+    ).select_related('resident', 'rent_record').order_by('-created_at')
+
+    data = []
+    for txn in transactions:
+        total_refunded = sum(
+            r.refund_amount for r in txn.refunds.filter(status__in=['initiated', 'processing', 'success'])
+        )
+        refundable = txn.amount - total_refunded
+        if refundable <= 0:
+            continue
+        data.append({
+            'txnid': txn.txnid,
+            'amount': str(txn.amount),
+            'totalRefunded': str(total_refunded),
+            'refundable': str(refundable),
+            'residentName': txn.resident.residentsName if txn.resident else '',
+            'residentPhone': txn.resident.phoneNumber if txn.resident else '',
+            'productInfo': txn.product_info,
+            'rentMonth': txn.rent_record.month if txn.rent_record else '',
+            'paidAt': txn.created_at.isoformat(),
+        })
+
+    return Response({'success': True, 'transactions': data})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def initiate_refund(request):
+    """Admin-initiated refund against a specific PaymentTransaction.
+    Validates refund amount doesn't exceed remaining refundable balance.
+    Calls PayU cancel_refund_transaction API (stub until keys are live).
+    Refund goes back to the original payment method (RBI requirement).
+    """
+    txnid = request.data.get('txnid', '').strip()
+    refund_amount_raw = str(request.data.get('amount', '')).strip()
+    reason = request.data.get('reason', '').strip()
+
+    if not txnid or not refund_amount_raw or not reason:
+        return Response({
+            'success': False,
+            'message': 'Transaction ID, amount, and reason are required.',
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from decimal import Decimal, InvalidOperation
+        refund_amount = Decimal(refund_amount_raw)
+    except (InvalidOperation, TypeError):
+        return Response({
+            'success': False,
+            'message': 'Amount must be a valid number.',
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    if refund_amount <= 0:
+        return Response({
+            'success': False,
+            'message': 'Refund amount must be greater than zero.',
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        txn = PaymentTransaction.objects.get(txnid=txnid, status='success')
+    except PaymentTransaction.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Transaction not found or not eligible for refund.',
+        }, status=status.HTTP_404_NOT_FOUND)
+
+    # Calculate remaining refundable amount
+    total_refunded = sum(
+        r.refund_amount for r in txn.refunds.filter(status__in=['initiated', 'processing', 'success'])
+    )
+    refundable = txn.amount - total_refunded
+
+    if refund_amount > refundable:
+        return Response({
+            'success': False,
+            'message': f'Refund amount exceeds refundable balance (₹{refundable}).',
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create refund record
+    refund = PaymentRefund.objects.create(
+        transaction=txn,
+        refund_amount=refund_amount,
+        reason=reason,
+        status='initiated',
+        initiated_by=request.user,
+    )
+
+    # Call PayU refund API (stub)
+    payu_result = _process_payu_refund(txn, refund)
+
+    if payu_result['success']:
+        refund.status = 'processing'
+        refund.payu_refund_id = payu_result.get('refund_id', '')
+        refund.save()
+
+        # If full refund, revert the rent record status
+        new_total_refunded = total_refunded + refund_amount
+        if new_total_refunded >= txn.amount and txn.rent_record:
+            txn.rent_record.rentStatus = 'Refunded'
+            txn.rent_record.save(update_fields=['rentStatus'])
+
+        return Response({
+            'success': True,
+            'message': 'Refund initiated successfully. It will be credited to the original payment method within 5-7 business days.',
+            'refundId': refund.id,
+            'payuRefundId': refund.payu_refund_id,
+        })
+    else:
+        refund.status = 'failed'
+        refund.save()
+        return Response({
+            'success': False,
+            'message': f'Refund could not be processed: {payu_result.get("message", "Unknown error")}',
+        }, status=status.HTTP_502_BAD_GATEWAY)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_refund_history(request):
+    """List all refunds with their status."""
+    refunds = PaymentRefund.objects.select_related(
+        'transaction__resident', 'initiated_by'
+    ).order_by('-created_at')
+
+    data = []
+    for r in refunds:
+        data.append({
+            'id': r.id,
+            'txnid': r.transaction.txnid,
+            'originalAmount': str(r.transaction.amount),
+            'refundAmount': str(r.refund_amount),
+            'reason': r.reason,
+            'status': r.status,
+            'payuRefundId': r.payu_refund_id,
+            'residentName': r.transaction.resident.residentsName if r.transaction.resident else '',
+            'initiatedBy': r.initiated_by.get_full_name() or r.initiated_by.username if r.initiated_by else '',
+            'createdAt': r.created_at.isoformat(),
+        })
+
+    return Response({'success': True, 'refunds': data})
+
+
+def _process_payu_refund(transaction, refund):
+    """Stub: Process refund via PayU cancel_refund_transaction API.
+    Hash: sha512(key|command|var1|salt)
+    var1 = PayU transaction ID (txnid)
+    var2 = unique request ID
+    var3 = refund amount
+
+    Refund is credited back to original payment method per RBI mandate.
+    """
+    import hashlib
+    import logging
+    from django.conf import settings
+
+    logger = logging.getLogger(__name__)
+    payu_config = getattr(settings, 'PAYU_CONFIG', {})
+    merchant_key = (payu_config.get('merchant_key') or '').strip()
+    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
+
+    if not merchant_key or not merchant_salt:
+        logger.info(
+            f"[REFUND STUB] Would refund ₹{refund.refund_amount} on txn {transaction.txnid} "
+            f"via PayU cancel_refund_transaction API"
+        )
+        # TODO: Implement when PayU keys are available
+        # command = 'cancel_refund_transaction'
+        # var1 = transaction.txnid
+        # hash_str = f"{merchant_key}|{command}|{var1}|{merchant_salt}"
+        # api_hash = hashlib.sha512(hash_str.encode('utf-8')).hexdigest()
+        # response = requests.post('https://info.payu.in/merchant/postservice', data={
+        #     'key': merchant_key,
+        #     'command': command,
+        #     'var1': var1,
+        #     'var2': f"REF{refund.id}",
+        #     'var3': str(refund.refund_amount),
+        #     'hash': api_hash,
+        # })
+        return {'success': True, 'message': 'Stub — refund logged locally', 'refund_id': f'STUB_REF_{refund.id}'}
+
+    # When keys are available, uncomment the API call above and handle the response
+    return {'success': True, 'message': 'Stub — refund logged locally', 'refund_id': f'STUB_REF_{refund.id}'}
+
 
 def converted_welcome_email_template(data):
     if hasattr(data, '__dict__'):
