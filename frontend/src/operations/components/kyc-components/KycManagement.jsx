@@ -3,26 +3,29 @@ import axios from "axios";
 import Navbar from "../../../shared/Navbar";
 import { ShieldCheck, Check, X, Eye, ChevronDown } from "lucide-react";
 
+const TABS = ["Pending", "Approved", "Rejected"];
+
 export default function KycManagement({ isExpanded, setIsExpanded }) {
-    const [residents, setresidents] = useState([]);
+    const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Pending");
-    const [selectedresident, setSelectedresident] = useState(null);
+    const [selectedResident, setSelectedResident] = useState(null);
     const [rejectReason, setRejectReason] = useState("");
     const [processing, setProcessing] = useState(false);
     const [msg, setMsg] = useState({ text: "", type: "" });
 
     const Sidebar = useSidebar();
 
-    const fetchresidents = (status) => {
+    const fetchResidents = (status) => {
         setLoading(true);
+        setSelectedResident(null);
         axios.get(`/operations/kyc-pending/?status=${status}`)
-            .then((res) => { if (res.data.success) setresidents(res.data.residents); })
+            .then((res) => { if (res.data.success) setResidents(res.data.residents); })
             .catch(console.error)
             .finally(() => setLoading(false));
     };
 
-    useEffect(() => { fetchresidents(filter); }, [filter]);
+    useEffect(() => { fetchResidents(filter); }, [filter]);
 
     const handleApprove = async (residentId) => {
         setProcessing(true);
@@ -30,10 +33,11 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
             const res = await axios.post(`/operations/kyc-approve/${residentId}/`);
             if (res.data.success) {
                 setMsg({ text: res.data.message, type: "success" });
-                fetchresidents(filter);
-                setSelectedresident(null);
+                fetchResidents(filter);
             }
-        } catch { setMsg({ text: "Failed to approve.", type: "error" }); }
+        } catch {
+            setMsg({ text: "Failed to approve.", type: "error" });
+        }
         setProcessing(false);
     };
 
@@ -47,11 +51,12 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
             const res = await axios.post(`/operations/kyc-reject/${residentId}/`, { reason: rejectReason });
             if (res.data.success) {
                 setMsg({ text: res.data.message, type: "success" });
-                fetchresidents(filter);
-                setSelectedresident(null);
+                fetchResidents(filter);
                 setRejectReason("");
             }
-        } catch { setMsg({ text: "Failed to reject.", type: "error" }); }
+        } catch {
+            setMsg({ text: "Failed to reject.", type: "error" });
+        }
         setProcessing(false);
     };
 
@@ -70,18 +75,27 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">
-                    <div><h1>KYC Management</h1><p>Review and approve resident KYC documents</p></div>
-                    <div className="flex items-center gap-2">
-                        <select
-                            className="form-input text-sm w-auto"
-                            value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
-                        >
-                            <option value="Pending">Pending</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Rejected">Rejected</option>
-                        </select>
+                    <div>
+                        <h1>KYC Management</h1>
+                        <p>Review and approve resident KYC documents</p>
                     </div>
+                </div>
+
+                {/* Tab bar */}
+                <div className="flex gap-2 mb-6">
+                    {TABS.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setFilter(tab)}
+                            className={`px-5 py-2 rounded-full text-sm font-medium border transition-colors ${
+                                filter === tab
+                                    ? "bg-[#D4A017] text-white border-[#D4A017]"
+                                    : "bg-white text-gray-600 border-gray-300 hover:border-[#D4A017] hover:text-[#D4A017]"
+                            }`}
+                        >
+                            {tab}
+                        </button>
+                    ))}
                 </div>
 
                 {msg.text && (
@@ -105,7 +119,7 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                             <div key={t.id} className="card">
                                 <div
                                     className="card-body cursor-pointer"
-                                    onClick={() => setSelectedresident(selectedresident?.id === t.id ? null : t)}
+                                    onClick={() => setSelectedResident(selectedResident?.id === t.id ? null : t)}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -116,11 +130,11 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                                             <p className="text-xs text-gray-500">{t.phoneNumber} &bull; {t.email}</p>
                                             <p className="text-xs text-gray-500">{t.propertyName} — Room {t.roomNo}</p>
                                         </div>
-                                        <ChevronDown size={18} className={`text-gray-400 transition-transform ${selectedresident?.id === t.id ? "rotate-180" : ""}`} />
+                                        <ChevronDown size={18} className={`text-gray-400 transition-transform ${selectedResident?.id === t.id ? "rotate-180" : ""}`} />
                                     </div>
                                 </div>
 
-                                {selectedresident?.id === t.id && (
+                                {selectedResident?.id === t.id && (
                                     <div className="border-t border-gray-100 p-6">
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                             <DocSection label="Aadhaar" number={t.aadharNumber} frontUrl={t.aadharFrontCopy} backUrl={t.aadharBackCopy} />
@@ -130,7 +144,13 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
 
                                         {t.kycRejectionReason && (
                                             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                                                Previous rejection: {t.kycRejectionReason}
+                                                <span className="font-medium">Rejection reason:</span> {t.kycRejectionReason}
+                                            </div>
+                                        )}
+
+                                        {filter === "Approved" && (
+                                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
+                                                <Check size={16} /> KYC verified and approved.
                                             </div>
                                         )}
 
@@ -159,6 +179,16 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                                                     </button>
                                                 </div>
                                             </div>
+                                        )}
+
+                                        {filter === "Rejected" && (
+                                            <button
+                                                className="btn btn-primary flex items-center gap-2"
+                                                onClick={() => handleApprove(t.id)}
+                                                disabled={processing}
+                                            >
+                                                <Check size={16} /> Re-approve
+                                            </button>
                                         )}
                                     </div>
                                 )}
