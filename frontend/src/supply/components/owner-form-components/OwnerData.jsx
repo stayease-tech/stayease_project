@@ -1,6 +1,8 @@
 import React from 'react'
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function OwnerData({ ownerData, ownerHandleChange, emailError }) {
+    const { getOptions } = useDropdowns();
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
     return (
@@ -85,9 +87,9 @@ function OwnerData({ ownerData, ownerHandleChange, emailError }) {
                 name="ownerGender"
                 required>
                 <option value="" disabled>Select the Owner Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                {getOptions('genders').map((g, i) => (
+                    <option key={i} value={g}>{g}</option>
+                ))}
             </select>
         </div>
     )

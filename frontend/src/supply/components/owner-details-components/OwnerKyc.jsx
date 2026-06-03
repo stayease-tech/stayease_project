@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function getFileName(fileValue) {
     if (!fileValue) return 'No file uploaded';
@@ -61,6 +62,7 @@ function FileRow({ label, fileValue, fieldName, editMode, onChange, onTrigger })
 }
 
 function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, ownerHandleChange }) {
+    const { getOptions } = useDropdowns();
     const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
     const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
 
@@ -91,8 +93,9 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="aadharVerification" value={ownerDetails.aadharVerification}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select status</option>
-                            <option value="Verified">Verified</option>
-                            <option value="Not Verified">Not Verified</option>
+                            {getOptions('verification_statuses').map((v, i) => (
+                                <option key={i} value={v}>{v}</option>
+                            ))}
                         </select>
                     </DetailRow>
                 </dl>
@@ -118,8 +121,9 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="panVerification" value={ownerDetails.panVerification}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select status</option>
-                            <option value="Verified">Verified</option>
-                            <option value="Not Verified">Not Verified</option>
+                            {getOptions('verification_statuses').map((v, i) => (
+                                <option key={i} value={v}>{v}</option>
+                            ))}
                         </select>
                     </DetailRow>
                 </dl>
@@ -163,8 +167,9 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="accountStatus" value={ownerDetails.accountStatus}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
+                            {getOptions('owner_account_statuses').map((s, i) => (
+                                <option key={i} value={s}>{s}</option>
+                            ))}
                         </select>
                     </DetailRow>
 
@@ -172,8 +177,9 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="paymentType" value={ownerDetails.paymentType}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select type</option>
-                            <option value="Auto">Auto</option>
-                            <option value="Manual">Manual</option>
+                            {getOptions('owner_payment_types').map((p, i) => (
+                                <option key={i} value={p}>{p}</option>
+                            ))}
                         </select>
                     </DetailRow>
 

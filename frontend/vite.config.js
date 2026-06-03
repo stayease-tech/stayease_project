@@ -13,7 +13,7 @@ const frontendRoutes = [
 /** Only proxy to Django if the path looks like an API call, not a frontend route */
 function shouldProxy(pathname, modulePrefix) {
   // These prefixes are backend-only and should never be treated as SPA routes.
-  if (modulePrefix === '/api' || modulePrefix === '/resident-portal') {
+  if (modulePrefix === '/api' || modulePrefix === '/resident-portal' || modulePrefix === '/media') {
     return true;
   }
 
@@ -22,7 +22,7 @@ function shouldProxy(pathname, modulePrefix) {
 }
 
 const djangoTarget = 'http://127.0.0.1:8000';
-const modules = ['/accounts', '/operations', '/sales', '/supply', '/partners', '/contract', '/resident-details', '/resident-portal', '/api'];
+const modules = ['/accounts', '/operations', '/sales', '/supply', '/partners', '/contract', '/resident-details', '/resident-portal', '/api', '/media'];
 const proxy = {};
 for (const mod of modules) {
   proxy[mod] = {

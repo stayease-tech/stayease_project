@@ -21,6 +21,7 @@ from .service import ZohoESignService
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from stayease_project.permissions import IsSalesTeam, IsOperationsTeam, IsAdminGroup
 from rest_framework import status
 
 DATE_MIN = date(1900, 1, 1)
@@ -29,12 +30,26 @@ DATE_MAX = date(2099, 12, 31)
 # Create your views here.
 @login_required
 def auth_check(request):
+    """Handle GET /auth/check/ — verify whether the current session user is authenticated.
+
+    Returns:
+        JsonResponse with ``isAuthenticated`` bool and ``username`` if logged in.
+    """
     if request.user.is_authenticated:
         return JsonResponse({"isAuthenticated": True, "username": request.user.username})
     return JsonResponse({"isAuthenticated": False})
     
 @csrf_exempt
 def login_view(request):
+    """Handle POST /login/ — authenticate a staff user and create a login activity record.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``username`` and ``password``.
+
+    Returns:
+        JsonResponse with ``success``, ``username``, ``permissions``, and ``login_id`` on success,
+        or an error message with HTTP 400 on failure.
+    """
     data = json.loads(request.body)
     username = data.get("username")
     password = data.get("password")
@@ -62,6 +77,14 @@ def login_view(request):
     return JsonResponse({"success": False, "message": "Invalid credentials"}, status=400)
 
 def logout_view(request):
+    """Handle POST /logout/ — end the user session and stamp the logout time on the login record.
+
+    Args:
+        request: Django HttpRequest with optional JSON body containing ``loginId``.
+
+    Returns:
+        JsonResponse with ``success`` bool.
+    """
     if request.method != 'POST':
         return JsonResponse({"success": False, "message": "Invalid request method. POST expected."}, status=405)
 
@@ -81,6 +104,11 @@ def logout_view(request):
     return JsonResponse({"success": True})
 
 def get_user_activity_data(request):
+    """Handle GET /user-activity/ — return all staff users with their full login/logout history.
+
+    Returns:
+        JsonResponse with ``user_activity_data`` list on success, or an error message.
+    """
     if request.method == 'GET':
         try:
             user_activity_data = User_Activity_Data.objects.prefetch_related(
@@ -113,6 +141,15 @@ def get_user_activity_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 def get_resident_deductions(resident, room):
+    """Calculate the total check-out deductions charged to a resident for a given room.
+
+    Args:
+        resident: Resident name string used to filter expense records.
+        room: Room number string used to filter expense records.
+
+    Returns:
+        Float representing the grand total of all applicable deduction amounts including GST.
+    """
     expense_query = Expense_Detail.objects.filter(
         headOfExpense='Resident',
         expenseType='Check-Out Deductions'
@@ -139,6 +176,14 @@ def get_resident_deductions(resident, room):
     return total
 
 def calculate_daily_value(day):
+    """Return the delay charge amount (in rupees) based on the day-of-month a rent payment is made.
+
+    Args:
+        day: Integer day of month (1–31).
+
+    Returns:
+        Integer delay charge; zero for payments on or before the 5th.
+    """
     if day <= 5:
         return 0
     elif 6 <= day <= 10:
@@ -149,6 +194,7 @@ def calculate_daily_value(day):
         return 3000 + 500 * (day - 20)
 
 def update_delay_charges_for_received_rents():
+    """Recalculate and persist delay charges for all rent records whose status is 'Received'."""
     current_date = date.today()
     current_day = current_date.day
     
@@ -201,6 +247,7 @@ def update_delay_charges_for_received_rents():
             traceback.print_exc()
     
 def sync_rent_records_for_active_residents():
+    """Ensure every active resident has a rent record for each month from check-in through today."""
     current_date = date.today()
     
     active_residents = resident_Data.objects.filter(residentStatus='Active')
@@ -226,7 +273,7 @@ def sync_rent_records_for_active_residents():
             expected_months = []
             current_month = start_month
             
-            while current_month < end_month:
+            while current_month <= end_month:
                 month_str = current_month.strftime("%B %Y")
                 expected_months.append(month_str)
                 current_month = current_month + relativedelta(months=1)
@@ -259,6 +306,12 @@ def sync_rent_records_for_active_residents():
             continue
             
 def calculate_rent_with_delay_charges_new_resident(checkIn, resident_instance):
+    """Create monthly rent records with delay charges for a newly added resident from check-in to today.
+
+    Args:
+        checkIn: ISO date string (``YYYY-MM-DD``) representing the resident's check-in date.
+        resident_instance: Unsaved or newly saved ``resident_Data`` instance to attach records to.
+    """
     if resident_instance.pk is None:
         resident_instance.save()
     
@@ -269,7 +322,7 @@ def calculate_rent_with_delay_charges_new_resident(checkIn, resident_instance):
         current_month_date = target_date.replace(day=1)
         end_month_date = current_date.replace(day=1)
         
-        while current_month_date < end_month_date:
+        while current_month_date <= end_month_date:
             resident_rent_instance = resident_Rent_Data(
                 resident_data_instance=resident_instance,
                 month=current_month_date.strftime("%B %Y"),
@@ -277,10 +330,16 @@ def calculate_rent_with_delay_charges_new_resident(checkIn, resident_instance):
                 delayCharges=calculate_daily_value(current_date.day)
             )
             resident_rent_instance.save()
-                        
+
             current_month_date = current_month_date + relativedelta(months=1)
 
 def calculate_rent_with_delay_charges_update(checkIn, resident_instance):
+    """Reconcile rent records after a resident update — adds missing months and removes months outside the stay range.
+
+    Args:
+        checkIn: ISO date string (``YYYY-MM-DD``) or date object for the resident's check-in.
+        resident_instance: ``resident_Data`` instance whose rent records should be kept in sync.
+    """
     if not checkIn:
         print("Error: checkIn is None or empty")
         return
@@ -307,7 +366,7 @@ def calculate_rent_with_delay_charges_update(checkIn, resident_instance):
     expected_months = set()
     current_month = start_month
     
-    while current_month < end_month:
+    while current_month <= end_month:
         expected_months.add(current_month)
         current_month = current_month + relativedelta(months=1)
     
@@ -330,6 +389,15 @@ def calculate_rent_with_delay_charges_update(checkIn, resident_instance):
             )
         
 def is_current_month_in_range(start_date_str, end_date_str=None):
+    """Check whether the current calendar month falls within the given date range.
+
+    Args:
+        start_date_str: ISO date string marking the start of the range.
+        end_date_str: Optional ISO date string marking the end; defaults to the current month.
+
+    Returns:
+        ``True`` if the current month is within the range, ``False`` otherwise.
+    """
     if not start_date_str:
         return False
     
@@ -356,6 +424,7 @@ def is_current_month_in_range(start_date_str, end_date_str=None):
 today = timezone.now().date()
 
 def update_bed_status_for_checked_out_residents():
+    """Sync resident status (Active/Inactive) and bed salesStatus based on current checkout dates."""
     Bed_Data.objects.filter(bed_data_instance__isnull=True).update(salesStatus='Pending')
     
     residents = resident_Data.objects.select_related('bed_data_instance').all()
@@ -406,6 +475,13 @@ def update_bed_status_for_checked_out_residents():
         Bed_Data.objects.bulk_update(beds_to_update, ['salesStatus'])
 
 def get_beds_data(request):
+    """Handle GET /beds/ — return all properties, rooms, and beds with their resident and rent records.
+
+    Also triggers bed status sync, rent record sync, and delay charge recalculation on every request.
+
+    Returns:
+        JsonResponse with ``beds_table`` list containing nested property, room, bed, and resident data.
+    """
     if request.method == 'GET':
         try:
             properties = Property_Data.objects.prefetch_related(
@@ -569,6 +645,17 @@ def get_beds_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 def validate_resident_dates(new_checkIn, new_checkOut, bed_instance, resident_instance=None):
+    """Validate that the proposed check-in/out range does not overlap with any existing resident on the same bed.
+
+    Args:
+        new_checkIn: ISO date string for the proposed check-in.
+        new_checkOut: ISO date string for the proposed check-out (may be empty/None).
+        bed_instance: ``Bed_Data`` instance to check for conflicts.
+        resident_instance: Optional existing ``resident_Data`` to exclude from the overlap check.
+
+    Returns:
+        ``True`` if dates are valid and non-overlapping, ``False`` otherwise.
+    """
     def parse_date(date_str):
         if not date_str:
             return None
@@ -609,6 +696,16 @@ def validate_resident_dates(new_checkIn, new_checkOut, bed_instance, resident_in
 
 
 def parse_and_validate_iso_date(date_str, field_label, required=False):
+    """Parse and validate an ISO date string, enforcing YYYY-MM-DD format and a safe year range.
+
+    Args:
+        date_str: Raw date value from the request.
+        field_label: Human-readable field name used in error messages.
+        required: Whether a missing value should be treated as an error.
+
+    Returns:
+        Tuple of ``(raw_str, parsed_date, error_message)``; ``error_message`` is ``None`` on success.
+    """
     raw = str(date_str or '').strip()
     if not raw:
         if required:
@@ -627,6 +724,14 @@ def parse_and_validate_iso_date(date_str, field_label, required=False):
 
 @csrf_exempt
 def resident_form_submit(request):
+    """Handle POST /resident/ — create a new resident record, assign a bed, generate rent records, and create a portal user.
+
+    Args:
+        request: Django HttpRequest with JSON body containing resident details, ``bedId``, and date fields.
+
+    Returns:
+        JsonResponse with ``success`` bool, a status message, and ``residentCredentials`` on success.
+    """
     if request.method == 'POST':
         try:
             resident_data = json.loads(request.body)
@@ -743,6 +848,15 @@ def resident_form_submit(request):
 @api_view(["PUT"])
 @csrf_exempt
 def resident_data_update(request, id):
+    """Handle PUT /resident/<id>/ — update resident fields and files, sync bed status, and recalculate rent records.
+
+    Args:
+        request: Django HttpRequest with multipart form data containing updated fields and optional file uploads.
+        id: Primary key of the ``resident_Data`` record to update.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'PUT':
         try:
             submitted_data = request.POST
@@ -841,6 +955,15 @@ def resident_data_update(request, id):
 
 @csrf_exempt
 def rent_data_update(request, id):
+    """Handle PUT /rent/<id>/ — update payment details for a monthly rent record and refresh delay charges.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``transferType``, ``utrNumber``, ``transferredDate``, and/or ``rentStatus``.
+        id: Primary key of the ``resident_Rent_Data`` record to update.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -896,7 +1019,7 @@ def rent_data_update(request, id):
 # ─── Refund Management ────────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSalesTeam])
 def get_refund_eligible_transactions(request):
     """List transactions eligible for refund (successful payments with remaining refundable amount)."""
     transactions = PaymentTransaction.objects.filter(
@@ -927,11 +1050,11 @@ def get_refund_eligible_transactions(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSalesTeam])
 def initiate_refund(request):
     """Admin-initiated refund against a specific PaymentTransaction.
     Validates refund amount doesn't exceed remaining refundable balance.
-    Calls PayU cancel_refund_transaction API (stub until keys are live).
+    Calls Razorpay payment.refund API.
     Refund goes back to the original payment method (RBI requirement).
     """
     txnid = request.data.get('txnid', '').strip()
@@ -988,12 +1111,12 @@ def initiate_refund(request):
         initiated_by=request.user,
     )
 
-    # Call PayU refund API (stub)
-    payu_result = _process_payu_refund(txn, refund)
+    # Call Razorpay refund API
+    razorpay_result = _process_razorpay_refund(txn, refund)
 
-    if payu_result['success']:
+    if razorpay_result['success']:
         refund.status = 'processing'
-        refund.payu_refund_id = payu_result.get('refund_id', '')
+        refund.gateway_refund_id = razorpay_result.get('refund_id', '')
         refund.save()
 
         # If full refund, revert the rent record status
@@ -1006,19 +1129,19 @@ def initiate_refund(request):
             'success': True,
             'message': 'Refund initiated successfully. It will be credited to the original payment method within 5-7 business days.',
             'refundId': refund.id,
-            'payuRefundId': refund.payu_refund_id,
+            'gatewayRefundId': refund.gateway_refund_id,
         })
     else:
         refund.status = 'failed'
         refund.save()
         return Response({
             'success': False,
-            'message': f'Refund could not be processed: {payu_result.get("message", "Unknown error")}',
+            'message': f'Refund could not be processed: {razorpay_result.get("message", "Unknown error")}',
         }, status=status.HTTP_502_BAD_GATEWAY)
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSalesTeam])
 def get_refund_history(request):
     """List all refunds with their status."""
     refunds = PaymentRefund.objects.select_related(
@@ -1034,7 +1157,7 @@ def get_refund_history(request):
             'refundAmount': str(r.refund_amount),
             'reason': r.reason,
             'status': r.status,
-            'payuRefundId': r.payu_refund_id,
+            'gatewayRefundId': r.gateway_refund_id,
             'residentName': r.transaction.resident.residentsName if r.transaction.resident else '',
             'initiatedBy': r.initiated_by.get_full_name() or r.initiated_by.username if r.initiated_by else '',
             'createdAt': r.created_at.isoformat(),
@@ -1043,49 +1166,44 @@ def get_refund_history(request):
     return Response({'success': True, 'refunds': data})
 
 
-def _process_payu_refund(transaction, refund):
-    """Stub: Process refund via PayU cancel_refund_transaction API.
-    Hash: sha512(key|command|var1|salt)
-    var1 = PayU transaction ID (txnid)
-    var2 = unique request ID
-    var3 = refund amount
-
-    Refund is credited back to original payment method per RBI mandate.
+def _process_razorpay_refund(transaction, refund):
+    """Process refund via Razorpay payment.refund API.
+    Uses the gateway_payment_id stored on the original PaymentTransaction.
+    Refund is credited back to the original payment method per RBI mandate.
     """
-    import hashlib
     import logging
+    import razorpay
     from django.conf import settings
 
     logger = logging.getLogger(__name__)
-    payu_config = getattr(settings, 'PAYU_CONFIG', {})
-    merchant_key = (payu_config.get('merchant_key') or '').strip()
-    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
 
-    if not merchant_key or not merchant_salt:
+    if not transaction.gateway_payment_id:
         logger.info(
-            f"[REFUND STUB] Would refund ₹{refund.refund_amount} on txn {transaction.txnid} "
-            f"via PayU cancel_refund_transaction API"
+            f"[REFUND] No gateway_payment_id for txn {transaction.txnid}. "
+            f"Cannot process Razorpay refund without original payment ID."
         )
-        # TODO: Implement when PayU keys are available
-        # command = 'cancel_refund_transaction'
-        # var1 = transaction.txnid
-        # hash_str = f"{merchant_key}|{command}|{var1}|{merchant_salt}"
-        # api_hash = hashlib.sha512(hash_str.encode('utf-8')).hexdigest()
-        # response = requests.post('https://info.payu.in/merchant/postservice', data={
-        #     'key': merchant_key,
-        #     'command': command,
-        #     'var1': var1,
-        #     'var2': f"REF{refund.id}",
-        #     'var3': str(refund.refund_amount),
-        #     'hash': api_hash,
-        # })
-        return {'success': True, 'message': 'Stub — refund logged locally', 'refund_id': f'STUB_REF_{refund.id}'}
+        return {'success': False, 'message': 'Original payment ID not available for refund.'}
 
-    # When keys are available, uncomment the API call above and handle the response
-    return {'success': True, 'message': 'Stub — refund logged locally', 'refund_id': f'STUB_REF_{refund.id}'}
+    try:
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        response = client.payment.refund(
+            transaction.gateway_payment_id,
+            {'amount': int(refund.refund_amount * 100)}
+        )
+        refund_id = response.get('id', '')
+        logger.info(f"[REFUND] Razorpay refund created: {refund_id} for txn {transaction.txnid}")
+        return {'success': True, 'refund_id': refund_id}
+    except Exception as e:
+        logger.error(f"[REFUND] Razorpay refund failed for txn {transaction.txnid}: {e}")
+        return {'success': False, 'message': str(e)}
 
 
 def converted_welcome_email_template(data):
+    """Send a welcome email to a converted lead requesting required resident details and KYC documents.
+
+    Args:
+        data: Either a ``Leads_Detail`` instance or a dict containing ``name``, ``email``, and ``contact``.
+    """
     if hasattr(data, '__dict__'):
         data = {
             'name': data.name,
@@ -1139,6 +1257,14 @@ def converted_welcome_email_template(data):
 
 @csrf_exempt
 def leads_form_submit(request):
+    """Handle POST /leads/ — save a new sales lead and send a welcome email if the lead was converted.
+
+    Args:
+        request: Django HttpRequest with JSON body containing lead fields including ``leadResult``.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'POST':
         try:
             lead_data = json.loads(request.body)
@@ -1167,6 +1293,11 @@ def leads_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_leads_data(request):
+    """Handle GET /leads/ — retrieve all sales leads as a flat list.
+
+    Returns:
+        JsonResponse with ``leads_table`` list on success, or an error message.
+    """
     if request.method == 'GET':
         try:
             leads = Leads_Detail.objects.all()
@@ -1196,6 +1327,15 @@ def get_leads_data(request):
 
 @csrf_exempt
 def leads_data_update(request, id):
+    """Handle PUT /leads/<id>/ — update lead fields and send a welcome email if the lead result changes to converted.
+
+    Args:
+        request: Django HttpRequest with JSON body containing updated lead fields.
+        id: Primary key of the ``Leads_Detail`` record to update.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -1249,6 +1389,15 @@ def leads_data_update(request, id):
 
 @csrf_exempt
 def leads_data_delete(request, id):
+    """Handle DELETE /leads/<id>/ — permanently remove a lead record.
+
+    Args:
+        request: Django HttpRequest; method must be DELETE.
+        id: Primary key of the ``Leads_Detail`` record to delete.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'DELETE':
         try:
                 lead = Leads_Detail.objects.get(id=id)
@@ -1260,8 +1409,16 @@ def leads_data_delete(request, id):
             return JsonResponse({'success': False, 'message': 'Error deleting lead data. Please try again later!'})
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSalesTeam])
 def upload_and_send(request):
+    """Handle POST /documents/upload/ — upload a PDF and send it for e-signature via Zoho Sign.
+
+    Args:
+        request: Multipart request with ``title``, ``recipientEmail``, ``recipientName``, and ``pdfFile``.
+
+    Returns:
+        DRF Response with ``success`` bool, ``signing_url`` on success, or error details on failure.
+    """
     # Get data
     title = request.data.get('title')
     recipient_email = request.data.get('recipientEmail')
@@ -1339,15 +1496,123 @@ def upload_and_send(request):
         }, status=500)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSalesTeam])
 def get_documents(request):
+    """Handle GET /documents/ — list all documents uploaded by the current user.
+
+    Returns:
+        DRF Response with a list of document id, title, recipient_email, and created_at.
+    """
     docs = Document.objects.filter(user=request.user).values('id', 'title', 'recipient_email', 'created_at')
     return Response(list(docs))
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsSalesTeam])
 def get_requests(request):
+    """Handle GET /signing-requests/ — list all e-signature requests created by the current user.
+
+    Returns:
+        DRF Response with a list of signing request details including status and signing URL.
+    """
     reqs = SigningRequest.objects.filter(document__user=request.user).values(
         'id', 'document__title', 'signing_url', 'status', 'sent_at'
     )
     return Response(list(reqs))
+
+
+@api_view(['POST'])
+@permission_classes([IsOperationsTeam | IsSalesTeam | IsAdminGroup])
+def upload_lease_agreement(request, resident_id):
+    """Handle POST /resident/<resident_id>/lease/ — upload a PDF lease agreement and auto-enable the resident portal.
+
+    Args:
+        request: Multipart request with a ``leaseAgreement`` PDF file (max 10 MB).
+        resident_id: Primary key of the ``resident_Data`` record.
+
+    Returns:
+        DRF Response with ``success`` bool, lease URL, and upload timestamp on success.
+    """
+    try:
+        resident = resident_Data.objects.get(id=resident_id)
+    except resident_Data.DoesNotExist:
+        return Response({'success': False, 'message': 'Resident not found.'}, status=404)
+
+    lease_file = request.FILES.get('leaseAgreement')
+    if not lease_file:
+        return Response({'success': False, 'message': 'No file provided.'}, status=400)
+
+    # Validate file type (PDF only)
+    if not lease_file.name.lower().endswith('.pdf'):
+        return Response({'success': False, 'message': 'Only PDF files are allowed.'}, status=400)
+
+    # Validate file size (max 10MB)
+    if lease_file.size > 10 * 1024 * 1024:
+        return Response({'success': False, 'message': 'File size must be under 10MB.'}, status=400)
+
+    # Delete old file if exists
+    if resident.leaseAgreement:
+        default_storage.delete(resident.leaseAgreement.name)
+
+    resident.leaseAgreement = lease_file
+    resident.leaseUploadedAt = timezone.now()
+    resident.leaseUploadedBy = request.user.get_full_name() or request.user.username
+    resident.save(update_fields=['leaseAgreement', 'leaseUploadedAt', 'leaseUploadedBy'])
+
+    # Auto-enable resident portal
+    if resident.residentUser and not resident.residentUser.is_active:
+        resident.residentUser.is_active = True
+        resident.residentUser.save(update_fields=['is_active'])
+
+    # Send notification email to resident
+    if resident.email:
+        try:
+            email = EmailMessage(
+                subject='Your Lease Agreement is Ready',
+                body=(
+                    f'Dear {resident.residentsName},\n\n'
+                    'Your lease agreement has been uploaded and is now available '
+                    'for viewing on your resident portal.\n\n'
+                    'Please log in to your portal to view and download your lease agreement.\n\n'
+                    'Regards,\nStayEase Team'
+                ),
+                to=[resident.email],
+            )
+            email.send(fail_silently=True)
+        except Exception:
+            pass
+
+    return Response({
+        'success': True,
+        'message': 'Lease agreement uploaded successfully.',
+        'leaseAgreement': resident.leaseAgreement.url if resident.leaseAgreement else None,
+        'leaseUploadedAt': resident.leaseUploadedAt.isoformat() if resident.leaseUploadedAt else None,
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsOperationsTeam | IsSalesTeam | IsAdminGroup])
+def enable_resident_portal(request, resident_id):
+    """Handle POST /resident/<resident_id>/enable-portal/ — activate the resident's Django auth user for portal access.
+
+    Args:
+        request: Django HttpRequest; no body required.
+        resident_id: Primary key of the ``resident_Data`` record.
+
+    Returns:
+        DRF Response with ``success`` bool and a status message.
+    """
+    try:
+        resident = resident_Data.objects.get(id=resident_id)
+    except resident_Data.DoesNotExist:
+        return Response({'success': False, 'message': 'Resident not found.'}, status=404)
+
+    if not resident.residentUser:
+        return Response({'success': False, 'message': 'No portal account exists for this resident.'}, status=400)
+
+    if resident.residentUser.is_active:
+        return Response({'success': False, 'message': 'Portal is already enabled.'}, status=400)
+
+    resident.residentUser.is_active = True
+    resident.residentUser.save(update_fields=['is_active'])
+
+    return Response({'success': True, 'message': 'Resident portal enabled successfully.'})

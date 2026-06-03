@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
@@ -8,6 +10,7 @@ import { toast } from "react-toastify";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../shared/dateInput";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import { User, Phone, Mail, MapPin, Briefcase, Bed, Calendar, IndianRupee, ShieldCheck, CheckCircle, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 const FIELD_CLS = "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-[#D4A017] transition-colors";
 const LABEL_CLS = "block text-xs font-medium text-gray-500 mb-1.5";
@@ -82,6 +85,7 @@ function getSubmitErrorMessage(err) {
 }
 
 export default function residentForm({ isExpanded, setIsExpanded }) {
+    const { getOptions, getStaffNamesList } = useDropdowns();
     const navigate = useNavigate();
     const { id } = useParams();
     const isNew = !id || id === "new";
@@ -380,18 +384,17 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                                     <Field label="Comfort Class *">
                                         <select name="comfortClass" value={form.comfortClass} onChange={handleChange} className={SELECT_CLS} required>
                                             <option value="">Select comfort class</option>
-                                            <option value="With AC">With AC</option>
-                                            <option value="Without AC">Without AC</option>
+                                            {getOptions('comfort_classes').map((c, i) => (
+                                                <option key={i} value={c}>{c}</option>
+                                            ))}
                                         </select>
                                     </Field>
                                     <Field label="Meal Plan *">
                                         <select name="mealType" value={form.mealType} onChange={handleChange} className={SELECT_CLS} required>
                                             <option value="">Select meal plan</option>
-                                            <option value="Breakfast Only">Breakfast Only</option>
-                                            <option value="Breakfast & Lunch">Breakfast &amp; Lunch</option>
-                                            <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch &amp; Dinner</option>
-                                            <option value="Dinner Only">Dinner Only</option>
-                                            <option value="No Meal Plan">No Meal Plan</option>
+                                            {getOptions('meal_types').map((m, i) => (
+                                                <option key={i} value={m}>{m}</option>
+                                            ))}
                                         </select>
                                     </Field>
                                 </FieldRow>
@@ -420,17 +423,17 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                                 <Field label="Property Manager *">
                                     <select name="propertyManager" value={form.propertyManager} onChange={handleChange} className={SELECT_CLS} required>
                                         <option value="">Select manager</option>
-                                        <option value="Madhusudhan">Madhusudhan</option>
-                                        <option value="Kiran">Kiran</option>
-                                        <option value="Rithan">Rithan</option>
+                                        {getStaffNamesList().map((name, i) => (
+                                            <option key={i} value={name}>{name}</option>
+                                        ))}
                                     </select>
                                 </Field>
                                 <Field label="Sales Manager *">
                                     <select name="salesManager" value={form.salesManager} onChange={handleChange} className={SELECT_CLS} required>
                                         <option value="">Select manager</option>
-                                        <option value="Madhusudhan">Madhusudhan</option>
-                                        <option value="Kiran">Kiran</option>
-                                        <option value="Rithan">Rithan</option>
+                                        {getStaffNamesList().map((name, i) => (
+                                            <option key={i} value={name}>{name}</option>
+                                        ))}
                                     </select>
                                 </Field>
                             </FieldRow>
@@ -442,8 +445,9 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                                 <Field label="KYC Document Type">
                                     <select name="kycType" value={form.kycType} onChange={handleChange} className={SELECT_CLS}>
                                         <option value="">Select document type</option>
-                                        <option value="Aadhar">Aadhaar</option>
-                                        <option value="PAN">PAN</option>
+                                        {getOptions('kyc_types').map((k, i) => (
+                                            <option key={i} value={k}>{k}</option>
+                                        ))}
                                     </select>
                                 </Field>
 
@@ -457,8 +461,9 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                                             <Field label="Verification Status">
                                                 <select name="aadharStatus" value={form.aadharStatus} onChange={handleChange} className={SELECT_CLS} required={form.kycType === "Aadhar"}>
                                                     <option value="">Select status</option>
-                                                    <option value="Verified">Verified</option>
-                                                    <option value="Not Verified">Not Verified</option>
+                                                    {getOptions('verification_statuses').map((v, i) => (
+                                                        <option key={i} value={v}>{v}</option>
+                                                    ))}
                                                 </select>
                                             </Field>
                                         </FieldRow>
@@ -476,8 +481,9 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                                             <Field label="Verification Status">
                                                 <select name="panStatus" value={form.panStatus} onChange={handleChange} className={SELECT_CLS} required={form.kycType === "PAN"}>
                                                     <option value="">Select status</option>
-                                                    <option value="Verified">Verified</option>
-                                                    <option value="Not Verified">Not Verified</option>
+                                                    {getOptions('verification_statuses').map((v, i) => (
+                                                        <option key={i} value={v}>{v}</option>
+                                                    ))}
                                                 </select>
                                             </Field>
                                         </FieldRow>

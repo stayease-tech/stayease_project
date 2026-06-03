@@ -1,11 +1,18 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import json
+import hmac
 import hashlib
 import uuid
-from datetime import datetime
+import time
+import logging
+from datetime import datetime, date
 from decimal import Decimal, InvalidOperation
-from urllib.parse import urlencode
 
-from django.http import JsonResponse, HttpResponseRedirect
+import razorpay
+
+from django.core.paginator import Paginator
+from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
@@ -15,6 +22,7 @@ from django.conf import settings
 
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from stayease_project.permissions import IsResident
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -23,6 +31,15 @@ from stayease_project.throttles import LoginRateThrottle
 
 from stayease_sales.models import resident_Data, resident_Rent_Data, PaymentTransaction, RecurringMandate
 from stayease_operations.models import PropertyComplaintDetail, ComplaintCategory, Feedback
+
+logger = logging.getLogger(__name__)
+
+# In-memory set for webhook event deduplication (resets on restart — acceptable for this use case)
+_processed_webhook_event_ids = set()
+
+
+def _get_razorpay_client():
+    return razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 
 # ─── resident Login (JWT) ───────────────────────────────────────────
@@ -52,6 +69,11 @@ class residentLoginView(APIView):
             return Response({'success': False, 'message': 'No resident account linked to this user.'},
                             status=status.HTTP_404_NOT_FOUND)
 
+        # Ensure user is in the Resident group for RBAC
+        from django.contrib.auth.models import Group
+        resident_group, _ = Group.objects.get_or_create(name='Resident')
+        user.groups.add(resident_group)
+
         refresh = RefreshToken.for_user(user)
         return Response({
             'success': True,
@@ -79,8 +101,14 @@ def _get_resident(request):
 # ─── Dashboard ─────────────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_dashboard(request):
+    """Handle GET /resident/dashboard/ — return dashboard summary for the authenticated resident.
+
+    Returns:
+        Response with KYC status, lease status, total rent due, next due date, complaint
+        counts, and property/room/bed assignment details.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -99,6 +127,15 @@ def resident_dashboard(request):
         month = now.month + 1 if now.month < 12 else 1
         year = now.year if now.month < 12 else now.year + 1
         next_due = now.replace(year=year, month=month, day=due_day)
+
+    # Lease status — check if resident has a lease agreement uploaded or a completed signing request
+    from stayease_sales.models import Document, SigningRequest
+    lease_completed = bool(resident.leaseAgreement)
+    if not lease_completed:
+        lease_docs = Document.objects.filter(recipient_email=resident.email)
+        lease_completed = SigningRequest.objects.filter(
+            document__in=lease_docs, status='completed'
+        ).exists()
 
     # Complaints count
     complaint_count = PropertyComplaintDetail.objects.filter(propertyComplaint_bed=resident).count()
@@ -121,6 +158,7 @@ def resident_dashboard(request):
     return Response({
         'success': True,
         'kycApprovalStatus': resident.kycApprovalStatus,
+        'leaseCompleted': lease_completed,
         'residentStatus': resident.residentStatus,
         'residentsName': resident.residentsName,
         'totalDue': total_due,
@@ -140,8 +178,14 @@ def resident_dashboard(request):
 # ─── Profile ───────────────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_profile(request):
+    """Handle GET /resident/profile/ — return full profile details for the authenticated resident.
+
+    Returns:
+        Response with personal info, property/room/bed assignment, lease dates,
+        rent, deposit, meal type, KYC status, and resident status.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -155,7 +199,7 @@ def resident_profile(request):
             if hasattr(bed.room, 'property') and bed.room.property:
                 prop = bed.room.property
                 property_name = prop.propertyName or ''
-                property_address = f"{prop.doorNo or ''}, {prop.streetName or ''}, {prop.areaName or ''}, {prop.city or ''}"
+                property_address = f"{prop.doorBuilding or ''}, {prop.streetAddress or ''}, {prop.area or ''}, {prop.city or ''}"
 
     return Response({
         'success': True,
@@ -179,8 +223,16 @@ def resident_profile(request):
 
 
 @api_view(['PUT'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_profile_update(request):
+    """Handle PUT /resident/profile/update/ — update editable profile fields for the authenticated resident.
+
+    Args:
+        request: DRF Request with optional JSON body fields: `residentsName`, `email`, `permanentAddress`.
+
+    Returns:
+        Response with `success` flag and a confirmation message.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -204,8 +256,17 @@ def resident_profile_update(request):
 # ─── Change Password ───────────────────────────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_change_password(request):
+    """Handle POST /resident/change-password/ — change the authenticated resident's password.
+
+    Args:
+        request: DRF Request with JSON body containing `currentPassword` and `newPassword`.
+
+    Returns:
+        Response with `success` flag and a message. Returns 400 if current password is
+        incorrect or new password is fewer than 6 characters.
+    """
     current_password = request.data.get('currentPassword', '')
     new_password = request.data.get('newPassword', '')
 
@@ -228,9 +289,42 @@ def resident_change_password(request):
 
 # ─── KYC Upload ────────────────────────────────────────────────────
 
+def _validate_kyc_file(uploaded_file):
+    """Validate a KYC upload: max 5 MB, images and PDFs only (magic-byte check)."""
+    max_size = 5 * 1024 * 1024  # 5 MB
+    if uploaded_file.size > max_size:
+        return f'"{uploaded_file.name}" exceeds the 5 MB limit.'
+
+    # Read magic bytes and reset
+    header = uploaded_file.read(8)
+    uploaded_file.seek(0)
+
+    allowed_signatures = [
+        b'\xff\xd8\xff',           # JPEG
+        b'\x89PNG\r\n\x1a\n',     # PNG
+        b'%PDF',                   # PDF
+        b'RIFF',                   # WebP (RIFF container)
+    ]
+    if not any(header.startswith(sig) for sig in allowed_signatures):
+        return f'"{uploaded_file.name}" is not a valid image or PDF file.'
+
+    return None
+
+
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_kyc_upload(request):
+    """Handle POST /resident/kyc/upload/ — upload KYC identity documents for the resident.
+
+    Args:
+        request: DRF Request with multipart form data containing optional file fields
+            (`aadharFrontCopy`, `aadharBackCopy`, `panFrontCopy`, `panBackCopy`,
+            `studentEmployeeIdCopy`) and text fields for corresponding ID numbers.
+
+    Returns:
+        Response with `success` flag and a message. Rejects already-approved KYC and
+        files exceeding 5 MB or with unsupported formats.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -241,6 +335,13 @@ def resident_kyc_upload(request):
     # Handle file uploads
     files = request.FILES
     data = request.POST
+
+    # Validate all uploaded files before processing
+    for field_name, uploaded_file in files.items():
+        error = _validate_kyc_file(uploaded_file)
+        if error:
+            return Response({'success': False, 'message': error},
+                            status=status.HTTP_400_BAD_REQUEST)
 
     if 'aadharFrontCopy' in files:
         resident.aadharFrontCopy = files['aadharFrontCopy']
@@ -273,8 +374,14 @@ def resident_kyc_upload(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_kyc_status(request):
+    """Handle GET /resident/kyc/status/ — return the KYC status and uploaded document URLs.
+
+    Returns:
+        Response with KYC approval status, rejection reason, document numbers,
+        and signed URLs for all uploaded identity document files.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -300,15 +407,40 @@ def resident_kyc_status(request):
 # ─── Rent History / Invoices ──────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_rent_history(request):
+    """Handle GET /resident/rent-history/ — return paginated rent records for the resident.
+
+    Args:
+        request: DRF Request with optional query params `paid_only` (bool), `page` (int),
+            and `page_size` (int, max 50).
+
+    Returns:
+        Response with paginated `rentRecords` list and pagination metadata.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
 
-    records = resident_Rent_Data.objects.filter(resident_data_instance=resident).order_by('-submittedDateAndTime')
+    qs = resident_Rent_Data.objects.filter(resident_data_instance=resident)
+    if request.query_params.get('paid_only') == 'true':
+        qs = qs.filter(rentStatus='Received')
+    records = qs.order_by('-submittedDateAndTime')
+
+    page_num = request.query_params.get('page', 1)
+    page_size = request.query_params.get('page_size', 10)
+    try:
+        page_num = int(page_num)
+        page_size = min(int(page_size), 50)
+    except (ValueError, TypeError):
+        page_num = 1
+        page_size = 10
+
+    paginator = Paginator(records, page_size)
+    page = paginator.get_page(page_num)
+
     data = []
-    for r in records:
+    for r in page:
         data.append({
             'id': r.id,
             'month': r.month,
@@ -320,12 +452,21 @@ def resident_rent_history(request):
             'transferredDate': r.transferredDate,
         })
 
-    return Response({'success': True, 'rentRecords': data})
+    return Response({
+        'success': True,
+        'rentRecords': data,
+        'currentPage': page.number,
+        'totalPages': paginator.num_pages,
+        'totalRecords': paginator.count,
+    })
 
+
+# ─── Razorpay One-Time Payments ─────────────────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def resident_payu_init(request):
+@permission_classes([IsResident])
+def resident_payment_init(request):
+    """Initiate a Razorpay order for one-time rent payment."""
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -339,27 +480,7 @@ def resident_payu_init(request):
     if amount <= 0:
         return Response({'success': False, 'message': 'Amount must be greater than zero.'}, status=400)
 
-    payu_config = getattr(settings, 'PAYU_CONFIG', {})
-    merchant_key = (payu_config.get('merchant_key') or '').strip()
-    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
-    payu_base_url = (payu_config.get('base_url') or '').strip()
-    success_url = (payu_config.get('success_url') or '').strip()
-    failure_url = (payu_config.get('failure_url') or '').strip()
-
-    if not merchant_key or not merchant_salt or not payu_base_url:
-        return Response({
-            'success': False,
-            'message': 'Payment service is not configured yet. Please contact support.',
-        }, status=503)
-
-    txn_id = str(request.data.get('txnId') or f"SE{uuid.uuid4().hex[:18]}")
-    product_info = str(request.data.get('productInfo') or 'Rent Payment').strip()[:100]
-    firstname = (resident.residentsName or request.user.first_name or 'resident').strip()
-    email = (resident.email or '').strip()
-    phone = str(resident.phoneNumber or request.user.username or '').strip()
     rent_id = str(request.data.get('rentId') or '')
-
-    # Validate the rent record belongs to this resident
     rent_record = None
     if rent_id:
         try:
@@ -370,269 +491,475 @@ def resident_payu_init(request):
         except (resident_Rent_Data.DoesNotExist, ValueError):
             return Response({'success': False, 'message': 'Invalid rent record.'}, status=400)
 
-    amount_str = f"{amount:.2f}"
-    # Hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
-    hash_sequence = "|".join([
-        merchant_key,
-        txn_id,
-        amount_str,
-        product_info,
-        firstname,
-        email,
-        str(resident.id),   # udf1
-        str(request.user.id),  # udf2
-        rent_id,             # udf3
-        '', '',              # udf4, udf5
-        '', '', '', '', '',  # additional fields
-        merchant_salt,
-    ])
-    payu_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
+        if rent_record.rentStatus == 'Received':
+            return Response({'success': False, 'message': 'Rent already paid.'}, status=400)
 
-    # Log payment transaction for audit trail
+    txn_id = f"SE{uuid.uuid4().hex[:18]}"
+    firstname = (resident.residentsName or request.user.first_name or 'Resident').strip()
+    email = (resident.email or '').strip()
+    phone = str(resident.phoneNumber or request.user.username or '').strip()
+
+    try:
+        client = _get_razorpay_client()
+        order = client.order.create(dict(
+            amount=int(amount * 100),  # paise
+            currency='INR',
+            receipt=txn_id,
+            notes={
+                'resident_id': str(resident.id),
+                'user_id': str(request.user.id),
+                'rent_id': rent_id,
+            }
+        ))
+    except Exception as e:
+        logger.error(f"[PAYMENT_INIT] Razorpay order.create failed: {e}")
+        return Response({
+            'success': False,
+            'message': 'Payment service unavailable. Please try again later.',
+        }, status=503)
+
     PaymentTransaction.objects.create(
         txnid=txn_id,
         resident=resident,
         rent_record=rent_record,
         amount=amount,
-        product_info=product_info,
+        product_info=str(request.data.get('productInfo') or 'Rent Payment').strip()[:100],
         status='initiated',
+        gateway_order_id=order['id'],
     )
 
     return Response({
         'success': True,
-        'paymentProvider': 'payu',
-        'payuBaseUrl': payu_base_url,
-        'paymentData': {
-            'key': merchant_key,
-            'txnid': txn_id,
-            'amount': amount_str,
-            'productinfo': product_info,
-            'firstname': firstname,
+        'orderId': order['id'],
+        'keyId': settings.RAZORPAY_KEY_ID,
+        'amount': int(amount * 100),
+        'currency': 'INR',
+        'prefill': {
+            'name': firstname,
             'email': email,
-            'phone': phone,
-            'surl': success_url,
-            'furl': failure_url,
-            'hash': payu_hash,
-            'udf1': str(resident.id),
-            'udf2': str(request.user.id),
-            'udf3': rent_id,
-        }
+            'contact': phone,
+        },
+        'notes': {
+            'resident_id': str(resident.id),
+            'rent_id': rent_id,
+        },
     })
 
 
-def _verify_payu_hash(post_data):
-    """Verify the reverse hash from PayU callback."""
-    payu_config = getattr(settings, 'PAYU_CONFIG', {})
-    merchant_key = (payu_config.get('merchant_key') or '').strip()
-    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
+@api_view(['POST'])
+@permission_classes([IsResident])
+def resident_payment_verify(request):
+    """Verify Razorpay payment signature and update records on success."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'resident not found.'}, status=404)
 
-    received_hash = post_data.get('hash', '')
-    # Reverse hash: salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key
-    hash_sequence = "|".join([
-        merchant_salt,
-        post_data.get('status', ''),
-        '', '', '', '',
-        post_data.get('udf5', ''),
-        post_data.get('udf4', ''),
-        post_data.get('udf3', ''),
-        post_data.get('udf2', ''),
-        post_data.get('udf1', ''),
-        post_data.get('email', ''),
-        post_data.get('firstname', ''),
-        post_data.get('productinfo', ''),
-        post_data.get('amount', ''),
-        post_data.get('txnid', ''),
-        merchant_key,
-    ])
-    expected_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
-    return received_hash.lower() == expected_hash.lower()
+    razorpay_payment_id = request.data.get('razorpay_payment_id', '').strip()
+    razorpay_order_id = request.data.get('razorpay_order_id', '').strip()
+    razorpay_signature = request.data.get('razorpay_signature', '').strip()
 
+    if not razorpay_payment_id or not razorpay_order_id or not razorpay_signature:
+        return Response({'success': False, 'message': 'razorpay_payment_id, razorpay_order_id, and razorpay_signature are required.'}, status=400)
 
-def _payu_redirect(status_val, **params):
-    """Build a safe redirect URL to the frontend payment result page."""
-    frontend_base = getattr(settings, 'FRONTEND_BASE_URL', '')
-    params['status'] = status_val
-    return HttpResponseRedirect(f'{frontend_base}/resident/payment-result?{urlencode(params)}')
-
-
-@csrf_exempt
-def payu_success(request):
-    if request.method != 'POST':
-        return HttpResponseRedirect('/resident/payments')
-
-    post = request.POST
-    txnid = post.get('txnid', '')
-    amount = post.get('amount', '')
-
-    # 1. Verify hash
-    if not _verify_payu_hash(post):
-        return _payu_redirect('failed', reason='tampered')
-
-    # 2. Look up the transaction log
     try:
-        txn = PaymentTransaction.objects.get(txnid=txnid)
+        txn = PaymentTransaction.objects.get(gateway_order_id=razorpay_order_id, resident=resident)
     except PaymentTransaction.DoesNotExist:
-        return _payu_redirect('failed', reason='unknown_transaction')
+        return Response({'success': False, 'message': 'Transaction not found.'}, status=404)
 
-    # 3. Idempotency — don't process the same txn twice
+    # Idempotency — return success if already processed
     if txn.status == 'success':
-        return _payu_redirect('success', txnid=txnid, amount=amount)
+        return Response({'success': True, 'txnid': txn.txnid, 'amount': str(txn.amount)})
 
-    # 4. Verify amount matches what was initiated
     try:
-        callback_amount = Decimal(amount)
-    except (InvalidOperation, TypeError):
-        callback_amount = None
-
-    if callback_amount is None or callback_amount != txn.amount:
+        client = _get_razorpay_client()
+        client.utility.verify_payment_signature({
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature,
+        })
+    except razorpay.errors.SignatureVerificationError:
         txn.status = 'failed'
-        txn.payu_status = 'amount_mismatch'
+        txn.gateway_status = 'signature_mismatch'
         txn.save()
-        return _payu_redirect('failed', reason='amount_mismatch')
+        return Response({'success': False, 'message': 'Payment signature verification failed.'}, status=400)
+    except Exception as e:
+        logger.error(f"[PAYMENT_VERIFY] Unexpected error: {e}")
+        return Response({'success': False, 'message': 'Verification error.'}, status=500)
 
-    # 5. Mark transaction as successful
+    # Signature valid — mark success
     txn.status = 'success'
-    txn.payu_status = post.get('status', '')
+    txn.gateway_status = 'captured'
+    txn.gateway_payment_id = razorpay_payment_id
     txn.save()
 
-    # 6. Update the rent record
     if txn.rent_record:
         rent_record = txn.rent_record
         rent_record.rentStatus = 'Received'
-        rent_record.transferType = 'Online - PayU'
-        rent_record.utrNumber = txnid
-        rent_record.transferredDate = datetime.now().strftime('%Y-%m-%d')
+        rent_record.transferType = 'Online - Razorpay'
+        rent_record.utrNumber = razorpay_payment_id
+        rent_record.transferredDate = date.today().strftime('%Y-%m-%d')
         rent_record.save()
 
-    return _payu_redirect('success', txnid=txnid, amount=amount)
+    return Response({'success': True, 'txnid': txn.txnid, 'amount': str(txn.amount)})
 
 
-@csrf_exempt
-def payu_failure(request):
-    if request.method != 'POST':
-        return HttpResponseRedirect('/resident/payments')
-
-    post = request.POST
-    txnid = post.get('txnid', '')
-
-    # Verify hash on failure callbacks too
-    if not _verify_payu_hash(post):
-        return _payu_redirect('failed', reason='tampered')
-
-    # Update transaction log
-    try:
-        txn = PaymentTransaction.objects.get(txnid=txnid)
-        if txn.status != 'success':  # don't overwrite a success
-            txn.status = 'failed'
-            txn.payu_status = post.get('status', '')
-            txn.save()
-    except PaymentTransaction.DoesNotExist:
-        pass
-
-    return _payu_redirect('failed', txnid=txnid)
-
-
-# ─── PayU Webhook (Server-to-Server Notification) ───────────────────
+# ─── Razorpay Webhook (server-to-server) ────────────────────────────
 
 @csrf_exempt
-def payu_webhook(request):
-    """Handle PayU server-to-server webhook notifications.
-    This catches payments where the browser redirect was missed
-    (e.g., user closed browser, network issue during redirect).
-    Configure this URL in PayU merchant dashboard under Webhooks.
+def razorpay_webhook(request):
+    """Handle Razorpay server-to-server webhook.
+    Verify via X-Razorpay-Signature (HMAC-SHA256 with webhook secret).
+    Configure this URL in Razorpay Dashboard under Settings → Webhooks.
     """
-    import logging
-    logger = logging.getLogger(__name__)
-
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'POST only'}, status=405)
 
-    post = request.POST
-    txnid = post.get('txnid', '')
-    payu_status = post.get('status', '')
+    signature = request.headers.get('X-Razorpay-Signature', '')
+    if not signature:
+        logger.warning('[WEBHOOK] Missing X-Razorpay-Signature header')
+        return JsonResponse({'status': 'error', 'message': 'missing_signature'}, status=403)
 
-    if not _verify_payu_hash(post):
-        logger.warning(f"[WEBHOOK] Hash verification failed for txnid={txnid}")
-        return JsonResponse({'status': 'error', 'message': 'hash_mismatch'}, status=403)
+    webhook_secret = (settings.RAZORPAY_WEBHOOK_SECRET or '').encode('utf-8')
+    expected = hmac.new(webhook_secret, request.body, hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected, signature):
+        logger.warning('[WEBHOOK] HMAC signature mismatch')
+        return JsonResponse({'status': 'error', 'message': 'invalid_signature'}, status=403)
 
-    # Try one-time payment transaction first
+    # Deduplicate by event ID
+    event_id = request.headers.get('X-Razorpay-Event-Id', '')
+    if event_id and event_id in _processed_webhook_event_ids:
+        logger.info(f'[WEBHOOK] Duplicate event {event_id}, skipping')
+        return JsonResponse({'status': 'ok', 'message': 'duplicate'})
+    if event_id:
+        _processed_webhook_event_ids.add(event_id)
+
     try:
-        txn = PaymentTransaction.objects.get(txnid=txnid)
-        if txn.status == 'success':
-            return JsonResponse({'status': 'ok', 'message': 'already_processed'})
+        payload = json.loads(request.body)
+    except (json.JSONDecodeError, Exception) as e:
+        logger.error(f'[WEBHOOK] JSON parse error: {e}')
+        return JsonResponse({'status': 'error', 'message': 'invalid_json'}, status=400)
 
-        if payu_status == 'success':
-            amount = post.get('amount', '')
-            try:
-                callback_amount = Decimal(amount)
-            except (InvalidOperation, TypeError):
-                callback_amount = None
+    event = payload.get('event', '')
+    logger.info(f'[WEBHOOK] Received event: {event}')
 
-            if callback_amount is not None and callback_amount == txn.amount:
-                txn.status = 'success'
-                txn.payu_status = payu_status
-                txn.save()
+    if event == 'payment.captured':
+        _handle_payment_captured(payload)
+    elif event == 'payment.failed':
+        _handle_payment_failed(payload)
+    elif event == 'subscription.charged':
+        _handle_subscription_charged(payload)
+    elif event == 'subscription.cancelled':
+        _handle_subscription_cancelled(payload)
+    elif event == 'qr_code.closed':
+        _handle_qr_code_closed(payload)
+    else:
+        logger.info(f'[WEBHOOK] Unhandled event type: {event}')
 
-                if txn.rent_record:
-                    rent_record = txn.rent_record
-                    rent_record.rentStatus = 'Received'
-                    rent_record.transferType = 'Online - PayU'
-                    rent_record.utrNumber = txnid
-                    rent_record.transferredDate = datetime.now().strftime('%Y-%m-%d')
-                    rent_record.save()
-                logger.info(f"[WEBHOOK] Payment {txnid} marked success via webhook")
-            else:
-                txn.status = 'failed'
-                txn.payu_status = 'amount_mismatch'
-                txn.save()
-                logger.warning(f"[WEBHOOK] Amount mismatch for {txnid}")
-        else:
-            txn.status = 'failed'
-            txn.payu_status = payu_status
-            txn.save()
-            logger.info(f"[WEBHOOK] Payment {txnid} marked {payu_status} via webhook")
+    return JsonResponse({'status': 'ok'})
 
-        return JsonResponse({'status': 'ok'})
+
+def _handle_payment_captured(payload):
+    """Update transaction to success when Razorpay confirms capture."""
+    try:
+        payment = payload['payload']['payment']['entity']
+        order_id = payment.get('order_id', '')
+        payment_id = payment.get('id', '')
+    except (KeyError, TypeError):
+        logger.warning('[WEBHOOK] payment.captured: malformed payload')
+        return
+
+    try:
+        txn = PaymentTransaction.objects.get(gateway_order_id=order_id)
     except PaymentTransaction.DoesNotExist:
-        pass
+        logger.warning(f'[WEBHOOK] payment.captured: unknown order_id={order_id}')
+        return
 
-    # Try SI mandate
+    if txn.status == 'success':
+        return  # already processed — idempotent
+
+    txn.status = 'success'
+    txn.gateway_status = 'captured'
+    txn.gateway_payment_id = payment_id
+    txn.save()
+
+    if txn.rent_record:
+        txn.rent_record.rentStatus = 'Received'
+        txn.rent_record.transferType = 'Online - Razorpay'
+        txn.rent_record.utrNumber = payment_id
+        txn.rent_record.transferredDate = date.today().strftime('%Y-%m-%d')
+        txn.rent_record.save()
+
+    logger.info(f'[WEBHOOK] payment.captured: txn {txn.txnid} marked success')
+
+
+def _handle_payment_failed(payload):
+    """Mark transaction failed — do NOT overwrite a successful payment."""
     try:
-        mandate = RecurringMandate.objects.get(txnid=txnid)
-        if mandate.status == 'active':
-            return JsonResponse({'status': 'ok', 'message': 'already_processed'})
+        payment = payload['payload']['payment']['entity']
+        order_id = payment.get('order_id', '')
+        error_code = payment.get('error_code', 'failed')
+    except (KeyError, TypeError):
+        return
 
-        if payu_status == 'success':
-            auth_payu_id = post.get('authPayUId', '') or post.get('si_token', '')
-            if auth_payu_id:
-                mandate.auth_payu_id = auth_payu_id
-                mandate.status = 'active'
-                from datetime import date
-                today = date.today()
-                if today.month < 12:
-                    next_month_1st = today.replace(month=today.month + 1, day=1)
-                else:
-                    next_month_1st = today.replace(year=today.year + 1, month=1, day=1)
-                mandate.next_charge_date = max(next_month_1st, mandate.start_date)
-                mandate.save()
-                logger.info(f"[WEBHOOK] Mandate {txnid} activated via webhook")
-        else:
-            logger.info(f"[WEBHOOK] Mandate {txnid} status={payu_status} via webhook")
+    try:
+        txn = PaymentTransaction.objects.get(gateway_order_id=order_id)
+    except PaymentTransaction.DoesNotExist:
+        return
 
-        return JsonResponse({'status': 'ok'})
+    if txn.status == 'success':
+        return  # success is terminal — never downgrade
+
+    txn.status = 'failed'
+    txn.gateway_status = error_code
+    txn.save()
+    logger.info(f'[WEBHOOK] payment.failed: txn gateway_order_id={order_id} marked failed')
+
+
+def _handle_subscription_charged(payload):
+    """Create rent record when Razorpay auto-charges a subscription."""
+    try:
+        subscription = payload['payload']['subscription']['entity']
+        sub_id = subscription.get('id', '')
+        payment = payload['payload']['payment']['entity']
+        payment_id = payment.get('id', '')
+    except (KeyError, TypeError):
+        logger.warning('[WEBHOOK] subscription.charged: malformed payload')
+        return
+
+    try:
+        mandate = RecurringMandate.objects.select_related('resident').get(gateway_subscription_id=sub_id)
     except RecurringMandate.DoesNotExist:
-        pass
+        logger.warning(f'[WEBHOOK] subscription.charged: unknown subscription_id={sub_id}')
+        return
 
-    logger.warning(f"[WEBHOOK] Unknown txnid={txnid}")
-    return JsonResponse({'status': 'error', 'message': 'unknown_transaction'}, status=404)
+    today = date.today()
+    month_label = today.strftime('%B %Y')
+
+    # Deduplicate — check if a rent record already exists for this month
+    existing = resident_Rent_Data.objects.filter(
+        resident_data_instance=mandate.resident,
+        month=month_label,
+        transferType='Auto-Pay (Razorpay)',
+    ).exists()
+    if existing:
+        logger.info(f'[WEBHOOK] subscription.charged: rent record already exists for {month_label}, skipping')
+        return
+
+    resident_Rent_Data.objects.create(
+        resident_data_instance=mandate.resident,
+        rentStatus='Received',
+        month=month_label,
+        rent=str(mandate.billing_amount),
+        transferType='Auto-Pay (Razorpay)',
+        utrNumber=payment_id,
+        transferredDate=today.strftime('%Y-%m-%d'),
+    )
+
+    mandate.last_charged_date = today
+    if today.month < 12:
+        next_date = today.replace(month=today.month + 1, day=1)
+    else:
+        next_date = today.replace(year=today.year + 1, month=1, day=1)
+    mandate.next_charge_date = min(next_date, mandate.end_date) if next_date <= mandate.end_date else None
+    mandate.save()
+    logger.info(f'[WEBHOOK] subscription.charged: rent record created for {month_label}')
 
 
-# ─── Standing Instructions (Recurring Payments) ─────────────────────
+def _handle_subscription_cancelled(payload):
+    """Mark mandate revoked when Razorpay subscription is cancelled."""
+    try:
+        subscription = payload['payload']['subscription']['entity']
+        sub_id = subscription.get('id', '')
+    except (KeyError, TypeError):
+        return
+
+    try:
+        mandate = RecurringMandate.objects.get(gateway_subscription_id=sub_id)
+        mandate.status = 'revoked'
+        mandate.save()
+        logger.info(f'[WEBHOOK] subscription.cancelled: mandate {mandate.txnid} revoked')
+    except RecurringMandate.DoesNotExist:
+        logger.warning(f'[WEBHOOK] subscription.cancelled: unknown sub_id={sub_id}')
+
+
+def _handle_qr_code_closed(payload):
+    """Update txn and rent record when a QR code is paid."""
+    try:
+        qr = payload['payload']['qr_code']['entity']
+        qr_id = qr.get('id', '')
+        close_reason = qr.get('close_reason', '')
+        payment_id = qr.get('payments_amount_received', '') or ''
+        # payment_id comes from the linked payment in notes
+        payments = payload['payload'].get('payment', {}).get('entity', {})
+        if payments:
+            payment_id = payments.get('id', payment_id)
+    except (KeyError, TypeError):
+        return
+
+    try:
+        txn = PaymentTransaction.objects.get(gateway_order_id=qr_id)
+    except PaymentTransaction.DoesNotExist:
+        return
+
+    if txn.status == 'success':
+        return
+
+    if close_reason == 'paid':
+        txn.status = 'success'
+        txn.gateway_status = 'paid'
+        txn.gateway_payment_id = str(payment_id)
+        txn.save()
+
+        if txn.rent_record:
+            txn.rent_record.rentStatus = 'Received'
+            txn.rent_record.transferType = 'Online - Razorpay'
+            txn.rent_record.utrNumber = str(payment_id)
+            txn.rent_record.transferredDate = date.today().strftime('%Y-%m-%d')
+            txn.rent_record.save()
+        logger.info(f'[WEBHOOK] qr_code.closed (paid): txn {txn.txnid} success')
+    else:
+        txn.status = 'failed'
+        txn.gateway_status = close_reason or 'expired'
+        txn.save()
+        logger.info(f'[WEBHOOK] qr_code.closed ({close_reason}): txn {txn.txnid} failed')
+
+
+# ─── Razorpay UPI QR Code Payments ──────────────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def resident_si_consent_init(request):
-    """Initiate SI consent registration — redirects to PayU hosted page for e-mandate."""
+@permission_classes([IsResident])
+def resident_payment_qr(request):
+    """Generate a single-use UPI QR code for a pending rent payment."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'resident not found.'}, status=404)
+
+    amount_raw = str(request.data.get('amount', '')).strip()
+    try:
+        amount = Decimal(amount_raw)
+    except (InvalidOperation, TypeError):
+        return Response({'success': False, 'message': 'Amount must be a valid number.'}, status=400)
+
+    if amount <= 0:
+        return Response({'success': False, 'message': 'Amount must be greater than zero.'}, status=400)
+
+    rent_id = str(request.data.get('rentId') or '')
+    rent_record = None
+    if rent_id:
+        try:
+            rent_record = resident_Rent_Data.objects.get(
+                id=int(rent_id),
+                resident_data_instance=resident,
+            )
+        except (resident_Rent_Data.DoesNotExist, ValueError):
+            return Response({'success': False, 'message': 'Invalid rent record.'}, status=400)
+
+        if rent_record.rentStatus == 'Received':
+            return Response({'success': False, 'message': 'Rent already paid.'}, status=400)
+
+    txn_id = f"SE{uuid.uuid4().hex[:18]}"
+    month = rent_record.month if rent_record else 'Rent'
+    close_by = int(time.time()) + 300  # 5 minutes
+
+    try:
+        client = _get_razorpay_client()
+        qr = client.qrcode.create({
+            'type': 'upi_qr',
+            'name': f'Rent - {month}',
+            'usage': 'single_use',
+            'fixed_amount': True,
+            'payment_amount': int(amount * 100),
+            'description': f'Rent Payment - {month}',
+            'close_by': close_by,
+            'notes': {
+                'resident_id': str(resident.id),
+                'rent_id': rent_id,
+                'order_id': txn_id,
+            }
+        })
+    except Exception as e:
+        logger.error(f'[QR_GENERATE] Razorpay qrcode.create failed: {e}')
+        return Response({'success': False, 'message': 'QR generation failed. Please try again.'}, status=503)
+
+    PaymentTransaction.objects.create(
+        txnid=txn_id,
+        resident=resident,
+        rent_record=rent_record,
+        amount=amount,
+        product_info=f'Rent Payment - {month}',
+        status='initiated',
+        gateway_order_id=qr['id'],
+    )
+
+    return Response({
+        'success': True,
+        'qrCodeId': qr['id'],
+        'qrImageUrl': qr.get('image_url', ''),
+        'amount': str(amount),
+        'expiresAt': close_by,
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsResident])
+def resident_payment_qr_status(request):
+    """Poll QR payment status."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'resident not found.'}, status=404)
+
+    qr_code_id = request.GET.get('qrCodeId', '').strip()
+    if not qr_code_id:
+        return Response({'success': False, 'message': 'qrCodeId is required.'}, status=400)
+
+    try:
+        txn = PaymentTransaction.objects.get(gateway_order_id=qr_code_id)
+    except PaymentTransaction.DoesNotExist:
+        return Response({'success': False, 'message': 'QR code not found.'}, status=404)
+
+    if txn.resident_id != resident.id:
+        return Response({'success': False, 'message': 'Not authorised.'}, status=403)
+
+    # Already in terminal state
+    if txn.status == 'success':
+        return Response({'status': 'paid'})
+    if txn.status == 'failed':
+        return Response({'status': 'expired'})
+
+    # Fetch live status from Razorpay
+    try:
+        client = _get_razorpay_client()
+        qr = client.qrcode.fetch(qr_code_id)
+    except Exception as e:
+        logger.error(f'[QR_STATUS] qrcode.fetch failed: {e}')
+        return Response({'status': 'pending'})
+
+    close_reason = qr.get('close_reason', '')
+    if close_reason == 'paid' and txn.status != 'success':
+        txn.status = 'success'
+        txn.gateway_status = 'paid'
+        txn.save()
+        if txn.rent_record:
+            txn.rent_record.rentStatus = 'Received'
+            txn.rent_record.transferType = 'Online - Razorpay'
+            txn.rent_record.transferredDate = date.today().strftime('%Y-%m-%d')
+            txn.rent_record.save()
+        return Response({'status': 'paid'})
+    elif close_reason in ('timeout', 'on_demand'):
+        txn.status = 'failed'
+        txn.gateway_status = close_reason
+        txn.save()
+        return Response({'status': 'expired'})
+
+    return Response({'status': 'pending'})
+
+
+# ─── Recurring Payments / Subscriptions ─────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsResident])
+def resident_subscription_init(request):
+    """Initiate Razorpay subscription for recurring rent auto-pay."""
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'Resident not found.'}, status=404)
@@ -684,56 +1011,44 @@ def resident_si_consent_init(request):
             'message': 'Monthly rent must be greater than zero.',
         }, status=400)
 
-    payu_config = getattr(settings, 'PAYU_CONFIG', {})
-    merchant_key = (payu_config.get('merchant_key') or '').strip()
-    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
-    payu_base_url = (payu_config.get('base_url') or '').strip()
-    si_success_url = (payu_config.get('si_success_url') or '').strip()
-    si_failure_url = (payu_config.get('si_failure_url') or '').strip()
+    # Calculate total count (number of months in lease)
+    months = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+    if end_date.day > start_date.day:
+        months += 1
+    total_count = max(1, months)
 
-    if not merchant_key or not merchant_salt or not payu_base_url:
-        return Response({
-            'success': False,
-            'message': 'Payment service is not configured yet. Please contact support.',
-        }, status=503)
-
-    txn_id = f"SESI{uuid.uuid4().hex[:16]}"
-    amount_str = f"{billing_amount:.2f}"
-    product_info = 'Monthly Rent Auto-Pay'
     firstname = (resident.residentsName or request.user.first_name or 'Resident').strip()
     email = (resident.email or '').strip()
     phone = str(resident.phoneNumber or request.user.username or '').strip()
 
-    # Build si_details JSON — minified, no whitespace
-    si_details = json.dumps({
-        'billingAmount': amount_str,
-        'billingCurrency': 'INR',
-        'billingCycle': 'MONTHLY',
-        'billingInterval': 1,
-        'paymentStartDate': start_date.strftime('%Y-%m-%d'),
-        'paymentEndDate': end_date.strftime('%Y-%m-%d'),
-        'billingRule': 'MAX',
-        'billingLimit': 'ON',
-    }, separators=(',', ':'))
+    txn_id = f"SESI{uuid.uuid4().hex[:16]}"
 
-    # SI Hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||si_details|salt
-    hash_sequence = '|'.join([
-        merchant_key,
-        txn_id,
-        amount_str,
-        product_info,
-        firstname,
-        email,
-        str(resident.id),      # udf1
-        str(request.user.id),  # udf2
-        '', '', '',            # udf3, udf4, udf5
-        '', '', '', '', '',    # additional empty fields
-        si_details,
-        merchant_salt,
-    ])
-    payu_hash = hashlib.sha512(hash_sequence.encode('utf-8')).hexdigest()
+    try:
+        client = _get_razorpay_client()
+        plan = client.plan.create({
+            'period': 'monthly',
+            'interval': 1,
+            'item': {
+                'name': f'Monthly Rent - {firstname}',
+                'amount': int(billing_amount * 100),
+                'currency': 'INR',
+            }
+        })
+        subscription = client.subscription.create({
+            'plan_id': plan['id'],
+            'total_count': total_count,
+            'customer_notify': 1,
+            'notes': {
+                'resident_id': str(resident.id),
+            }
+        })
+    except Exception as e:
+        logger.error(f'[SUBSCRIPTION_INIT] Razorpay API failed: {e}')
+        return Response({
+            'success': False,
+            'message': 'Subscription service unavailable. Please try again later.',
+        }, status=503)
 
-    # Log mandate
     RecurringMandate.objects.create(
         txnid=txn_id,
         resident=resident,
@@ -742,63 +1057,63 @@ def resident_si_consent_init(request):
         start_date=start_date,
         end_date=end_date,
         status='initiated',
+        gateway_plan_id=plan['id'],
+        gateway_subscription_id=subscription['id'],
     )
 
     return Response({
         'success': True,
-        'paymentProvider': 'payu',
-        'payuBaseUrl': payu_base_url,
-        'paymentData': {
-            'key': merchant_key,
-            'txnid': txn_id,
-            'amount': amount_str,
-            'productinfo': product_info,
-            'firstname': firstname,
+        'subscriptionId': subscription['id'],
+        'keyId': settings.RAZORPAY_KEY_ID,
+        'prefill': {
+            'name': firstname,
             'email': email,
-            'phone': phone,
-            'surl': si_success_url,
-            'furl': si_failure_url,
-            'hash': payu_hash,
-            'udf1': str(resident.id),
-            'udf2': str(request.user.id),
-            'si': '1',
-            'api_version': '7',
-            'si_details': si_details,
-        }
+            'contact': phone,
+        },
     })
 
 
-@csrf_exempt
-def payu_si_success(request):
-    """Handle PayU SI consent success callback — extract authPayUId."""
-    if request.method != 'POST':
-        return HttpResponseRedirect('/resident/payments')
+@api_view(['POST'])
+@permission_classes([IsResident])
+def resident_subscription_verify(request):
+    """Verify Razorpay subscription payment signature and activate mandate."""
+    resident = _get_resident(request)
+    if not resident:
+        return Response({'success': False, 'message': 'Resident not found.'}, status=404)
 
-    post = request.POST
-    txnid = post.get('txnid', '')
+    razorpay_payment_id = request.data.get('razorpay_payment_id', '').strip()
+    razorpay_subscription_id = request.data.get('razorpay_subscription_id', '').strip()
+    razorpay_signature = request.data.get('razorpay_signature', '').strip()
 
-    if not _verify_payu_hash(post):
-        return _payu_redirect('failed', reason='tampered', type='mandate')
+    if not razorpay_payment_id or not razorpay_subscription_id or not razorpay_signature:
+        return Response({'success': False, 'message': 'razorpay_payment_id, razorpay_subscription_id, and razorpay_signature are required.'}, status=400)
 
     try:
-        mandate = RecurringMandate.objects.get(txnid=txnid)
+        mandate = RecurringMandate.objects.get(
+            gateway_subscription_id=razorpay_subscription_id,
+            resident=resident,
+        )
     except RecurringMandate.DoesNotExist:
-        return _payu_redirect('failed', reason='unknown_mandate', type='mandate')
+        return Response({'success': False, 'message': 'Mandate not found.'}, status=404)
 
+    # Idempotency
     if mandate.status == 'active':
-        return _payu_redirect('success', txnid=txnid, type='mandate')
+        return Response({'success': True, 'type': 'mandate'})
 
-    # Extract the mandate token from PayU response
-    auth_payu_id = post.get('authPayUId', '') or post.get('si_token', '')
-    if not auth_payu_id:
-        mandate.status = 'initiated'
-        mandate.save()
-        return _payu_redirect('failed', reason='no_mandate_token', type='mandate')
+    try:
+        client = _get_razorpay_client()
+        client.utility.verify_subscription_payment_signature({
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_subscription_id': razorpay_subscription_id,
+            'razorpay_signature': razorpay_signature,
+        })
+    except razorpay.errors.SignatureVerificationError:
+        return Response({'success': False, 'message': 'Subscription signature verification failed.'}, status=400)
+    except Exception as e:
+        logger.error(f'[SUBSCRIPTION_VERIFY] Error: {e}')
+        return Response({'success': False, 'message': 'Verification error.'}, status=500)
 
-    mandate.auth_payu_id = auth_payu_id
     mandate.status = 'active'
-    # Set next charge date to the 1st of next month or start_date, whichever is later
-    from datetime import date
     today = date.today()
     if today.month < 12:
         next_month_1st = today.replace(month=today.month + 1, day=1)
@@ -807,34 +1122,11 @@ def payu_si_success(request):
     mandate.next_charge_date = max(next_month_1st, mandate.start_date)
     mandate.save()
 
-    return _payu_redirect('success', txnid=txnid, type='mandate')
-
-
-@csrf_exempt
-def payu_si_failure(request):
-    """Handle PayU SI consent failure callback."""
-    if request.method != 'POST':
-        return HttpResponseRedirect('/resident/payments')
-
-    post = request.POST
-    txnid = post.get('txnid', '')
-
-    if not _verify_payu_hash(post):
-        return _payu_redirect('failed', reason='tampered', type='mandate')
-
-    try:
-        mandate = RecurringMandate.objects.get(txnid=txnid)
-        if mandate.status != 'active':
-            mandate.status = 'initiated'
-            mandate.save()
-    except RecurringMandate.DoesNotExist:
-        pass
-
-    return _payu_redirect('failed', txnid=txnid, type='mandate')
+    return Response({'success': True, 'type': 'mandate'})
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_mandate_status(request):
     """Get the current auto-pay mandate status for the authenticated resident."""
     resident = _get_resident(request)
@@ -865,7 +1157,7 @@ def resident_mandate_status(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_mandate_cancel(request):
     """Cancel the active recurring mandate — RBI requires residents can cancel at any time."""
     resident = _get_resident(request)
@@ -882,13 +1174,13 @@ def resident_mandate_cancel(request):
             'message': 'No active auto-pay mandate found.',
         }, status=404)
 
-    # Revoke mandate via PayU API (stub — requires merchant keys + SI enablement)
-    revoke_result = _revoke_mandate_on_payu(mandate)
-    if not revoke_result['success']:
-        import logging
-        logging.getLogger(__name__).warning(
-            f"PayU mandate revoke API failed for mandate {mandate.txnid}: {revoke_result.get('message')}"
-        )
+    # Cancel subscription on Razorpay
+    if mandate.gateway_subscription_id:
+        try:
+            client = _get_razorpay_client()
+            client.subscription.cancel(mandate.gateway_subscription_id)
+        except Exception as e:
+            logger.warning(f'Razorpay subscription cancel failed: {e}')
 
     mandate.status = 'revoked'
     mandate.save()
@@ -896,82 +1188,21 @@ def resident_mandate_cancel(request):
     return Response({'success': True, 'message': 'Auto-pay mandate cancelled successfully.'})
 
 
-# ─── Server-to-Server SI Stubs ──────────────────────────────────────
-
-def _revoke_mandate_on_payu(mandate):
-    """Stub: Revoke mandate via PayU mandate_revoke API.
-    Requires: POST to PayU info API with command=mandate_revoke, var1=authPayUId.
-    Hash: sha512(key|command|var1|salt)
-    """
-    payu_config = getattr(settings, 'PAYU_CONFIG', {})
-    merchant_key = (payu_config.get('merchant_key') or '').strip()
-    merchant_salt = (payu_config.get('merchant_salt') or '').strip()
-
-    if not merchant_key or not merchant_salt or not mandate.auth_payu_id:
-        return {'success': False, 'message': 'PayU not configured or no mandate token'}
-
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(
-        f"[SI STUB] Would revoke mandate {mandate.txnid} "
-        f"(authPayUId={mandate.auth_payu_id}) via PayU mandate_revoke API"
-    )
-    # TODO: Implement when PayU SI is enabled on the merchant account
-    # command = 'mandate_revoke'
-    # hash_str = f"{merchant_key}|{command}|{mandate.auth_payu_id}|{merchant_salt}"
-    # api_hash = hashlib.sha512(hash_str.encode('utf-8')).hexdigest()
-    # response = requests.post('https://info.payu.in/merchant/postservice', data={
-    #     'key': merchant_key, 'command': command,
-    #     'var1': mandate.auth_payu_id, 'hash': api_hash,
-    # })
-    return {'success': True, 'message': 'Stub — revocation logged locally'}
-
-
-def _send_pre_debit_notification(mandate):
-    """Stub: Send pre-debit notification via PayU pre_debit_SI API.
-    RBI requires 24+ hours before charging. We send 48 hours early.
-    Hash: sha512(key|command|var1|salt)
-    """
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(
-        f"[SI STUB] Would send pre-debit notification for mandate {mandate.txnid} "
-        f"(authPayUId={mandate.auth_payu_id}, amount={mandate.billing_amount})"
-    )
-    # TODO: Implement when PayU SI is enabled
-    # command = 'pre_debit_SI'
-    # var1 = json.dumps({'authPayUId': mandate.auth_payu_id, 'amount': str(mandate.billing_amount)})
-    # hash_str = f"{merchant_key}|{command}|{var1}|{merchant_salt}"
-    # ...
-    return {'success': True, 'message': 'Stub — pre-debit notification logged'}
-
-
-def _execute_si_charge(mandate):
-    """Stub: Execute recurring charge via PayU si_transaction API.
-    Hash: sha512(key|command|var1|salt)
-    """
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(
-        f"[SI STUB] Would execute SI charge for mandate {mandate.txnid} "
-        f"(authPayUId={mandate.auth_payu_id}, amount={mandate.billing_amount})"
-    )
-    # TODO: Implement when PayU SI is enabled
-    # command = 'si_transaction'
-    # var1 = json.dumps({
-    #     'authPayUId': mandate.auth_payu_id,
-    #     'amount': str(mandate.billing_amount),
-    #     'txnid': f"SESIC{uuid.uuid4().hex[:14]}",
-    #     'debitDate': mandate.next_charge_date.strftime('%Y-%m-%d'),
-    # })
-    # hash_str = f"{merchant_key}|{command}|{var1}|{merchant_salt}"
-    # ...
-    return {'success': True, 'message': 'Stub — SI charge logged'}
-
+# ─── Invoices ─────────────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_invoice_detail(request, pk):
+    """Handle GET /resident/invoice/<pk>/ — return full invoice details for a specific rent record.
+
+    Args:
+        request: DRF Request.
+        pk: Primary key of the rent record belonging to this resident.
+
+    Returns:
+        Response with detailed invoice data including rent amount, delay charges,
+        payment status, and property/room context.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -1012,24 +1243,34 @@ def resident_invoice_detail(request, pk):
 # ─── Complaints ────────────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_complaints(request):
+    """Handle GET /resident/complaints/ — list all maintenance complaints for the resident.
+
+    Returns:
+        Response with `complaints` list including category, location, urgency, latest
+        status, and ticket number for each complaint.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
 
     complaints = PropertyComplaintDetail.objects.filter(
         propertyComplaint_bed=resident
-    ).prefetch_related('complaint_category').order_by('-id')
+    ).prefetch_related('complaint').order_by('-id')
 
     data = []
     for c in complaints:
-        categories = c.complaint_category.all()
+        categories = c.complaint.all()
         latest_cat = categories.order_by('-id').first()
         data.append({
             'id': c.id,
+            'category': c.category,
+            'location': c.location,
+            'urgency': c.urgency,
             'issueDesc': c.issueDesc,
             'preferredTime': c.preferredTime,
+            'submittedAt': c.submittedDateAndTime.strftime('%Y-%m-%d %H:%M') if c.submittedDateAndTime else '',
             'latestStatus': latest_cat.status if latest_cat else 'Open',
             'latestCategory': latest_cat.category_type if latest_cat else None,
             'ticketNumber': latest_cat.ticket_number if latest_cat else None,
@@ -1039,8 +1280,17 @@ def resident_complaints(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_complaint_submit(request):
+    """Handle POST /resident/complaints/submit/ — create a new maintenance complaint.
+
+    Args:
+        request: DRF Request with JSON body containing `category`, `location`, `urgency`,
+            `issueDesc`, and optional `preferredTime`.
+
+    Returns:
+        Response with `success` flag and `complaintId` on success. Requires approved KYC.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -1050,9 +1300,22 @@ def resident_complaint_submit(request):
                         status=status.HTTP_403_FORBIDDEN)
 
     data = request.data
+    category = data.get('category', '').strip()
+    location = data.get('location', '').strip()
+    urgency = data.get('urgency', '').strip()
     issue_desc = data.get('issueDesc', '').strip()
     preferred_time = data.get('preferredTime', '').strip()
 
+    valid_categories = [c[0] for c in PropertyComplaintDetail.CATEGORY_CHOICES]
+    valid_locations = [l[0] for l in PropertyComplaintDetail.LOCATION_CHOICES]
+    valid_urgencies = [u[0] for u in PropertyComplaintDetail.URGENCY_CHOICES]
+
+    if not category or category not in valid_categories:
+        return Response({'success': False, 'message': 'A valid category is required.'}, status=400)
+    if not location or location not in valid_locations:
+        return Response({'success': False, 'message': 'A valid location is required.'}, status=400)
+    if not urgency or urgency not in valid_urgencies:
+        return Response({'success': False, 'message': 'A valid urgency level is required.'}, status=400)
     if not issue_desc:
         return Response({'success': False, 'message': 'Issue description is required.'}, status=400)
 
@@ -1060,30 +1323,43 @@ def resident_complaint_submit(request):
         propertyComplaint_bed=resident,
         residentsName=resident.residentsName,
         phoneNumber=resident.phoneNumber,
+        category=category,
+        location=location,
+        urgency=urgency,
         issueDesc=issue_desc,
         preferredTime=preferred_time,
     )
 
-    return Response({'success': True, 'message': 'Complaint submitted successfully.', 'complaintId': complaint.id})
+    return Response({'success': True, 'message': 'Maintenance request submitted successfully.', 'complaintId': complaint.id})
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_complaint_detail(request, pk):
+    """Handle GET /resident/complaints/<pk>/ — return full detail of a single complaint.
+
+    Args:
+        request: DRF Request.
+        pk: Primary key of the complaint belonging to this resident.
+
+    Returns:
+        Response with complaint metadata, all category updates with ticket numbers and
+        vendor info, and any associated feedback entries.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
 
     try:
         complaint = PropertyComplaintDetail.objects.prefetch_related(
-            'complaint_category__complaint_vendor',
-            'complaint_category__complaint_feedback',
+            'complaint__complaint_vendor',
+            'complaint__complaint_feedback',
         ).get(id=pk, propertyComplaint_bed=resident)
     except PropertyComplaintDetail.DoesNotExist:
         return Response({'success': False, 'message': 'Complaint not found.'}, status=404)
 
     categories = []
-    for cat in complaint.complaint_category.all().order_by('id'):
+    for cat in complaint.complaint.all().order_by('id'):
         feedbacks = []
         for fb in cat.complaint_feedback.all():
             feedbacks.append({
@@ -1106,9 +1382,14 @@ def resident_complaint_detail(request, pk):
         'success': True,
         'complaint': {
             'id': complaint.id,
+            'rawCategory': complaint.category or '',
+            'category': complaint.get_category_display() if complaint.category else '',
+            'location': complaint.get_location_display() if complaint.location else '',
+            'urgency': complaint.get_urgency_display() if complaint.urgency else '',
             'issueDesc': complaint.issueDesc,
             'preferredTime': complaint.preferredTime,
             'residentsName': complaint.residentsName,
+            'submittedAt': complaint.submittedDateAndTime.strftime('%d %b %Y, %I:%M %p') if complaint.submittedDateAndTime else '',
             'categories': categories,
         },
     })
@@ -1117,8 +1398,14 @@ def resident_complaint_detail(request, pk):
 # ─── Lease Agreement ──────────────────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_lease(request):
+    """Handle GET /resident/lease/ — return lease documents and signing requests for the resident.
+
+    Returns:
+        Response with `documents` list (each with signing request status and URL) and
+        a direct `leaseAgreement` upload if present on the resident profile.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
@@ -1144,14 +1431,31 @@ def resident_lease(request):
             } for sr in signing_reqs],
         })
 
-    return Response({'success': True, 'documents': data})
+    # Include direct lease agreement from resident profile
+    lease_agreement = None
+    if resident.leaseAgreement:
+        lease_agreement = {
+            'pdfUrl': resident.leaseAgreement.url,
+            'uploadedAt': resident.leaseUploadedAt.isoformat() if resident.leaseUploadedAt else None,
+            'uploadedBy': resident.leaseUploadedBy,
+        }
+
+    return Response({'success': True, 'documents': data, 'leaseAgreement': lease_agreement})
 
 
 # ─── Push Token ───────────────────────────────────────────────────
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsResident])
 def resident_register_push_token(request):
+    """Handle POST /resident/push-token/ — save an Expo push notification token for the resident.
+
+    Args:
+        request: DRF Request with JSON body containing `pushToken`.
+
+    Returns:
+        Response with `success` flag and a confirmation message.
+    """
     resident = _get_resident(request)
     if not resident:
         return Response({'success': False, 'message': 'resident not found.'}, status=404)

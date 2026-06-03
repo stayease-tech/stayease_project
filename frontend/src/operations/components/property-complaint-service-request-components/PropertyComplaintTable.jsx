@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { FaEdit } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function PropertyComplaintTable({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
@@ -84,15 +86,9 @@ function PropertyComplaintTable({ isExpanded, setIsExpanded }) {
                             <div className="flex gap-2">
                                 <select id="status" value={status} onChange={(e) => setStatus(e.target.value)} className="block mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="status" required>
                                     <option value="All">{`All (${propertyComplaintData.length})`}</option>
-                                    <option value="Open">{`Open (${propertyComplaintData.filter(complaint =>
-                                        complaint.status === 'Open'
-                                    ).length})`}</option>
-                                    <option value="Follow Up">{`Follow Up (${propertyComplaintData.filter(complaint =>
-                                        complaint.status === 'Follow Up'
-                                    ).length})`}</option>
-                                    <option value="Closed">{`Closed (${propertyComplaintData.filter(complaint =>
-                                        complaint.status === 'Closed'
-                                    ).length})`}</option>
+                                    {getOptions('complaint_statuses').map((s, i) => (
+                                        <option key={i} value={s}>{`${s} (${propertyComplaintData.filter(complaint => complaint.status === s).length})`}</option>
+                                    ))}
                                 </select>
 
                                 <input

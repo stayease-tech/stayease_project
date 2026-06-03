@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Navbar from "../../../shared/Navbar";
 import SalesSidebar from "../Sidebar";
-import { ShieldCheck, Check, X, Eye, ChevronDown } from "lucide-react";
-
-const TABS = ["Pending", "Approved", "Rejected"];
+import { ShieldCheck, Check, X, Eye, ChevronDown, Upload } from "lucide-react";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 export default function KycManagement({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
+    const TABS = getOptions('kyc_approval_statuses');
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Pending");
@@ -14,6 +15,8 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
     const [rejectReason, setRejectReason] = useState("");
     const [processing, setProcessing] = useState(false);
     const [msg, setMsg] = useState({ text: "", type: "" });
+    const [uploadingLease, setUploadingLease] = useState(null);
+    const leaseInputRef = useRef(null);
 
     const fetchResidents = (status) => {
         setLoading(true);
@@ -57,6 +60,28 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
             setMsg({ text: "Failed to reject.", type: "error" });
         }
         setProcessing(false);
+    };
+
+    const handleLeaseUpload = async (residentId, file) => {
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            setMsg({ text: "Only PDF files are allowed.", type: "error" });
+            return;
+        }
+        setUploadingLease(residentId);
+        const formData = new FormData();
+        formData.append('leaseAgreement', file);
+        try {
+            const res = await axios.post(`/sales/upload-lease/${residentId}/`, formData);
+            if (res.data.success) {
+                setMsg({ text: res.data.message, type: "success" });
+                fetchResidents(filter);
+            }
+        } catch {
+            setMsg({ text: "Failed to upload lease agreement.", type: "error" });
+        }
+        setUploadingLease(null);
+        if (leaseInputRef.current) leaseInputRef.current.value = "";
     };
 
     const statusBadge = (status) => {
@@ -140,6 +165,65 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                                             <DocSection label="PAN" number={t.panNumber} frontUrl={t.panFrontCopy} backUrl={t.panBackCopy} />
                                             <DocSection label={t.studentEmployeeIdType || "Student/Employee ID"} number={t.studentEmployeeIdNumber} frontUrl={t.studentEmployeeIdCopy} />
                                         </div>
+
+                                        {/* Lease Agreement */}
+                                        <div className="mb-4 border border-gray-200 rounded-lg p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-semibold text-sm text-gray-800 mb-1">Lease Agreement</p>
+                                                    {t.leaseAgreement ? (
+                                                        <div className="flex items-center gap-3 text-xs">
+                                                            <a href={t.leaseAgreement} target="_blank" rel="noreferrer" className="text-[#D4A017] hover:underline flex items-center gap-1">
+                                                                <Eye size={12} /> View PDF
+                                                            </a>
+                                                            <span className="text-gray-400">
+                                                                Uploaded {t.leaseUploadedAt?.split("T")[0]} by {t.leaseUploadedBy}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-gray-400">Not uploaded yet</p>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <input
+                                                        ref={leaseInputRef}
+                                                        type="file"
+                                                        accept=".pdf"
+                                                        className="hidden"
+                                                        onChange={(e) => handleLeaseUpload(t.id, e.target.files[0])}
+                                                    />
+                                                    <button
+                                                        className="btn btn-outline text-xs flex items-center gap-1"
+                                                        onClick={() => leaseInputRef.current?.click()}
+                                                        disabled={uploadingLease === t.id}
+                                                    >
+                                                        {uploadingLease === t.id ? (
+                                                            "Uploading..."
+                                                        ) : t.leaseAgreement ? (
+                                                            <><Upload size={14} /> Replace</>
+                                                        ) : (
+                                                            <><Upload size={14} /> Upload</>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Portal Status */}
+                                        {t.hasPortalAccount && (
+                                            <div className="mb-4 border border-gray-200 rounded-lg p-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="font-semibold text-sm text-gray-800 mb-1">Resident Portal</p>
+                                                        {t.portalEnabled ? (
+                                                            <p className="text-xs text-green-600 flex items-center gap-1"><Check size={12} /> Portal is active</p>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-400">Upload lease agreement to enable portal</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {t.kycRejectionReason && (
                                             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">

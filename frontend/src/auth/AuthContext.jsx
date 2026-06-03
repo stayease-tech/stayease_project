@@ -34,6 +34,12 @@ const DEFAULT_ROUTES = {
     resident: '/resident/dashboard',
 };
 
+/**
+ * Infers the user's role from their permission strings.
+ *
+ * @param {string[]} permissions - Array of Django permission codenames.
+ * @returns {string|null} The detected user type, or null if none matched.
+ */
 function detectUserType(permissions) {
     // Count permissions per type to find the best match
     const counts = {};
@@ -56,11 +62,23 @@ function detectUserType(permissions) {
     return best;
 }
 
+/**
+ * Configures axios to send cookies and the CSRF token with every request.
+ *
+ * @returns {void}
+ */
 function setupAxiosDefaults() {
     axios.defaults.withCredentials = true;
     axios.defaults.headers.common["X-CSRFToken"] = Cookies.get("csrftoken");
 }
 
+/**
+ * AuthProvider — supplies authentication state and actions to the component tree.
+ *
+ * @param {object} props
+ * @param {React.ReactNode} props.children - Components that need access to auth context.
+ * @returns {React.ReactElement}
+ */
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
         return JSON.parse(localStorage.getItem("user")) || null;
@@ -132,6 +150,11 @@ export const AuthProvider = ({ children }) => {
         checkAuthStatus();
     }, []);
 
+    /**
+     * Clears all auth state from React state and localStorage.
+     *
+     * @returns {void}
+     */
     function clearAuth() {
         setUser(null);
         setUserType(null);
@@ -146,6 +169,13 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("residentData");
     }
 
+    /**
+     * Authenticates a standard staff user via session-based login.
+     *
+     * @param {string} username
+     * @param {string} password
+     * @returns {Promise<{success: boolean, userType?: string, redirect?: string, message?: string}>}
+     */
     const login = async (username, password) => {
         setupAxiosDefaults();
 
@@ -184,6 +214,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Authenticates a partner user via OTP verification.
+     *
+     * @param {string} phone - The partner's registered phone number.
+     * @param {string} otp - The one-time password received by the partner.
+     * @returns {Promise<{success: boolean, redirect?: string, message?: string}>}
+     */
     const loginPartner = async (phone, otp) => {
         setupAxiosDefaults();
 
@@ -206,6 +243,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Authenticates a resident user via JWT-based login.
+     *
+     * @param {string} phone - The resident's registered phone number.
+     * @param {string} password
+     * @returns {Promise<{success: boolean, redirect?: string, message?: string}>}
+     */
     const loginresident = async (phone, password) => {
         try {
             const response = await axios.post("/api/resident-login/", { phone, password });
@@ -233,6 +277,12 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Requests an OTP to be sent to the given phone number.
+     *
+     * @param {string} phone - The partner's phone number.
+     * @returns {Promise<{success: boolean, message: string}>}
+     */
     const sendOtp = async (phone) => {
         setupAxiosDefaults();
         try {
@@ -244,13 +294,19 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    /**
+     * Logs out the current user, calling the backend logout endpoint for staff users,
+     * then clears all local auth state.
+     *
+     * @returns {Promise<void>}
+     */
     const logout = async () => {
         setupAxiosDefaults();
 
         const currentType = localStorage.getItem("userType");
         const loginId = localStorage.getItem("login_id");
 
-        if (currentType && currentType !== 'partners') {
+        if (currentType && currentType !== 'partners' && currentType !== 'resident') {
             const prefix = API_PREFIX_MAP[currentType];
             try {
                 await axios.post(`${prefix}/logout/`, { loginId }, { skipGlobalErrorToast: true });
@@ -279,4 +335,9 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
+/**
+ * useAuth — convenience hook for consuming the AuthContext.
+ *
+ * @returns {{ user: string|null, userType: string|null, isLoading: boolean, login: Function, loginPartner: Function, loginresident: Function, sendOtp: Function, logout: Function, DEFAULT_ROUTES: object }}
+ */
 export const useAuth = () => useContext(AuthContext);

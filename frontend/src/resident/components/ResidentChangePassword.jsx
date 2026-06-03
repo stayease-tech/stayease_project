@@ -1,7 +1,9 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import { useState } from "react";
 import residentApi from "../residentApi";
 import Navbar from "../../shared/Navbar";
-import residentSidebar from "./Sidebar";
+import ResidentSidebar from "./Sidebar";
 import { Lock } from "lucide-react";
 import { toast } from "react-toastify";
 
@@ -39,7 +41,7 @@ export default function residentChangePassword({ isExpanded, setIsExpanded }) {
 
     return (
         <div className="bg-[#F5F5F0] min-h-screen">
-            <residentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
+            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">

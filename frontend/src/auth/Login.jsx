@@ -3,6 +3,12 @@ import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+/**
+ * Login — unified login page for staff and partner users.
+ * Redirects already-authenticated users to their default dashboard.
+ *
+ * @returns {React.ReactElement}
+ */
 function Login() {
     const auth = useAuth();
     const navigate = useNavigate();
@@ -26,16 +32,34 @@ function Login() {
         return <Navigate to={auth.DEFAULT_ROUTES[auth.userType]} replace />;
     }
 
+    /**
+     * Updates the staff login form field that changed.
+     *
+     * @param {React.ChangeEvent<HTMLInputElement>} e
+     * @returns {void}
+     */
     const handleStaffChange = (e) => {
         const { name, value } = e.target;
         setLoginData((prev) => ({ ...prev, [name]: value }));
     };
 
+    /**
+     * Updates the partner login form field that changed.
+     *
+     * @param {React.ChangeEvent<HTMLInputElement>} e
+     * @returns {void}
+     */
     const handlePartnerChange = (e) => {
         const { name, value } = e.target;
         setPartnerData((prev) => ({ ...prev, [name]: value }));
     };
 
+    /**
+     * Submits the staff login form and navigates on success.
+     *
+     * @param {React.FormEvent<HTMLFormElement>} e
+     * @returns {Promise<void>}
+     */
     const handleStaffSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -51,6 +75,11 @@ function Login() {
         setIsSubmitting(false);
     };
 
+    /**
+     * Requests an OTP for the phone number entered in the partner login form.
+     *
+     * @returns {Promise<void>}
+     */
     const handleSendOtp = async () => {
         if (!partnerData.phone) {
             setError("Please enter your phone number.");
@@ -68,6 +97,12 @@ function Login() {
         setIsSendingOtp(false);
     };
 
+    /**
+     * Submits the partner OTP form and navigates on successful verification.
+     *
+     * @param {React.FormEvent<HTMLFormElement>} e
+     * @returns {Promise<void>}
+     */
     const handlePartnerSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { FaUpload } from "react-icons/fa";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
+    const { getOptions } = useDropdowns();
     const [isAadharOpen, setIsAadharOpen] = useState(false);
     const [isPanOpen, setIsPanOpen] = useState(false);
 
@@ -106,8 +108,9 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 name="aadharVerification"
                 required>
                 <option value="" disabled>Select the Verification Status here</option>
-                <option value="Verified">Verified</option>
-                <option value="Not Verified">Not Verified</option>
+                {getOptions('verification_statuses').map((v, i) => (
+                    <option key={i} value={v}>{v}</option>
+                ))}
             </select>
 
             <label htmlFor="panNumber" className="text-[#D4A017] max-sm:text-sm"><strong>PAN Number: <span className="text-red-500">*</span></strong></label>
@@ -180,8 +183,9 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 name="panVerification"
                 required>
                 <option value="" disabled>Select the Verification Status here</option>
-                <option value="Verified">Verified</option>
-                <option value="Not Verified">Not Verified</option>
+                {getOptions('verification_statuses').map((v, i) => (
+                    <option key={i} value={v}>{v}</option>
+                ))}
             </select>
 
             <h3 className="font-semibold mb-4 mt-4 text-stone-400 max-sm:text-sm">Bank Details</h3>
@@ -250,8 +254,9 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 name="accountStatus"
                 required>
                 <option value="" disabled>Select the Account Status here</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
+                {getOptions('owner_account_statuses').map((s, i) => (
+                    <option key={i} value={s}>{s}</option>
+                ))}
             </select>
 
             <label htmlFor="paymentType" className="text-[#D4A017] max-sm:text-sm"><strong>Payment Type: <span className="text-red-500">*</span></strong></label>
@@ -263,8 +268,9 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 name="paymentType"
                 required>
                 <option value="" disabled>Select the Payment Type here</option>
-                <option value="Auto">Auto</option>
-                <option value="Manual">Manual</option>
+                {getOptions('owner_payment_types').map((p, i) => (
+                    <option key={i} value={p}>{p}</option>
+                ))}
             </select>
 
             <label htmlFor="chequeCopy" className="text-[#D4A017] max-sm:text-sm">

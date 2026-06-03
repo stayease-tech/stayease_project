@@ -5,8 +5,10 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function LiabilityData({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const location = useLocation();
     const residentData = location.state?.residentData;
@@ -278,11 +280,9 @@ function LiabilityData({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="status" value={liabiltyData.status} onChange={liabilityHandleChange} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
                                                         <option value="" disabled>Select the status here</option>
-                                                        <option value="Pending">Pending</option>
-                                                        <option value="Process">Process</option>
-                                                        <option value="Settled">Settled</option>
-                                                        <option value="Adjusted">Adjusted</option>
-                                                        <option value="To Be Recovered">To Be Recovered</option>
+                                                        {getOptions('liability_statuses').map((s, i) => (
+                                                            <option key={i} value={s}>{s}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>

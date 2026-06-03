@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 export default function LiabilityForm({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const location = useLocation();
     const navigate = useNavigate();
     const residentData = location.state?.residentData;
@@ -211,11 +213,9 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
                         <label htmlFor="status" className="text-[#D4A017] max-sm:text-sm"><strong>Status: <span className="text-red-500">*</span></strong></label>
                         <select id="status" value={liabiltyData.status} onChange={liabilityHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="status" required>
                             <option value="" disabled>Select the status here</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Process">Process</option>
-                            <option value="Settled">Settled</option>
-                            <option value="Adjusted">Adjusted</option>
-                            <option value="To Be Recovered">To Be Recovered</option>
+                            {getOptions('liability_statuses').map((s, i) => (
+                                <option key={i} value={s}>{s}</option>
+                            ))}
                         </select>
 
                         {liabiltyData?.status === 'Pending' && <>

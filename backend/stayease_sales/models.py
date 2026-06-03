@@ -5,15 +5,21 @@ from stayease_supply.models import Bed_Data
 
 # Create your models here.
 class User_Activity_Data(models.Model):
+    """Tracks a unique staff user by username and email for activity auditing."""
+
     username = models.CharField(max_length=100)
     useremail = models.CharField(max_length=100)
 
 class User_Login_Data(models.Model):
+    """Records individual login/logout sessions for a staff user."""
+
     user_activity_instance = models.ForeignKey(User_Activity_Data, related_name="user_activity", on_delete=models.CASCADE)
     login_time = models.DateTimeField(auto_now_add=True)
     logout_time = models.DateTimeField(blank=True, null=True)
 
 class resident_Data(models.Model):
+    """Core resident record linking a person to a bed, storing KYC, lease, rent, and stay lifecycle information."""
+
     bed_data_instance = models.ForeignKey(Bed_Data, related_name="bed_data_instance", on_delete=models.CASCADE, blank=True, null=True)
     propertyManager = models.CharField(max_length=255, blank=True, null=True)
     salesManager = models.CharField(max_length=255, blank=True, null=True)
@@ -54,11 +60,16 @@ class resident_Data(models.Model):
     transferType = models.CharField(max_length=255, blank=True, null=True)
     utrNumber = models.CharField(max_length=255, blank=True, null=True)
     transferredDate = models.CharField(max_length=255, blank=True, null=True)
+    leaseAgreement = models.FileField(upload_to='documents/lease-agreements/%Y/%m/%d/', blank=True, null=True)
+    leaseUploadedAt = models.DateTimeField(blank=True, null=True)
+    leaseUploadedBy = models.CharField(max_length=255, blank=True, null=True)
     submittedDateAndTime = models.DateTimeField(auto_now_add=True)
     updatedDateAndTime = models.DateTimeField(auto_now=True)
     last_activity = models.DateTimeField(auto_now=True)
 
 class resident_Rent_Data(models.Model):
+    """Represents a monthly rent record for a resident, tracking payment status, delay charges, and transfer details."""
+
     resident_data_instance = models.ForeignKey(resident_Data, related_name="resident_data_instance", on_delete=models.CASCADE, blank=True, null=True)
     rentStatus = models.CharField(default='Not Received')
     month = models.CharField(max_length=255, blank=True, null=True)
@@ -72,6 +83,8 @@ class resident_Rent_Data(models.Model):
     last_activity = models.DateTimeField(auto_now=True)
 
 class PaymentTransaction(models.Model):
+    """Records each payment attempt made by a resident, including gateway identifiers and final status."""
+
     STATUS_CHOICES = [
         ('initiated', 'Initiated'),
         ('success', 'Success'),
@@ -83,7 +96,9 @@ class PaymentTransaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     product_info = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='initiated')
-    payu_status = models.CharField(max_length=50, blank=True, null=True)
+    gateway_status = models.CharField(max_length=50, blank=True, null=True)
+    gateway_order_id = models.CharField(max_length=128, blank=True, null=True)
+    gateway_payment_id = models.CharField(max_length=128, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -95,6 +110,8 @@ class PaymentTransaction(models.Model):
 
 
 class RecurringMandate(models.Model):
+    """Stores a recurring payment mandate (e.g. auto-debit subscription) linked to a resident for monthly rent collection."""
+
     STATUS_CHOICES = [
         ('initiated', 'Initiated'),
         ('active', 'Active'),
@@ -104,7 +121,8 @@ class RecurringMandate(models.Model):
     ]
     txnid = models.CharField(max_length=64, unique=True)
     resident = models.ForeignKey(resident_Data, on_delete=models.CASCADE, related_name='recurring_mandates')
-    auth_payu_id = models.CharField(max_length=128, blank=True, null=True)
+    gateway_subscription_id = models.CharField(max_length=128, blank=True, null=True)
+    gateway_plan_id = models.CharField(max_length=128, blank=True, null=True)
     billing_amount = models.DecimalField(max_digits=10, decimal_places=2)
     billing_cycle = models.CharField(max_length=20, default='MONTHLY')
     start_date = models.DateField()
@@ -127,6 +145,8 @@ class RecurringMandate(models.Model):
 
 
 class PaymentRefund(models.Model):
+    """Tracks a refund initiated against a successful PaymentTransaction, including gateway refund ID and status."""
+
     STATUS_CHOICES = [
         ('initiated', 'Initiated'),
         ('processing', 'Processing'),
@@ -137,7 +157,7 @@ class PaymentRefund(models.Model):
     refund_amount = models.DecimalField(max_digits=10, decimal_places=2)
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='initiated')
-    payu_refund_id = models.CharField(max_length=128, blank=True, null=True)
+    gateway_refund_id = models.CharField(max_length=128, blank=True, null=True)
     initiated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='initiated_refunds')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -150,6 +170,8 @@ class PaymentRefund(models.Model):
 
 
 class Leads_Detail(models.Model):
+    """Stores a sales lead with source, contact information, and conversion outcome."""
+
     leadDate = models.CharField()
     leadSource = models.CharField()
     name = models.CharField()
@@ -168,6 +190,8 @@ class Leads_Detail(models.Model):
         ]
 
 class Document(models.Model):
+    """Represents a PDF document uploaded by a staff user for e-signature delivery to a recipient."""
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     pdf_file = models.FileField(upload_to='documents/')
@@ -176,6 +200,8 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class SigningRequest(models.Model):
+    """Records the e-signature request sent to Zoho Sign for a Document, including the signing URL and current status."""
+
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
     request_id = models.CharField(max_length=100)
     signing_url = models.URLField()

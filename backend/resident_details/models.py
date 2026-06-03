@@ -1,7 +1,14 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 from django.db import models
 
 # Create your models here.
 class residentContract_Detail(models.Model):
+    """Represents a resident's registration details submitted via the onboarding form.
+
+    Stores personal information, identity documents, and links to the property contract.
+    """
+
     uniqueId = models.CharField(unique=True)
     fname = models.CharField(max_length=100)
     lname = models.CharField(max_length=100)

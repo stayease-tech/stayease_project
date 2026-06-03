@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Cookies from 'js-cookie';
 import axios from 'axios';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function PropertyComplaintData({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const { id } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -253,6 +255,21 @@ function PropertyComplaintData({ isExpanded, setIsExpanded }) {
                                         <td className="py-1 px-2">{propertyComplaintData?.issue_desc || ''}</td>
                                     </tr>
 
+                                    {propertyComplaintData?.resident_category && <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Category</th>
+                                        <td className="py-1 px-2">{propertyComplaintData.resident_category}</td>
+                                    </tr>}
+
+                                    {propertyComplaintData?.resident_location && <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Location</th>
+                                        <td className="py-1 px-2">{propertyComplaintData.resident_location}</td>
+                                    </tr>}
+
+                                    {propertyComplaintData?.resident_urgency && <tr className="border-b border-white">
+                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Urgency</th>
+                                        <td className="py-1 px-2">{propertyComplaintData.resident_urgency}</td>
+                                    </tr>}
+
                                     <tr className="border-b border-white">
                                         <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Status</th>
                                         {!dataEditView ? <>
@@ -262,9 +279,9 @@ function PropertyComplaintData({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="status" value={propertyComplaintDetails.status} onChange={(e) => propertyComplaintHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
                                                         <option value="" disabled>Select the status here</option>
-                                                        <option value="Open">Open</option>
-                                                        <option value="Follow Up">Follow Up</option>
-                                                        <option value="Closed">Closed</option>
+                                                        {getOptions('complaint_statuses').map((s, i) => (
+                                                            <option key={i} value={s}>{s}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -280,8 +297,9 @@ function PropertyComplaintData({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="registeredVendor" value={registeredVendor} onChange={(e) => setRegisteredVendor(e.target.value)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="registeredVendor" required>
                                                         <option value="" disabled>Select the option here</option>
-                                                        <option value="Yes">Yes</option>
-                                                        <option value="No">No</option>
+                                                        {getOptions('yes_no_options').map((o, i) => (
+                                                            <option key={i} value={o}>{o}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Sidebar from '../Sidebar';
@@ -9,8 +11,10 @@ import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../shared/dateInput";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function residentDetails({ isExpanded, setIsExpanded }) {
+    const { getOptions, getStaffNamesList } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -266,9 +270,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="propertyManager" value={residentDetails.propertyManager} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="propertyManager" required>
                                                         <option value="" disabled>Select the Property Manager here</option>
-                                                        <option value="Madhusudhan">Madhusudhan</option>
-                                                        <option value="Kiran">Kiran</option>
-                                                        <option value="Rithan">Rithan</option>
+                                                        {getStaffNamesList().map((name, i) => (
+                                                            <option key={i} value={name}>{name}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -284,10 +288,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="salesManager" value={residentDetails.salesManager} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="salesManager" required>
                                                         <option value="" disabled>Select the Sales Manager here</option>
-                                                        <option value="Asma">Asma</option>
-                                                        <option value="Madhusudhan">Madhusudhan</option>
-                                                        <option value="Kiran">Kiran</option>
-                                                        <option value="Rithan">Rithan</option>
+                                                        {getStaffNamesList().map((name, i) => (
+                                                            <option key={i} value={name}>{name}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -303,8 +306,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="comfortClass" value={residentDetails.comfortClass} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="comfortClass" required>
                                                         <option value="" disabled>Select the Comfort Class here</option>
-                                                        <option value="With AC">With AC</option>
-                                                        <option value="Without AC">Without AC</option>
+                                                        {getOptions('comfort_classes').map((c, i) => (
+                                                            <option key={i} value={c}>{c}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -320,11 +324,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="mealType" value={residentDetails.mealType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="mealType" required>
                                                         <option value="" disabled>Select the Meal Type here</option>
-                                                        <option value="Breakfast Only">Breakfast Only</option>
-                                                        <option value="Breakfast & Lunch">Breakfast & Lunch</option>
-                                                        <option value="Breakfast, Lunch & Dinner">Breakfast, Lunch & Dinner</option>
-                                                        <option value="Dinner Only">Dinner Only</option>
-                                                        <option value="No Meal Plan">No Meal Plan</option>
+                                                        {getOptions('meal_types').map((m, i) => (
+                                                            <option key={i} value={m}>{m}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -422,8 +424,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="kycType" value={residentDetails.kycType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="kycType" required>
                                                         <option value="" disabled>Select the document type here</option>
-                                                        <option value="Aadhar">Aadhar</option>
-                                                        <option value="PAN">PAN</option>
+                                                        {getOptions('kyc_types').map((k, i) => (
+                                                            <option key={i} value={k}>{k}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -533,8 +536,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                     <span className="py-1 px-2 w-full">
                                                         <select id="aadharStatus" value={residentDetails.aadharStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="aadharStatus" required>
                                                             <option value="" disabled>Select the status here</option>
-                                                            <option value="Verified">Verified</option>
-                                                            <option value="Not Verified">Not Verified</option>
+                                                            {getOptions('verification_statuses').map((v, i) => (
+                                                                <option key={i} value={v}>{v}</option>
+                                                            ))}
                                                         </select>
                                                     </span>
                                                 </td>
@@ -645,8 +649,9 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                                                     <span className="py-1 px-2 w-full">
                                                         <select id="panStatus" value={residentDetails.panStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="panStatus" required>
                                                             <option value="" disabled>Select the status here</option>
-                                                            <option value="Verified">Verified</option>
-                                                            <option value="Not Verified">Not Verified</option>
+                                                            {getOptions('verification_statuses').map((v, i) => (
+                                                                <option key={i} value={v}>{v}</option>
+                                                            ))}
                                                         </select>
                                                     </span>
                                                 </td>

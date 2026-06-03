@@ -126,7 +126,7 @@ const About = memo(({ property }) => {
                         className='w-[100%] h-[70] md:h-[70vh] lg:w-[45vw] object-cover'
                         loading="eager"
                         decoding="async"
-                        fetchpriority="high"
+                        fetchPriority="high"
                     />
                 </div>
 

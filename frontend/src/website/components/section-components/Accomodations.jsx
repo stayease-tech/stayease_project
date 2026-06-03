@@ -45,7 +45,7 @@ const Slide = memo(({ slide, index, isActive }) => (
             className="w-full h-full object-cover"
             loading={index === 0 ? "eager" : "lazy"} // First slide eager, others lazy
             decoding="async"
-            fetchpriority={index === 0 ? "high" : "auto"}
+            fetchPriority={index === 0 ? "high" : "auto"}
         />
 
         <div className="numbertext absolute top-0 left-0 text-white p-2 text-sm opacity-0 group-hover:opacity-90 transition-opacity duration-300">

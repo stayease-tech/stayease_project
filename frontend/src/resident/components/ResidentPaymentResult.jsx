@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 

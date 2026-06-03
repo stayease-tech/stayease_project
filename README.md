@@ -163,6 +163,7 @@ StayEase is a multi-portal property management system built for co-living/PG bus
 | django-cors-headers | 4.6.0 | CORS for mobile app |
 | WhiteNoise | 6.8.2 | Static file serving |
 | django-storages + boto3 | — | AWS S3 file storage (optional) |
+| Razorpay | 1.4.2 | Payment gateway (resident rent payments) |
 | Gunicorn | 23.0.0 | Production WSGI server |
 
 ### Web Frontend
@@ -298,55 +299,43 @@ cd PMS_Stayease
 
 ### 2. Set Up Environment Variables
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env` in the project root and fill in your values:
 
-```env
-# Django
-SECRET_KEY=your-django-secret-key
-DEBUG=True
-
-# Database (PostgreSQL)
-NAME=stayease_local
-USER=your_db_user
-PASSWORD=your_db_password
-HOST=localhost
-PORT=5432
-
-# Email (Gmail SMTP)
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
-
-# AWS S3 (optional, for file storage)
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-
-# Zoho eSign (optional)
-ZOHO_CLIENT_ID=
-ZOHO_CLIENT_SECRET=
-ZOHO_REFRESH_TOKEN=
-ZOHO_REGION=
+```bash
+cp .env.example .env
 ```
+
+See [Environment Variables](#environment-variables) for the full reference.
 
 ### 3. Backend Setup
 
 ```bash
-# Create virtual environment
+# From project root — create virtual environment (one-time)
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate          # macOS/Linux
+# .venv\Scripts\activate           # Windows
 
-# Install dependencies
+# Install ALL dependencies (including razorpay, setuptools shim, test tools)
 pip install -r backend/requirements.txt
 
-# Run migrations
+# Run database migrations
 cd backend
 python manage.py migrate
 
 # Create superuser (admin account)
 python manage.py createsuperuser
 
+# Verify there are 0 issues before starting
+python manage.py check             # must print: System check identified no issues (0 silenced).
+
 # Start dev server
 python manage.py runserver
 ```
+
+> **Note — Python 3.12+ / 3.14:** `razorpay` depends on `pkg_resources` (from `setuptools`).
+> `setuptools>=70` is listed in `requirements.txt` and installs the shim automatically.
+> If you ever see `ModuleNotFoundError: No module named 'pkg_resources'` it means
+> `setuptools` was not installed — re-run `pip install -r backend/requirements.txt`.
 
 ### 4. Frontend Setup
 
@@ -374,7 +363,7 @@ npx expo start       # Opens Expo dev tools
 From the project root:
 
 ```bash
-# Terminal 1: Backend
+# Terminal 1: Backend (run from project root)
 source .venv/bin/activate && cd backend && python manage.py runserver
 
 # Terminal 2: Frontend
@@ -395,6 +384,35 @@ cd frontend && npm run build    # Outputs to frontend/build/
 cp -r frontend/build backend/build
 cd backend && python manage.py collectstatic --noinput
 ```
+
+---
+
+## Environment Variables
+
+All variables live in `.env` at the project root (git-ignored). Use `.env.example` as the template.
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SECRET_KEY` | Yes | Django secret key — generate with `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"` |
+| `DEBUG` | Yes | `True` for local dev, `False` in production |
+| `ALLOWED_HOSTS` | Yes | Comma-separated: `localhost,127.0.0.1` |
+| `NAME` | Yes | PostgreSQL database name |
+| `USER` | Yes | PostgreSQL username |
+| `PASSWORD` | Yes | PostgreSQL password |
+| `HOST` | Yes | PostgreSQL host (default `localhost`) |
+| `PORT` | Yes | PostgreSQL port (default `5432`) |
+| `EMAIL_HOST_USER` | Yes | Gmail address for transactional email |
+| `EMAIL_HOST_PASSWORD` | Yes | Gmail App Password (16-char, not account password) |
+| `RAZORPAY_KEY_ID` | Yes | Razorpay API key — `rzp_test_*` for test, `rzp_live_*` for production |
+| `RAZORPAY_KEY_SECRET` | Yes | Razorpay API secret |
+| `RAZORPAY_WEBHOOK_SECRET` | Yes | Self-generated HMAC secret — `openssl rand -hex 32` |
+| `FRONTEND_BASE_URL` | Yes | `http://localhost:5173` (dev) or `https://yourdomain.com` (prod) |
+| `AWS_ACCESS_KEY_ID` | No | AWS credentials — only needed when S3 storage is enabled |
+| `AWS_SECRET_ACCESS_KEY` | No | AWS credentials |
+| `ZOHO_CLIENT_ID` | No | Zoho eSign OAuth client ID |
+| `ZOHO_CLIENT_SECRET` | No | Zoho eSign OAuth client secret |
+| `ZOHO_REFRESH_TOKEN` | No | Zoho eSign OAuth refresh token |
+| `ZOHO_REGION` | No | Zoho region code (e.g. `in`) |
 
 ---
 
@@ -517,6 +535,11 @@ cd backend && python manage.py collectstatic --noinput
 | `/resident-portal/complaints/<id>/` | GET | JWT | Complaint detail with timeline |
 | `/resident-portal/lease/` | GET | JWT | Lease documents (Zoho e-sign) |
 | `/resident-portal/register-push-token/` | POST | JWT | Register push notification token |
+| `/resident-portal/payments/initiate/` | POST | JWT | Create Razorpay order for rent payment |
+| `/resident-portal/payments/verify/` | POST | JWT | Verify payment signature after checkout |
+| `/resident-portal/payments/qr/generate/` | POST | JWT | Generate QR code for UPI payment |
+| `/resident-portal/payments/qr/status/` | GET | JWT | Poll QR payment status |
+| `/resident-portal/payments/webhook/` | POST | None | Razorpay webhook receiver (HMAC-verified) |
 
 ### Contracts
 

@@ -4,15 +4,25 @@ import os
 
 # Create your models here.
 class User_Activity_Data(models.Model):
+    """Tracks unique users who have logged into the supply portal.
+
+    Stores username and email as an activity identity record, linked to login sessions.
+    """
     username = models.CharField(max_length=100)
     useremail = models.CharField(max_length=100)
 
 class User_Login_Data(models.Model):
+    """Records individual login and logout timestamps for a supply portal user session."""
     user_activity_instance = models.ForeignKey(User_Activity_Data, related_name="user_activity", on_delete=models.CASCADE)
     login_time = models.DateTimeField(auto_now_add=True)
     logout_time = models.DateTimeField(blank=True, null=True)
 
 class Owner_Data(models.Model):
+    """Represents a property owner onboarded into the StayEase supply chain.
+
+    Stores personal details, KYC documents, bank account information, and a count
+    of properties currently registered under this owner.
+    """
     ownerName = models.CharField()
     memberSince = models.CharField(blank=True, null=True)
     ownerPhone = models.CharField()
@@ -48,6 +58,7 @@ class Owner_Data(models.Model):
         ]
 
     def delete(self, *args, **kwargs):
+        """Delete associated KYC and cheque document files from storage before removing the record."""
         if self.aadharFrontCopy:
             storage = self.aadharFrontCopy.storage
             if storage.exists(self.aadharFrontCopy.name):
@@ -76,6 +87,11 @@ class Owner_Data(models.Model):
         super().delete(*args, **kwargs)
 
 class Property_Data(models.Model):
+    """Represents a managed property registered under an owner.
+
+    Stores location, amenities, pricing, compliance documents, and room/floor structure.
+    Auto-generates a unique serial number in the format SE-{year}-{sequence} on first save.
+    """
     owner = models.ForeignKey(Owner_Data, related_name="owner", on_delete=models.CASCADE)
     serial_number = models.CharField(max_length=20, unique=True)
     propertyName = models.CharField()
@@ -110,6 +126,7 @@ class Property_Data(models.Model):
     last_activity = models.DateTimeField(auto_now=True)
     
     def save(self, *args, **kwargs):
+        """Auto-generate a unique serial number on first save using the property's founded year."""
         with transaction.atomic():
             if not self.serial_number:
                 count = Property_Data.objects.select_for_update().filter(
@@ -130,6 +147,7 @@ class Property_Data(models.Model):
         ]
 
     def delete(self, *args, **kwargs):
+        """Delete associated property document and image files from disk before removing the record."""
         for field_name in ['saleDeed', 'ebill', 'taxReceipt', 'waterBill', 'loi', 'agreement', 'image']:
             file_field = getattr(self, field_name, None)
             if file_field and file_field.name:
@@ -142,6 +160,10 @@ class Property_Data(models.Model):
         super().delete(*args, **kwargs)
 
 class Room_Data(models.Model):
+    """Represents an individual room within a property, at a specific floor or basement level.
+
+    Tracks room number, type, occupancy status, and whether it is a basement unit.
+    """
     property = models.ForeignKey(Property_Data, related_name="property", on_delete=models.CASCADE)
     buildingLevel = models.CharField()
     roomNo = models.CharField(max_length=255, blank=True, null=True)
@@ -150,10 +172,15 @@ class Room_Data(models.Model):
     is_basement = models.BooleanField(default=False, editable=False)
 
     def save(self, *args, **kwargs):
+        """Derive and set the `is_basement` flag from the building level name before saving."""
         self.is_basement = "basement" in self.buildingLevel.lower()
         super().save(*args, **kwargs)
 
 class Bed_Data(models.Model):
+    """Represents a bed slot within a room, holding resident assignment and utility details.
+
+    Stores resident KYC, check-in/check-out dates, rent status, and facility access flags.
+    """
     room = models.ForeignKey(Room_Data, related_name="room", on_delete=models.CASCADE)
     bedLabel = models.CharField(max_length=255, blank=True, null=True)
     balconyAccess = models.CharField(max_length=255, blank=True, null=True)
@@ -199,6 +226,10 @@ class Bed_Data(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
 class Property_Detail(models.Model):
+    """Stores public-facing marketing details and media for a property listing.
+
+    Used to populate the client-facing property pages with images, description, and pricing.
+    """
     livingRoom = models.ImageField(upload_to='images/property-images/', blank=True, null=True)
     bedRoom = models.ImageField(upload_to='images/property-images/', blank=True, null=True)
     kitchenArea = models.ImageField(upload_to='images/property-images/', blank=True, null=True)
@@ -214,10 +245,12 @@ class Property_Detail(models.Model):
     propertyIframeLink = models.TextField(blank=True, null=True)
 
 class Neighbourhood_Image(models.Model):
+    """Stores neighbourhood photo uploads associated with a property listing."""
     property = models.ForeignKey(Property_Detail, related_name="neighbourhoodImages", on_delete=models.CASCADE)
     images = models.ImageField(upload_to='images/neighbourhood-images/', blank=True, null=True)
 
 class Price_Board_Detail(models.Model):
+    """Stores per-room-type pricing entries displayed on a property's price board."""
     property = models.ForeignKey(Property_Detail, related_name="priceBoardDetails", on_delete=models.CASCADE)
     roomType = models.CharField(blank=True, null=True)
     roomRent = models.CharField(blank=True, null=True)

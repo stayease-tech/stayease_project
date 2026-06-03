@@ -5,27 +5,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
-    const operationsCategories = ["BGV Charges", "Consumables", "Field Staff", "Printing and Stationary", "Property Maintenance", "Property Payroll", "Property Repairs", "Shipping and Freight", "Soft Furnishing", "Subscriptions", "Travel", "Utilities", "Other Operations Expense"];
-
-    const salesCategories = ["Agreement", "Deposit Refund"];
-
-    const marketingCategories = ["Meta", "Google", "Offline Marketing"];
-
-    const transformationCategories = ["Purchase-Furniture", "Soft Furnishing"];
-
-    const expansionCategories = ["Agreement Purchase", "Consultant Charges"];
-
-    const hrAndAdminCategories = ["Travel expense", "Food expense", "Purchase - IT", "purchase - HR", "Stationery", "Apparels", "Service - IT", "Other Expense"];
-
-    const checkOutDeductionsCategory = ["Painting", "Damage Cost", "Electricity", "Water", "Other Charges"];
-
-    const monthlyMaintenanceCategory = ["Water Charges", "Electricity Bill", "Other Charges", "Repairs & Replacement", "Others"];
-
-    const ownerDeductionsCategory = ["Electricity", "Asd", "RTO - furniture", "RTO - appliances", "Repair- furniture", "Repair - appliances", "Replacement- furniture", "Replacement - appliances", "Painting", "Repairs- others", "Lift", "Dg", "Water tankers", "Replacement - others"];
-
-    const ownerPayoutCategory = ["Rent", "Arrears"];
+    const { getOptions, getExpenseCategories } = useDropdowns();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -77,37 +60,37 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                 alert(`Please select a Room!`)
             } else {
                 if (expenseData.expenseType === 'Operations') {
-                    setExpenseCategory(operationsCategories)
+                    setExpenseCategory(getExpenseCategories('Operations'))
                 }
                 else if (expenseData.expenseType === 'Sales') {
-                    setExpenseCategory(salesCategories)
+                    setExpenseCategory(getExpenseCategories('Sales'))
                 }
                 else if (expenseData.expenseType === 'Marketing') {
-                    setExpenseCategory(marketingCategories)
+                    setExpenseCategory(getExpenseCategories('Marketing'))
                 }
                 else if (expenseData.expenseType === 'Transformation') {
-                    setExpenseCategory(transformationCategories)
+                    setExpenseCategory(getExpenseCategories('Transformation'))
                 }
                 else if (expenseData.expenseType === 'Expansion') {
-                    setExpenseCategory(expansionCategories)
+                    setExpenseCategory(getExpenseCategories('Expansion'))
                 }
                 else if (expenseData.expenseType === 'HR & Admin') {
-                    setExpenseCategory(hrAndAdminCategories)
+                    setExpenseCategory(getExpenseCategories('HR & Admin'))
                 }
                 else if (expenseData.headOfExpense === 'Resident') {
                     if (expenseData.expenseType === 'Check-Out Deductions') {
-                        setExpenseCategory(checkOutDeductionsCategory)
+                        setExpenseCategory(getExpenseCategories('Check-Out Deductions'))
                     }
                     else {
-                        setExpenseCategory(monthlyMaintenanceCategory)
+                        setExpenseCategory(getExpenseCategories('Monthly Maintenance'))
                     }
                 }
                 else if (expenseData.headOfExpense === 'Owners') {
                     if (expenseData.expenseType === 'Owner Deductions') {
-                        setExpenseCategory(ownerDeductionsCategory)
+                        setExpenseCategory(getExpenseCategories('Owner Deductions'))
                     }
                     else {
-                        setExpenseCategory(ownerPayoutCategory)
+                        setExpenseCategory(getExpenseCategories('Owner Payout'))
                     }
                 }
                 else {
@@ -297,9 +280,8 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
     }, [expenseData.headOfExpense]);
 
     useEffect(() => {
-        if (!expenseData.owner && (expenseData.headOfExpense !== 'Resident' && !expenseData.propertyName)) {
-            return;
-        }
+        if (expenseData.headOfExpense === 'Resident' && !expenseData.propertyName) return;
+        if (expenseData.headOfExpense !== 'Resident' && !expenseData.owner) return;
 
         const fetchData = async () => {
             setLoadingData(true);
@@ -319,9 +301,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
     }, [expenseData.owner, expenseData.headOfExpense, expenseData.propertyName]);
 
     useEffect(() => {
-        if (expenseData.headOfExpense !== 'Resident' && !expenseData.room) {
-            return;
-        }
+        if (!expenseData.room) return;
 
         const fetchData = async () => {
             setLoadingData(true);
@@ -441,10 +421,9 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                             <label htmlFor="headOfExpense" className="text-[#D4A017] max-sm:text-sm"><strong>Head of Expense:</strong></label>
                             <select id="headOfExpense" value={expenseData.headOfExpense} onChange={expenseHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="headOfExpense" required>
                                 <option value="" disabled>Select the Head of Expense here</option>
-                                <option value="Owners">Owners</option>
-                                <option value="Stayease">Stayease</option>
-                                <option value="Property">Property</option>
-                                <option value="Resident">Resident</option>
+                                {getOptions('head_of_expense').map((h, i) => (
+                                    <option key={i} value={h}>{h}</option>
+                                ))}
                             </select>
 
                             <label htmlFor="expenseType" className="text-[#D4A017] max-sm:text-sm"><strong>Expense Type:</strong></label>
@@ -452,22 +431,21 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                 <option value="" disabled>Select the Expense Type here</option>
 
                                 {(expenseData.headOfExpense === 'Stayease' || expenseData.headOfExpense === 'Property') && <>
-                                    <option value="Operations">Operations</option>
-                                    <option value="Sales">Sales</option>
-                                    <option value="Marketing">Marketing</option>
-                                    <option value="Transformation">Transformation</option>
-                                    <option value="Expansion">Expansion</option>
-                                    <option value="HR & Admin">HR & Admin</option>
+                                    {getOptions('expense_types__stayease_property').map((t, i) => (
+                                        <option key={i} value={t}>{t}</option>
+                                    ))}
                                 </>}
 
                                 {expenseData.headOfExpense === 'Owners' && <>
-                                    <option value="Owner Deductions">Owner Deductions</option>
-                                    <option value="Owner Payout">Owner Payout</option>
+                                    {getOptions('expense_types__owners').map((t, i) => (
+                                        <option key={i} value={t}>{t}</option>
+                                    ))}
                                 </>}
 
                                 {expenseData.headOfExpense === 'Resident' && <>
-                                    <option value="Check-Out Deductions">Check-Out Deductions</option>
-                                    <option value="Monthly Maintenance">Monthly Maintenance</option>
+                                    {getOptions('expense_types__resident').map((t, i) => (
+                                        <option key={i} value={t}>{t}</option>
+                                    ))}
                                 </>}
                             </select>
 
@@ -624,9 +602,9 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         required
                                     >
                                         <option value="" disabled>Select the Payment Type here</option>
-                                        <option value="Reimbursement">Reimbursement</option>
-                                        <option value="Vendor">Vendor</option>
-                                        <option value="Others">Others</option>
+                                        {getOptions('payment_types').map((p, i) => (
+                                            <option key={i} value={p}>{p}</option>
+                                        ))}
                                     </select>
 
                                     {cat.paymentType === "Vendor" && <>
@@ -638,8 +616,9 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                             required
                                         >
                                             <option value="" disabled>Select the Vendor Type here</option>
-                                            <option value="Registered">Registered</option>
-                                            <option value="Not Registered">Not Registered</option>
+                                            {getOptions('vendor_types').map((v, i) => (
+                                                <option key={i} value={v}>{v}</option>
+                                            ))}
                                         </select>
 
                                         {cat.vendorType === "Registered" && <>
@@ -713,10 +692,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                                         required
                                     >
                                         <option value="" disabled>Select the Deadline here</option>
-                                        <option value="4 Hours">4 Hours</option>
-                                        <option value="8 Hours">8 Hours</option>
-                                        <option value="12 Hours">12 Hours</option>
-                                        <option value="24 Hours">24 Hours</option>
+                                        {getOptions('deadline_options').map((d, i) => <option key={i} value={d}>{d}</option>)}
                                     </select>
 
                                     <label className="text-[#D4A017] max-sm:text-sm"><strong>Comments (Optional):</strong></label>

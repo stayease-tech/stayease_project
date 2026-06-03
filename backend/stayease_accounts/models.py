@@ -1,17 +1,48 @@
 from django.db import models
 from stayease_supply.models import Owner_Data
 from stayease_sales.models import resident_Data
-    
+
+
+class DropdownConfig(models.Model):
+    """Stores configurable dropdown option values grouped by category.
+
+    Used to drive dynamic select inputs across the dashboard without code changes.
+    """
+
+    group = models.CharField(max_length=100, db_index=True)
+    value = models.CharField(max_length=255)
+    sort_order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ['group', 'sort_order']
+        unique_together = ['group', 'value']
+
+    def __str__(self):
+        return f"{self.group}: {self.value}"
+
+
 class User_Activity_Data(models.Model):
+    """Tracks dashboard users for activity and login history purposes.
+
+    Acts as the parent record linking a user's username/email to their login sessions.
+    """
+
     username = models.CharField(max_length=100)
     useremail = models.CharField(max_length=100)
 
 class User_Login_Data(models.Model):
+    """Records individual login and logout timestamps for a dashboard user session."""
+
     user_activity_instance = models.ForeignKey(User_Activity_Data, related_name="user_activity", on_delete=models.CASCADE)
     login_time = models.DateTimeField(auto_now_add=True)
     logout_time = models.DateTimeField(blank=True, null=True)
 
 class Vendor_Detail(models.Model):
+    """Represents a vendor or service provider used for property expenses.
+
+    Stores billing type, banking/UPI details, and timestamps for payment processing.
+    """
+
     vendor = models.CharField()
     contact = models.CharField()
     category = models.CharField()
@@ -34,6 +65,11 @@ class Vendor_Detail(models.Model):
         ]
 
 class Expense_Detail(models.Model):
+    """Represents the top-level header of an expense submission.
+
+    Groups one or more expense categories under a single property, head, and type.
+    """
+
     owner_instance = models.ForeignKey(Owner_Data, related_name="owner_expenses", on_delete=models.CASCADE, blank=True, null=True)
     dashboardUser = models.CharField(max_length=100, blank=True, null=True)
     propertyName = models.CharField(max_length=100)
@@ -45,6 +81,11 @@ class Expense_Detail(models.Model):
     email_thread_id = models.CharField(max_length=255, blank=True, null=True)
 
 class Expense_Category_Detail(models.Model):
+    """Stores a single line-item category within an expense submission.
+
+    Tracks amount, payment details, status, receipt, and approval workflow fields.
+    """
+
     expense_instance = models.ForeignKey(Expense_Detail, related_name="expense_categories", on_delete=models.CASCADE, blank=True, null=True)
     vendor_instance = models.ForeignKey(Vendor_Detail, related_name="vendor_categories", on_delete=models.CASCADE, blank=True, null=True)
     expenseRaisedEmail = models.CharField(max_length=100, blank=True, null=True)
@@ -86,6 +127,11 @@ class Expense_Category_Detail(models.Model):
         verbose_name_plural = "Expense Categories"
 
 class Fixed_Expense_Detail(models.Model):
+    """Records a monthly fixed rental payout entry for a property owner.
+
+    Tracks rental amount, TDS deductions, transfer details, and payment status.
+    """
+
     owner_instance = models.ForeignKey(Owner_Data, related_name="owner_fixed_expenses", on_delete=models.CASCADE)
     dashboardUser = models.CharField(max_length=100)
     expenseRaisedEmail = models.CharField(max_length=100)
@@ -115,6 +161,11 @@ class Fixed_Expense_Detail(models.Model):
         ]
 
 class Liability_Detail(models.Model):
+    """Represents a security deposit refund liability for a resident on check-out.
+
+    Tracks refund status, UTR transfer details, and whether a bank-details email was sent.
+    """
+
     liability_resident = models.ForeignKey(resident_Data, related_name="liability_resident", on_delete=models.CASCADE, blank=True, null=True)
     status = models.CharField(max_length=100)
     checkSendEmail = models.BooleanField(blank=True, null=True)
@@ -132,6 +183,11 @@ class Liability_Detail(models.Model):
         ]
 
 class RawdataFile(models.Model):
+    """Represents an uploaded bank statement or raw financial data file.
+
+    Acts as the parent container for the parsed Rawdata_Detail line items.
+    """
+
     rawdataFile = models.FileField(upload_to='documents/accounts-files/%Y/%m/%d/')
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
@@ -151,6 +207,11 @@ class RawdataFile(models.Model):
         super().delete(*args, **kwargs)
 
 class Rawdata_Detail(models.Model):
+    """Stores a single parsed transaction row from an uploaded raw data file.
+
+    Categorises each bank transaction with property, expense type, and reconciliation status.
+    """
+
     rawdata = models.ForeignKey(RawdataFile, related_name="rawdata", on_delete=models.CASCADE)
     owner_instance = models.ForeignKey(Owner_Data, related_name="owner_rawdata", on_delete=models.CASCADE, blank=True, null=True)
     date = models.CharField()
@@ -183,6 +244,11 @@ class Rawdata_Detail(models.Model):
         verbose_name_plural = "Raw Data Details"
 
 class OtherFile(models.Model):
+    """Represents a miscellaneous file upload associated with a property.
+
+    Used to store supporting documents that don't fit standard expense categories.
+    """
+
     propertyName = models.CharField(max_length=255)
     fileName = models.CharField(max_length=255)
     file = models.FileField(upload_to='documents/accounts-other-files/%Y/%m/%d/')

@@ -2,6 +2,7 @@
   "name": "stayease-frontend",
   "private": true,
   "version": "0.0.0",
+  "author": "Aravind Adari",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -24,6 +25,8 @@
     "country-state-city": "^3.2.1",
     "framer-motion": "^12.38.0",
     "js-cookie": "^3.0.5",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.8.0",
     "papaparse": "^5.5.3",

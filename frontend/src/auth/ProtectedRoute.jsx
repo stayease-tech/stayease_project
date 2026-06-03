@@ -1,6 +1,15 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
+/**
+ * ProtectedRoute — wraps a route and redirects unauthenticated users.
+ * Admin users bypass the type restriction and can access any portal route.
+ *
+ * @param {object} props
+ * @param {React.ReactNode} props.children - The protected page component.
+ * @param {string} [props.allowedType] - The user role permitted to access this route.
+ * @returns {React.ReactElement}
+ */
 function ProtectedRoute({ children, allowedType }) {
     const { user, userType, isLoading, DEFAULT_ROUTES } = useAuth();
 

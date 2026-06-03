@@ -1,492 +1,329 @@
-# Stayease Payment System — Technical Documentation
+# StayEase Payment System — Technical Documentation
 
-## Overview
+## 1. Overview
 
-Stayease uses **PayU India** as the payment gateway with a **Hosted Checkout** integration pattern. The resident is redirected to PayU's secure payment page — card data never touches our servers, keeping PCI DSS compliance scope at **SAQ A** level.
+StayEase uses **Razorpay** as the payment gateway. Supported payment methods:
 
-The system supports three payment modes:
-1. **One-time rent payment** — resident pays a specific month's rent
-2. **Recurring auto-pay (Standing Instructions)** — automated monthly deductions tied to lease duration
-3. **Admin-initiated refunds** — processed back to the original payment method
+- **Card** (credit/debit — Visa, Mastercard, Rupay)
+- **UPI** (Razorpay modal)
+- **Net Banking**
+- **Wallets** (Paytm, PhonePe, etc.)
+- **UPI QR Code** (single-use, fixed-amount, 5-minute expiry)
+- **Subscriptions / Auto-Pay** (Razorpay e-mandates for recurring monthly rent)
 
----
-
-## Architecture
-
-```
-┌──────────────┐     ┌─────────────┐     ┌──────────────┐
-│   Frontend   │────▶│   Backend   │────▶│   PayU API   │
-│  (React 19)  │◀────│  (Django)   │◀────│  (Hosted)    │
-└──────────────┘     └─────────────┘     └──────────────┘
-                           ▲│
-┌──────────────┐           ││
-│  Mobile App  │───────────┘│
-│ (React Native│◀───────────┘
-│  + Expo)     │
-└──────────────┘     ┌────────────┐
-                     │ PostgreSQL │
-                     └────────────┘
-```
-
-**Key Principle**: All hash computation and sensitive operations happen server-side only. The merchant salt is never exposed to the frontend.
+Card and bank data are handled entirely by Razorpay's hosted checkout modal. Our servers never see or process card numbers — PCI DSS scope is **SAQ A**.
 
 ---
 
-## Data Models
+## 2. Architecture
 
-### `PaymentTransaction` (`stayease_sales/models.py`)
-
-Audit trail for every one-time payment attempt.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `txnid` | CharField(64), unique | Transaction ID (format: `SE` + 18 hex chars) |
-| `resident` | FK → resident_Data | The paying resident |
-| `rent_record` | FK → resident_Rent_Data, nullable | The rent month being paid |
-| `amount` | DecimalField(10,2) | Payment amount |
-| `product_info` | CharField(100) | Description (e.g., "Rent - April 2026") |
-| `status` | CharField(20) | `initiated` / `success` / `failed` |
-| `payu_status` | CharField(50), nullable | Raw status from PayU callback |
-| `created_at` | DateTimeField | When payment was initiated |
-| `updated_at` | DateTimeField | Last update |
-
-### `RecurringMandate` (`stayease_sales/models.py`)
-
-Tracks PayU Standing Instruction mandates for auto-pay.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `txnid` | CharField(64), unique | Consent transaction ID (format: `SESI` + 16 hex) |
-| `resident` | FK → resident_Data | The resident who set up auto-pay |
-| `auth_payu_id` | CharField(128), nullable | PayU mandate token (set after consent success) |
-| `billing_amount` | DecimalField(10,2) | Monthly charge amount (from `rentPerMonth`) |
-| `billing_cycle` | CharField(20) | Always `MONTHLY` |
-| `start_date` | DateField | From resident's `checkIn` |
-| `end_date` | DateField | From resident's `checkOut` |
-| `status` | CharField(20) | `initiated` / `active` / `paused` / `revoked` / `expired` |
-| `next_charge_date` | DateField, nullable | When the next charge will execute |
-| `last_charged_date` | DateField, nullable | When the last charge succeeded |
-
-### `PaymentRefund` (`stayease_sales/models.py`)
-
-Tracks refunds against successful payments.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `transaction` | FK → PaymentTransaction | The original payment being refunded |
-| `refund_amount` | DecimalField(10,2) | Amount to refund (supports partial) |
-| `reason` | TextField | Admin-provided reason for refund |
-| `status` | CharField(20) | `initiated` / `processing` / `success` / `failed` |
-| `payu_refund_id` | CharField(128), nullable | PayU's refund reference ID |
-| `initiated_by` | FK → User, nullable | Admin user who triggered the refund |
-
----
-
-## Payment Flows
-
-### Flow 1: One-Time Rent Payment
-
-**Resident Portal → PayU Hosted Checkout → Callback → Rent Updated**
+### 2.1 One-Time Payment Flow
 
 ```
-Step 1: Resident clicks "Pay ₹X" on pending rent
-     ↓
-Step 2: Frontend POSTs to /resident-portal/payments/payu/init/
-        Backend:
-        - Validates resident owns the rent record
-        - Generates txnid (SE + uuid)
-        - Computes SHA-512 forward hash:
-          key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
-        - Creates PaymentTransaction(status='initiated')
-        - Returns PayU form data to frontend
-     ↓
-Step 3: Frontend auto-submits hidden HTML form to PayU base URL
-        Resident completes payment on PayU's hosted page
-     ↓
-Step 4a: SUCCESS → PayU POSTs to /resident-portal/payments/payu/success/
-         Backend:
-         - Verifies reverse hash (salt|status||||||udf5|...|key)
-         - Checks idempotency (won't process same txnid twice)
-         - Verifies callback amount matches initiated amount
-         - Marks PaymentTransaction → 'success'
-         - Updates rent record: rentStatus='Received', transferType='Online - PayU'
-         - Redirects to frontend /resident/payment-result?status=success
-
-Step 4b: FAILURE → PayU POSTs to /resident-portal/payments/payu/failure/
-         Backend:
-         - Verifies reverse hash
-         - Marks PaymentTransaction → 'failed'
-         - Redirects to frontend /resident/payment-result?status=failed
-
-Step 4c: WEBHOOK (fallback) → PayU POSTs to /resident-portal/payments/payu/webhook/
-         Catches cases where browser redirect was missed (user closed tab, network issue)
-         Same processing logic as success/failure callbacks
+Resident clicks Pay
+    → POST /payments/init/       (backend creates Razorpay order, returns orderId + keyId)
+    → Frontend opens Razorpay modal (window.Razorpay)
+    → Resident pays in modal
+    → Razorpay calls handler(response) in JS
+    → POST /payments/verify/      (backend verifies HMAC signature, updates DB)
+    → Navigate to /resident/payment-result
+    
+    [Safety net] Razorpay webhook → POST /payments/webhook/
+                                  → handles payment.captured event
 ```
 
-### Flow 2: Recurring Mandate Setup (SI Consent)
-
-**Resident Portal → PayU SI Hosted Page → Consent Callback → Mandate Activated**
+### 2.2 UPI QR Code Flow
 
 ```
-Step 1: Resident clicks "Set up Auto-Pay"
-     ↓
-Step 2: Frontend POSTs to /resident-portal/payments/payu/si-consent/
-        Backend:
-        - Checks no active mandate exists for this resident
-        - Validates checkIn/checkOut dates (YYYY-MM-DD format)
-        - Validates rentPerMonth as billing amount
-        - Builds si_details JSON (minified):
-          {"billingAmount":"X","billingCurrency":"INR","billingCycle":"MONTHLY",
-           "billingInterval":1,"paymentStartDate":"YYYY-MM-DD",
-           "paymentEndDate":"YYYY-MM-DD","billingRule":"MAX","billingLimit":"ON"}
-        - Computes SI hash:
-          key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||si_details|salt
-        - Creates RecurringMandate(status='initiated')
-        - Returns form data with si=1, api_version=7, si_details
-     ↓
-Step 3: Frontend auto-submits form to PayU
-        Resident authorizes e-mandate on PayU's page
-     ↓
-Step 4a: SUCCESS → PayU POSTs to /resident-portal/payments/payu/si-success/
-         - Verifies reverse hash
-         - Extracts authPayUId (the mandate token for future charges)
-         - Sets mandate status → 'active'
-         - Calculates next_charge_date (1st of next month or start_date, whichever is later)
+Resident clicks QR
+    → POST /payments/qr/generate/  (backend creates single-use QR, returns image URL + expiry)
+    → Frontend shows QR modal with 5-minute countdown
+    → Frontend polls GET /payments/qr/status/ every 5 seconds
+    → Resident scans QR on phone
+    → Payment captured → GET /payments/qr/status/ returns {status: 'paid'}
+    → Navigate to success page
 
-Step 4b: FAILURE → PayU POSTs to /resident-portal/payments/payu/si-failure/
-         - Verifies hash, keeps mandate as 'initiated'
+    [Safety net] Razorpay webhook → POST /payments/webhook/
+                                  → handles qr_code.closed event
 ```
 
-### Flow 3: Recurring Charge Execution (Server-Side Cron)
-
-**Management Command → Pre-Debit Notification → SI Charge → Rent Record Created**
+### 2.3 Subscription / Auto-Pay Flow
 
 ```
-Daily cron: 0 6 * * * ./venv/bin/python manage.py charge_recurring_rents
-
-Phase 1 — Pre-Debit Notifications (48 hours before charge):
-  - Find mandates WHERE status='active' AND next_charge_date = today + 2 days
-  - Call PayU pre_debit_SI API [STUB — requires SI enablement]
-  - RBI requires minimum 24-hour notice; we send 48 hours early
-
-Phase 2 — Execute Charges (due today):
-  - Find mandates WHERE status='active' AND next_charge_date = today
-  - If end_date < today → mark mandate as 'expired', skip
-  - Call PayU si_transaction API [STUB — requires SI enablement]
-  - On success:
-    - Create resident_Rent_Data record (month, amount, transferType='Auto-Pay (SI)')
-    - Update mandate: last_charged_date = today, advance next_charge_date by 1 month
-    - If next_charge_date > end_date → mark mandate as 'expired'
-```
-
-### Flow 4: Mandate Cancellation
-
-**Resident cancels anytime (RBI requirement)**
-
-```
-Step 1: Resident clicks "Cancel Auto-Pay" (with confirmation dialog)
-     ↓
-Step 2: Frontend POSTs to /resident-portal/payments/mandate/cancel/
-        Backend:
-        - Finds active mandate for this resident
-        - Calls PayU mandate_revoke API [STUB]
-        - Sets mandate status → 'revoked'
-```
-
-### Flow 5: Admin-Initiated Refund
-
-**Admin dashboard → Select transaction → Issue refund → Credited to original method**
-
-```
-Step 1: Admin views eligible transactions
-        GET /sales/refunds/eligible/
-        Returns successful payments with remaining refundable balance
-
-Step 2: Admin initiates refund
-        POST /sales/refunds/initiate/
-        Body: { txnid, amount, reason }
-        Backend:
-        - Validates txnid is a successful transaction
-        - Calculates total already refunded on this txn
-        - Validates refund_amount ≤ remaining refundable balance
-        - Creates PaymentRefund(status='initiated')
-        - Calls PayU cancel_refund_transaction API [STUB]
-        - On success: status → 'processing', updates PayU refund ID
-        - If full refund: rent record status → 'Refunded'
-
-Step 3: Admin views refund history
-        GET /sales/refunds/history/
-        Lists all refunds with status, amounts, who initiated
-
-PayU API (when keys are live):
-  - Command: cancel_refund_transaction
-  - Hash: sha512(key|command|var1|salt) where var1 = txnid
-  - Refund goes to original payment method (RBI mandate)
-  - Timeline: 5-7 business days
-```
-
-### Flow 6: Webhook (Server-to-Server Fallback)
-
-```
-PayU POSTs to /resident-portal/payments/payu/webhook/
-  - Verifies hash
-  - Checks PaymentTransaction table first, then RecurringMandate table
-  - Processes the same way as redirect callbacks
-  - Returns JSON status (not redirect)
-  - Configure this URL in PayU merchant dashboard
+Resident clicks Set up Auto-Pay
+    → POST /payments/subscription/init/   (create Razorpay plan + subscription)
+    → Frontend opens Razorpay modal with subscription_id
+    → Resident authorises mandate
+    → Razorpay calls handler(response) in JS
+    → POST /payments/subscription/verify/ (verify subscription signature, activate mandate)
+    
+    [Monthly auto-charge] Razorpay charges automatically
+    → Webhook → subscription.charged → creates resident_Rent_Data record
+    
+    [Reconciliation] charge_recurring_rents management command (daily cron)
+    → Checks for missed charges, expires old mandates
 ```
 
 ---
 
-## API Endpoints Reference
+## 3. API Reference
 
-### Resident Portal (JWT-authenticated, prefix: `/resident-portal/`)
+### 3.1 POST `/payments/init/`
+**Auth:** JWT (IsResident)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/payments/payu/init/` | JWT | Initiate one-time payment |
-| POST | `/payments/payu/success/` | None (CSRF exempt) | PayU success callback |
-| POST | `/payments/payu/failure/` | None (CSRF exempt) | PayU failure callback |
-| POST | `/payments/payu/webhook/` | None (CSRF exempt) | PayU server-to-server webhook |
-| POST | `/payments/payu/si-consent/` | JWT | Initiate SI mandate consent |
-| POST | `/payments/payu/si-success/` | None (CSRF exempt) | SI consent success callback |
-| POST | `/payments/payu/si-failure/` | None (CSRF exempt) | SI consent failure callback |
-| GET | `/payments/mandate/status/` | JWT | Get active mandate info |
-| POST | `/payments/mandate/cancel/` | JWT | Cancel active mandate |
-| GET | `/rent-history/` | JWT | List rent records |
-| GET | `/invoices/<id>/` | JWT | Invoice detail |
-
-### Admin / Sales Portal (Session-authenticated, prefix: `/sales/`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/refunds/eligible/` | Session | List refund-eligible transactions |
-| POST | `/refunds/initiate/` | Session | Initiate a refund |
-| GET | `/refunds/history/` | Session | List all refunds |
-
----
-
-## Security & Compliance
-
-### Hash Verification
-
-**Forward hash** (payment init → PayU):
-```
-SHA-512( key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt )
-```
-
-**SI forward hash** (SI consent init → PayU):
-```
-SHA-512( key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||si_details|salt )
-```
-Note: `si_details` is the minified JSON string (no whitespace).
-
-**Reverse hash** (PayU callback → our server):
-```
-SHA-512( salt|status||||||udf5|udf4|udf3|udf2|udf1|email|firstname|productinfo|amount|txnid|key )
-```
-
-**Server-to-server API hash** (for SI charges, refunds, mandate revoke):
-```
-SHA-512( key|command|var1|salt )
-```
-
-### PCI DSS v4.0.1
-
-- **Hosted Checkout** — card data handled entirely by PayU (SAQ A scope)
-- **No raw card storage** — we only store transaction IDs and mandate tokens
-- **Hash salt** stored in environment variable, never in client code
-
-### TLS / Transport Security
-
-```python
-SECURE_SSL_REDIRECT = True          # Force HTTPS in production
-SECURE_HSTS_SECONDS = 31536000      # 1-year HSTS
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-```
-
-### RBI Compliance
-
-| Requirement | Implementation |
-|-------------|---------------|
-| Pre-debit notification (24hr+) | Sent 48 hours before charge via management command |
-| Mandate cancellation anytime | `/payments/mandate/cancel/` endpoint |
-| Refund to original method | PayU `cancel_refund_transaction` routes refund to original instrument |
-| Data localisation | Deploy on India-based servers (AWS ap-south-1) |
-| e-Mandate AFA | First consent requires OTP on PayU's hosted page |
-| >₹15k monthly debit | Requires OTP each cycle (RBI limit) — consider e-NACH for higher limits |
-
-### Website Disclosures (PayU Activation Requirements)
-
-| Disclosure | URL | Status |
-|------------|-----|--------|
-| Terms & Conditions | `/Terms-conditions` | Live |
-| Privacy Policy | `/privacy-policy` | Live |
-| Refund & Cancellation Policy | `/refund-policy` | Live |
-| Contact Information | Footer (address, phone, email) | Live |
-| Grievance Officer | `/refund-policy` section 7 | Live |
-
----
-
-## Configuration
-
-### Environment Variables (`.env`)
-
-```env
-PAYU_MERCHANT_KEY=              # From PayU dashboard
-PAYU_MERCHANT_SALT=             # From PayU dashboard (NEVER expose client-side)
-PAYU_BASE_URL=https://test.payu.in/_payment          # Test: test.payu.in, Live: secure.payu.in
-PAYU_SUCCESS_URL=https://yourdomain.com/resident-portal/payments/payu/success/
-PAYU_FAILURE_URL=https://yourdomain.com/resident-portal/payments/payu/failure/
-PAYU_SI_SUCCESS_URL=https://yourdomain.com/resident-portal/payments/payu/si-success/
-PAYU_SI_FAILURE_URL=https://yourdomain.com/resident-portal/payments/payu/si-failure/
-FRONTEND_BASE_URL=https://yourdomain.com
-```
-
-### Django Settings (`settings.py`)
-
-```python
-PAYU_CONFIG = {
-    'merchant_key': os.getenv('PAYU_MERCHANT_KEY', ''),
-    'merchant_salt': os.getenv('PAYU_MERCHANT_SALT', ''),
-    'base_url': os.getenv('PAYU_BASE_URL', 'https://test.payu.in/_payment'),
-    'success_url': ...,
-    'failure_url': ...,
-    'si_success_url': ...,
-    'si_failure_url': ...,
+**Request:**
+```json
+{
+  "amount": "10000",
+  "rentId": 42,
+  "productInfo": "Rent - June 2026"
 }
 ```
 
-### Cron Job (Recurring Charges)
-
-```bash
-# Run daily at 6:00 AM IST
-0 6 * * * cd /path/to/backend && ./venv/bin/python manage.py charge_recurring_rents >> /var/log/stayease/recurring_charges.log 2>&1
+**Response (200):**
+```json
+{
+  "success": true,
+  "orderId": "order_XYZ",
+  "keyId": "rzp_live_XXXX",
+  "amount": 1000000,
+  "currency": "INR",
+  "prefill": {"name": "...", "email": "...", "contact": "..."},
+  "notes": {"resident_id": "5", "rent_id": "42"}
+}
 ```
 
 ---
 
-## Stubbed Components (Pending PayU SI Enablement)
+### 3.2 POST `/payments/verify/`
+**Auth:** JWT (IsResident)
 
-These functions are fully structured but log intent instead of making real API calls. They become functional once PayU merchant keys are provided and SI is enabled on the account.
-
-| Function | Location | PayU Command |
-|----------|----------|-------------|
-| `_execute_si_charge()` | `stayease_resident/views.py` | `si_transaction` |
-| `_send_pre_debit_notification()` | `stayease_resident/views.py` | `pre_debit_SI` |
-| `_revoke_mandate_on_payu()` | `stayease_resident/views.py` | `mandate_revoke` |
-| `_process_payu_refund()` | `stayease_sales/views.py` | `cancel_refund_transaction` |
-
-Each stub contains commented-out implementation code with the correct hash formula and API endpoint, ready to uncomment when keys are available.
-
----
-
-## Mobile App Integration
-
-The React Native + Expo mobile app (`StayEase-Mobile/`) uses a **WebView-based checkout** pattern that works identically for both one-time payments and SI mandate consent.
-
-### Flow
-
-```
-1. Resident taps "Pay Now" (invoice) or "Set up Auto-Pay" (dashboard)
-2. Mobile calls backend init endpoint (payu/init/ or payu/si-consent/)
-3. Backend returns { payuBaseUrl, paymentData } with server-computed hash
-4. Mobile generates auto-submit HTML form via createPayUCheckoutHtml()
-5. WebView loads the HTML → auto-submits to PayU hosted checkout
-6. Resident completes payment on PayU's page
-7. PayU POSTs to backend success/failure callback
-8. Backend redirects to: {FRONTEND_BASE_URL}/resident/payment-result?status=...&txnid=...
-9. WebView intercepts URL containing "/resident/payment-result"
-10. Mobile parses query params → navigates to native ResidentPaymentResultScreen
+**Request:**
+```json
+{
+  "razorpay_payment_id": "pay_XXXX",
+  "razorpay_order_id": "order_XXXX",
+  "razorpay_signature": "HMAC_SIG"
+}
 ```
 
-### Key Files (Mobile)
-
-| File | Purpose |
-|------|---------|
-| `src/payments/payu.js` | `createPayUCheckoutHtml()` — generates auto-submit HTML form with hidden fields |
-| `src/screens/resident/ResidentPaymentScreen.js` | WebView screen with redirect interception (`handled` ref guard prevents double-fire) |
-| `src/screens/resident/ResidentPaymentResultScreen.js` | Native success/failure result screen |
-| `src/screens/resident/ResidentInvoiceScreen.js` | "Pay Now" button triggers one-time payment |
-| `src/screens/resident/ResidentDashboardScreen.js` | Auto-pay setup/cancel UI with mandate status |
-| `src/api/endpoints.js` | `initResidentPayUPayment`, `initResidentSIConsent`, `getResidentMandateStatus`, `cancelResidentMandate` |
-
-### Mobile Endpoints Used
-
-| Function | Backend Endpoint | Purpose |
-|----------|-----------------|---------|
-| `initResidentPayUPayment(data)` | `POST /resident-portal/payments/payu/init/` | One-time payment init |
-| `initResidentSIConsent(data)` | `POST /resident-portal/payments/payu/si-consent/` | SI mandate consent init |
-| `getResidentMandateStatus()` | `GET /resident-portal/payments/mandate/status/` | Check active mandate |
-| `cancelResidentMandate()` | `POST /resident-portal/payments/mandate/cancel/` | Cancel active mandate |
-
-### WebView Redirect Interception
-
-The backend's `_payu_redirect()` helper generates `HttpResponseRedirect` to `{FRONTEND_BASE_URL}/resident/payment-result?status=...&txnid=...&amount=...&type=...`. The mobile WebView intercepts any URL containing `/resident/payment-result`, parses the query string, and uses `navigation.replace()` to show the native result screen. A `useRef(false)` guard prevents the handler from firing twice on iOS (where both `onShouldStartLoadWithRequest` and `onNavigationStateChange` trigger).
-
----
-
-## File Map
-
-```
-backend/
-├── stayease_sales/
-│   ├── models.py                    # PaymentTransaction, RecurringMandate, PaymentRefund
-│   ├── views.py                     # Refund endpoints (admin)
-│   ├── urls.py                      # /sales/refunds/*
-│   └── migrations/
-│       ├── 0012_paymenttransaction.py
-│       ├── 0013_recurringmandate.py
-│       └── 0014_paymentrefund.py
-├── stayease_resident/
-│   ├── views.py                     # All payment views (init, callbacks, webhook, SI, mandate)
-│   ├── urls.py                      # /resident-portal/payments/*
-│   └── management/
-│       └── commands/
-│           └── charge_recurring_rents.py  # Daily cron for SI charges
-├── stayease_project/
-│   └── settings.py                  # PAYU_CONFIG, TLS/HSTS settings
-└── docs/
-    └── PAYMENT_SYSTEM.md            # This file
-
-StayEase-Mobile/src/         # React Native + Expo mobile app
-├── payments/
-│   └── payu.js                      # Auto-submit HTML generator for WebView checkout
-├── screens/resident/
-│   ├── ResidentPaymentScreen.js     # WebView checkout (one-time + SI)
-│   ├── ResidentPaymentResultScreen.js  # Native result screen
-│   ├── ResidentInvoiceScreen.js     # "Pay Now" button for unpaid invoices
-│   └── ResidentDashboardScreen.js   # Auto-pay setup/cancel card
-└── api/
-    └── endpoints.js                 # initResidentPayUPayment, initResidentSIConsent, etc.
-
-frontend/src/
-├── resident/components/
-│   ├── ResidentPayments.jsx         # Pay rent + auto-pay setup/cancel UI
-│   └── ResidentPaymentResult.jsx    # Success/failure landing page
-├── website/components/
-│   ├── section-components/
-│   │   └── RefundPolicy.jsx         # Standalone refund policy page
-│   ├── pages/
-│   │   └── RefundPolicyPage.jsx     # Page wrapper
-│   └── global-components/
-│       └── Footer.jsx               # Added refund policy link
-└── Routing.jsx                      # /refund-policy and /resident/payment-result routes
+**Response (200):**
+```json
+{"success": true, "txnid": "SE...", "amount": "10000.00"}
 ```
 
 ---
 
-## PayU Dashboard Setup Checklist
+### 3.3 POST `/payments/qr/generate/`
+**Auth:** JWT (IsResident)
 
-When website verification completes:
+**Request:**
+```json
+{"amount": "10000", "rentId": 42}
+```
 
-- [ ] Copy Merchant Key and Salt to `.env`
-- [ ] Request MCC code **6513** (Real Estate / Property Management)
-- [ ] Request **Standing Instructions (SI)** enablement
-- [ ] Configure webhook URL: `https://yourdomain.com/resident-portal/payments/payu/webhook/`
-- [ ] Switch `PAYU_BASE_URL` from `test.payu.in` to `secure.payu.in` for production
-- [ ] Update all `surl`/`furl` URLs to use production domain
-- [ ] Uncomment API calls in stub functions and test
-- [ ] For rents >₹15,000: Consider e-NACH integration for fully automated high-value debits
+**Response (200):**
+```json
+{
+  "success": true,
+  "qrCodeId": "qr_XXXX",
+  "qrImageUrl": "https://rzp.io/i/qr.png",
+  "amount": "10000",
+  "expiresAt": 1748900000
+}
+```
+
+---
+
+### 3.4 GET `/payments/qr/status/?qrCodeId=qr_XXXX`
+**Auth:** JWT (IsResident)
+
+**Response:**
+```json
+{"status": "pending" | "paid" | "expired"}
+```
+
+---
+
+### 3.5 POST `/payments/webhook/`
+**Auth:** None (HMAC-SHA256 via `X-Razorpay-Signature` header)
+
+Receives Razorpay server-to-server events. Always returns `{"status": "ok"}` (200).
+
+---
+
+### 3.6 POST `/payments/subscription/init/`
+**Auth:** JWT (IsResident)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "subscriptionId": "sub_XXXX",
+  "keyId": "rzp_live_XXXX",
+  "prefill": {"name": "...", "email": "...", "contact": "..."}
+}
+```
+
+---
+
+### 3.7 POST `/payments/subscription/verify/`
+**Auth:** JWT (IsResident)
+
+**Request:**
+```json
+{
+  "razorpay_payment_id": "pay_XXXX",
+  "razorpay_subscription_id": "sub_XXXX",
+  "razorpay_signature": "HMAC_SIG"
+}
+```
+
+**Response:** `{"success": true, "type": "mandate"}`
+
+---
+
+### 3.8 GET `/payments/mandate/status/`
+**Auth:** JWT (IsResident)
+
+**Response:**
+```json
+{
+  "success": true,
+  "hasMandate": true,
+  "mandate": {
+    "id": 1,
+    "status": "active",
+    "billingAmount": "10000.00",
+    "startDate": "2026-01-01",
+    "endDate": "2026-12-31",
+    "nextChargeDate": "2026-07-01"
+  }
+}
+```
+
+---
+
+### 3.9 POST `/payments/mandate/cancel/`
+**Auth:** JWT (IsResident)
+
+Cancels the active subscription on Razorpay and marks mandate `revoked`.
+
+---
+
+## 4. Environment Variables
+
+| Variable | Purpose | Where to get it |
+|----------|---------|----------------|
+| `RAZORPAY_KEY_ID` | Public key for frontend modal | Razorpay Dashboard → Settings → API Keys |
+| `RAZORPAY_KEY_SECRET` | Secret key for backend API calls | Razorpay Dashboard → Settings → API Keys (shown once) |
+| `RAZORPAY_WEBHOOK_SECRET` | HMAC secret for webhook verification | Razorpay Dashboard → Settings → Webhooks → Secret |
+
+**Test mode:** Use keys prefixed `rzp_test_` for development.
+**Live mode:** Use keys prefixed `rzp_live_` for production.
+
+---
+
+## 5. Razorpay Dashboard Setup
+
+1. **API Keys:** Settings → API Keys → Generate Key Pair
+2. **Webhook URL:** Settings → Webhooks → Add New Webhook
+   - URL: `https://<your-domain>/resident-portal/payments/webhook/`
+   - Enable events: `payment.captured`, `payment.failed`, `subscription.activated`, `subscription.charged`, `subscription.cancelled`, `qr_code.closed`
+3. **Webhook Secret:** Copy the generated secret → set as `RAZORPAY_WEBHOOK_SECRET` in `.env`
+4. **Subscriptions:** Ensure "Subscriptions" product is enabled on your Razorpay account
+
+---
+
+## 6. QR Code Flow Details
+
+- QR codes are **single-use** (`usage: 'single_use'`) — one payment per QR
+- Amount is **fixed** (`fixed_amount: True`) — cannot be modified by the payer
+- QR expires in **5 minutes** (`close_by: now + 300`)
+- Frontend shows a live countdown timer
+- Frontend polls `/payments/qr/status/` every 5 seconds
+- Webhook `qr_code.closed` is the authoritative update path
+
+---
+
+## 7. Subscription Flow Details
+
+- One Razorpay Plan is created per subscription setup
+- `total_count` = number of months in the lease
+- `customer_notify: 1` — Razorpay sends pre-debit SMS/email (RBI requirement)
+- Residents can cancel anytime via `/payments/mandate/cancel/`
+- Webhook `subscription.charged` creates the `resident_Rent_Data` record
+
+---
+
+## 8. Reconciliation Cron
+
+**Command:** `python manage.py charge_recurring_rents`
+
+**Schedule (recommended):** `0 8 * * *` (8 AM daily)
+
+**What it does:**
+1. Expires mandates where `end_date < today`
+2. For active mandates where `next_charge_date <= today`:
+   - Fetches subscription status from Razorpay
+   - Syncs cancelled subscriptions → marks mandate `revoked`
+   - Creates missing rent records if Razorpay shows a charge but our webhook missed it
+
+---
+
+## 9. Refund Process
+
+**Endpoint:** `POST /sales/refunds/initiate/` (Sales team only)
+
+**Process:**
+1. Admin provides `txnid`, `amount`, `reason`
+2. Backend validates refund amount ≤ remaining refundable balance
+3. Calls `client.payment.refund(gateway_payment_id, {amount: paise})`
+4. On success: `PaymentRefund.status = 'processing'`, `gateway_refund_id` stored
+5. If full refund: `resident_Rent_Data.rentStatus = 'Refunded'`
+6. Timeline: 5–7 business days to original payment method (RBI mandate)
+
+**Partial refunds:** Multiple partial refunds are allowed as long as total ≤ original amount.
+
+---
+
+## 10. Compliance
+
+### PCI DSS v4.0.1 (SAQ A)
+- No card data on our servers — Razorpay hosted checkout handles all sensitive data
+- Only `gateway_order_id`, `gateway_payment_id`, `gateway_status` stored in our DB
+- TLS/HTTPS mandatory in production
+
+### RBI Guidelines
+- Pre-debit notification handled by Razorpay (`customer_notify: 1`)
+- Mandate cancellation available anytime (no conditions)
+- AFA (UPI PIN / OTP) handled by Razorpay checkout
+- Refund to original payment method enforced by Razorpay
+
+### NPCI UPI Standards
+- NPCI-compliant UPI QR generated by Razorpay API
+- `close_by` = 5 minutes, `usage = 'single_use'`, `fixed_amount = True`
+
+---
+
+## 11. Troubleshooting
+
+### Signature Verification Fails
+- Verify `RAZORPAY_WEBHOOK_SECRET` matches the secret in Razorpay Dashboard
+- For payment verify: ensure `razorpay_payment_id + "|" + razorpay_order_id` is signed correctly
+- Never log raw signature values in production
+
+### Webhook Not Received
+- Verify webhook URL is publicly accessible (HTTPS required)
+- Check Razorpay Dashboard → Webhooks → Delivery Attempts for error details
+- Razorpay retries for 24 hours — the reconciliation cron is the final fallback
+
+### QR Code Not Scanning
+- Ensure `image_url` from Razorpay is served over HTTPS
+- QR may have expired (5-minute window) — have resident generate a new one
+- Check `close_reason` via `/payments/qr/status/`
+
+### Subscription Not Charging
+- Verify subscription `status = 'active'` on Razorpay Dashboard
+- Check `total_count` — subscription auto-expires after all charges complete
+- Run `python manage.py charge_recurring_rents` manually to reconcile

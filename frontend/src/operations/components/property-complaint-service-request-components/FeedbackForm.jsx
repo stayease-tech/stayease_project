@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 const StarRatingInput = ({ rating, setRating }) => {
     const [hover, setHover] = useState(null);
@@ -28,6 +29,7 @@ const StarRatingInput = ({ rating, setRating }) => {
 };
 
 function FeedbackForm() {
+    const { getOptions } = useDropdowns();
     let publicUrl = process.env.PUBLIC_URL + '/';
     const { id } = useParams();
 
@@ -136,9 +138,9 @@ function FeedbackForm() {
                         required
                     >
                         <option value="" disabled>Select your option here</option>
-                        <option value="Yes">Yes</option>
-                        <option value="Partially">Partially</option>
-                        <option value="No">No</option>
+                        {getOptions('feedback_resolutions').map((r, i) => (
+                            <option key={i} value={r}>{r}</option>
+                        ))}
                     </select>
                 </div>
 

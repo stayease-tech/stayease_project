@@ -1,15 +1,17 @@
 import React from 'react';
 import { City, Country, State } from 'country-state-city';
 import { FaUpload } from "react-icons/fa";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleChange }) {
+    const { getOptions } = useDropdowns();
     const country = Country.getCountryByCode('IN');
     const states = State.getStatesOfCountry(country.isoCode);
     const state = states.find((state) => state.name === propertyData.state);
     const cities = City.getCitiesOfState(state?.countryCode, state?.isoCode);
 
-    const mealTypes = ["Veg", "Non-Veg"];
-    const amenities = ["Prime Locations", "Fully Furnished", "Parking Space", "Regular Housekeeping", "Free Wi-Fi", "Modular Kitchen", "CCTV Surveillance", "Washing Machine", "Workspace Setup", "Common Area", "Digital Lock Access", "Water Purifier", "OTT Subscriptions", "Community Intercom"];
+    const mealTypes = getOptions('property_meal_types');
+    const amenities = getOptions('property_amenities');
 
     return (
         <div className="mb-[20px]">
@@ -36,8 +38,9 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 required
             >
                 <option value="" disabled>Select the Property type here</option>
-                <option value="PG/Hostel">PG/Hostel</option>
-                <option value="Apartment">Apartment</option>
+                {getOptions('property_types').map((t, i) => (
+                    <option key={i} value={t}>{t}</option>
+                ))}
             </select>
 
             <label htmlFor={`foundedYear`} className="text-[#D4A017] max-sm:text-sm"><strong>Founded Year: <span className="text-red-500">*</span></strong></label>
@@ -268,8 +271,9 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 required
             >
                 <option value="" disabled>Select the Status of the Property here</option>
-                <option value="Active">Active</option>
-                <option value="Not Active">Not Active</option>
+                {getOptions('property_statuses').map((s, i) => (
+                    <option key={i} value={s}>{s}</option>
+                ))}
             </select>
         </div>
     )

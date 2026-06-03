@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../auth/AuthContext";
 
+/**
+ * Navbar — top navigation bar for all authenticated portal views.
+ * Displays the brand logo, a user avatar dropdown, and auto-logs out at 23:59:59.
+ *
+ * @param {object} props
+ * @param {boolean} props.isExpanded - Whether the sidebar is expanded, used to offset the navbar's left edge.
+ * @returns {React.ReactElement}
+ */
 export default function Navbar({ isExpanded }) {
     const navigate = useNavigate();
     const auth = useAuth();
@@ -38,10 +46,16 @@ export default function Navbar({ isExpanded }) {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [open]);
 
+    /**
+     * Calls the auth logout action and redirects to the appropriate login page.
+     *
+     * @returns {Promise<void>}
+     */
     const handleLogout = async () => {
         setIsLoggingOut(true);
+        const wasResident = auth.userType === 'resident';
         try { await auth.logout(); } catch (error) { console.error('Auto logout failed:', error); }
-        finally { setIsLoggingOut(false); navigate("/login"); }
+        finally { setIsLoggingOut(false); navigate(wasResident ? "/resident-login" : "/login"); }
     };
 
     const activityRoute = auth.userType ? `/${auth.userType}/${auth.userType}-user-activity-data` : "#";

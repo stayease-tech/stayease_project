@@ -17,6 +17,8 @@ urlpatterns = [
     path('send/', views.upload_and_send),
     path('documents/', views.get_documents),
     path('requests/', views.get_requests),
+    path('upload-lease/<str:resident_id>/', views.upload_lease_agreement, name='upload_lease_agreement'),
+    path('enable-portal/<str:resident_id>/', views.enable_resident_portal, name='enable_resident_portal'),
     path('refunds/eligible/', views.get_refund_eligible_transactions, name='get_refund_eligible_transactions'),
     path('refunds/initiate/', views.initiate_refund, name='initiate_refund'),
     path('refunds/history/', views.get_refund_history, name='get_refund_history'),

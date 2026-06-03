@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { ToastContainer, toast } from 'react-toastify'
 import { AuthProvider } from './auth/AuthContext'
+import { DropdownProvider } from './shared/DropdownContext'
 import { configureGlobalToasts } from './shared/toast'
 import { configureGlobalDateInputGuards } from './shared/dateInput'
 import './index.css'
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
+        <DropdownProvider>
         <ToastRouteCleanup />
         <App />
         <ToastContainer
@@ -36,6 +38,7 @@ createRoot(document.getElementById('root')).render(
           draggable
           theme="colored"
         />
+      </DropdownProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

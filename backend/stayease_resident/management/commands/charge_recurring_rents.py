@@ -1,20 +1,25 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 """
-Management command to process recurring rent charges via PayU Standing Instructions.
+Reconciliation command for Razorpay subscription-based recurring rent charges.
 
-Schedule via system cron to run daily:
-    0 6 * * * cd /path/to/backend && ./venv/bin/python manage.py charge_recurring_rents
+Razorpay auto-charges subscriptions and fires webhook events (subscription.charged).
+This command is a safety net / reconciliation pass that:
+1. Expires mandates where end_date < today
+2. Syncs subscription status from Razorpay for active mandates
+3. Creates missing rent records for months where Razorpay charged but our webhook missed it
 
-This command:
-1. Finds active mandates due for pre-debit notification (48 hours before charge)
-2. Finds active mandates due for charge execution (today)
-3. Creates rent records and updates mandate dates after successful charges
-
-Requires PayU SI to be enabled on the merchant account.
+Schedule via system cron to run daily (after webhook delivery window):
+    0 8 * * * cd /path/to/backend && ./venv/bin/python manage.py charge_recurring_rents
 """
+
 import logging
-from datetime import date, timedelta
+from datetime import date
+
+import razorpay
 
 from django.core.management.base import BaseCommand
+from django.conf import settings
 
 from stayease_sales.models import RecurringMandate, resident_Rent_Data
 
@@ -22,74 +27,117 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
-    help = 'Process recurring rent charges — send pre-debit notifications and execute SI charges'
+    help = 'Reconcile Razorpay subscription charges — expire stale mandates and create missing rent records'
 
     def handle(self, *args, **options):
         today = date.today()
-        pre_debit_date = today + timedelta(days=2)
+        month_label = today.strftime('%B %Y')
 
-        # 1. Send pre-debit notifications for mandates due in 2 days
-        pre_debit_mandates = RecurringMandate.objects.filter(
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+        # 1. Expire mandates past their end_date
+        expired_count = 0
+        overdue_mandates = RecurringMandate.objects.filter(
             status='active',
-            next_charge_date=pre_debit_date,
+            end_date__lt=today,
+        )
+        for mandate in overdue_mandates:
+            mandate.status = 'expired'
+            mandate.save()
+            expired_count += 1
+            self.stdout.write(
+                self.style.WARNING(
+                    f'[EXPIRED] Mandate {mandate.txnid} — lease ended {mandate.end_date}'
+                )
+            )
+
+        # 2. Reconcile active mandates due this month
+        reconciled_count = 0
+        skipped_count = 0
+        active_mandates = RecurringMandate.objects.filter(
+            status='active',
+            next_charge_date__lte=today,
         ).select_related('resident')
 
-        for mandate in pre_debit_mandates:
-            self.stdout.write(f"[PRE-DEBIT] Mandate {mandate.txnid} — ₹{mandate.billing_amount} due on {mandate.next_charge_date}")
-            from stayease_resident.views import _send_pre_debit_notification
-            result = _send_pre_debit_notification(mandate)
-            if result['success']:
-                self.stdout.write(self.style.SUCCESS(f"  Pre-debit notification sent: {result['message']}"))
-            else:
-                self.stdout.write(self.style.ERROR(f"  Pre-debit notification failed: {result['message']}"))
-
-        # 2. Execute charges for mandates due today
-        due_mandates = RecurringMandate.objects.filter(
-            status='active',
-            next_charge_date=today,
-        ).select_related('resident')
-
-        for mandate in due_mandates:
-            if mandate.end_date < today:
-                mandate.status = 'expired'
-                mandate.save()
-                self.stdout.write(self.style.WARNING(f"[EXPIRED] Mandate {mandate.txnid} — lease ended {mandate.end_date}"))
+        for mandate in active_mandates:
+            if not mandate.gateway_subscription_id:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'[SKIP] Mandate {mandate.txnid} has no gateway_subscription_id'
+                    )
+                )
+                skipped_count += 1
                 continue
 
-            self.stdout.write(f"[CHARGE] Mandate {mandate.txnid} — ₹{mandate.billing_amount}")
-            from stayease_resident.views import _execute_si_charge
-            result = _execute_si_charge(mandate)
+            # Check if rent record already exists for this month (webhook may have created it)
+            already_exists = resident_Rent_Data.objects.filter(
+                resident_data_instance=mandate.resident,
+                month=month_label,
+                transferType='Auto-Pay (Razorpay)',
+            ).exists()
 
-            if result['success']:
-                # Create a rent record for this charge
-                month_label = today.strftime('%B %Y')
+            if already_exists:
+                skipped_count += 1
+                continue
+
+            # Fetch subscription status from Razorpay
+            try:
+                subscription = client.subscription.fetch(mandate.gateway_subscription_id)
+            except Exception as e:
+                logger.error(
+                    f'[RECONCILE] Failed to fetch subscription {mandate.gateway_subscription_id}: {e}'
+                )
+                self.stdout.write(
+                    self.style.ERROR(
+                        f'  [ERROR] Could not fetch subscription for mandate {mandate.txnid}: {e}'
+                    )
+                )
+                continue
+
+            sub_status = subscription.get('status', '')
+
+            # Sync cancelled subscriptions
+            if sub_status == 'cancelled' and mandate.status == 'active':
+                mandate.status = 'revoked'
+                mandate.save()
+                self.stdout.write(
+                    self.style.WARNING(
+                        f'[REVOKED] Mandate {mandate.txnid} — subscription cancelled on Razorpay'
+                    )
+                )
+                continue
+
+            # Check if Razorpay shows a successful charge this month
+            paid_count = subscription.get('paid_count', 0)
+            if paid_count and paid_count > 0:
+                # Create missing rent record
                 resident_Rent_Data.objects.create(
                     resident_data_instance=mandate.resident,
                     rentStatus='Received',
                     month=month_label,
                     rent=str(mandate.billing_amount),
-                    transferType='Auto-Pay (SI)',
-                    utrNumber=mandate.txnid,
+                    transferType='Auto-Pay (Razorpay)',
+                    utrNumber=mandate.gateway_subscription_id,
                     transferredDate=today.strftime('%Y-%m-%d'),
                 )
 
                 mandate.last_charged_date = today
-                # Advance next_charge_date by one month
                 if today.month < 12:
                     next_date = today.replace(month=today.month + 1, day=1)
                 else:
                     next_date = today.replace(year=today.year + 1, month=1, day=1)
-                if next_date > mandate.end_date:
-                    mandate.status = 'expired'
-                    mandate.next_charge_date = None
-                else:
-                    mandate.next_charge_date = next_date
+                mandate.next_charge_date = next_date if next_date <= mandate.end_date else None
                 mandate.save()
-                self.stdout.write(self.style.SUCCESS(f"  Charge successful, next: {mandate.next_charge_date}"))
-            else:
-                self.stdout.write(self.style.ERROR(f"  Charge failed: {result['message']}"))
-                logger.error(f"SI charge failed for mandate {mandate.txnid}: {result['message']}")
 
-        self.stdout.write(self.style.SUCCESS(
-            f"\nDone. Pre-debit: {pre_debit_mandates.count()}, Charges: {due_mandates.count()}"
-        ))
+                reconciled_count += 1
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f'[RECONCILED] Mandate {mandate.txnid} — rent record created for {month_label}'
+                    )
+                )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\nDone. Expired: {expired_count}, Reconciled: {reconciled_count}, Skipped: {skipped_count}'
+            )
+        )

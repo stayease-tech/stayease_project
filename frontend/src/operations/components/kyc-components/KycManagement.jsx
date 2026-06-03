@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Navbar from "../../../shared/Navbar";
 import { ShieldCheck, Check, X, Eye, ChevronDown } from "lucide-react";
-
-const TABS = ["Pending", "Approved", "Rejected"];
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 export default function KycManagement({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
+    const TABS = getOptions('kyc_approval_statuses');
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Pending");

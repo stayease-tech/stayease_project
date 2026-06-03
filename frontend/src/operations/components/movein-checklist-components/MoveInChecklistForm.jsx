@@ -4,13 +4,10 @@ import Navbar from '../Navbar';
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function MoveInChecklistForm({ isExpanded, setIsExpanded }) {
-    const propertyConditionArr = ['Walls & Paint Condition', 'Ceiling Condition', 'Flooring / Tiles', 'Doors & Locks', 'Main Door Keys', 'Room Keys', 'Cupboard Keys', 'Access Cards / Key Tags'];
-    const electricalLightingArr = ['Ceiling Lights / Bulbs', 'Fans', 'Switches & Sockets', 'Air Conditioner (AC)', 'Wi-Fi Router / Internet', 'TV', 'DTH Connection', 'TV Remote'];
-    const furnitureFixturesArr = ['Bed Frame', 'Mattress', 'Pillows', 'Bedsheets', 'Duvet / Blanket', 'Towels'];
-    const kitchenPlumbingArr = ['Water Purifier', 'Sink Tap / Plumbing Lines', 'Refrigerator', 'Microwave / Induction / Stove', 'FurnitureFixtures Utensils'];
-    const housekeepingCleanlinessArr = ['Overall Cleanliness', 'Bathroom Condition', 'Mirror / Fixtures', 'Dustbins'];
+    const { getOptions } = useDropdowns();
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -38,19 +35,19 @@ function MoveInChecklistForm({ isExpanded, setIsExpanded }) {
 
     const dataHandleToggle = (step) => {
         if (step === 'PropertyCondition') {
-            setItemCategory(propertyConditionArr)
+            setItemCategory(getOptions('checklist__property_condition'))
         }
         if (step === 'ElectricalLighting') {
-            setItemCategory(electricalLightingArr)
+            setItemCategory(getOptions('checklist__electrical_lighting'))
         }
         if (step === 'FurnitureFixtures') {
-            setItemCategory(furnitureFixturesArr)
+            setItemCategory(getOptions('checklist__furniture_fixtures'))
         }
         if (step === 'KitchenPlumbing') {
-            setItemCategory(kitchenPlumbingArr)
+            setItemCategory(getOptions('checklist__kitchen_plumbing'))
         }
         if (step === 'HousekeepingCleanliness') {
-            setItemCategory(housekeepingCleanlinessArr)
+            setItemCategory(getOptions('checklist__housekeeping_cleanliness'))
         }
         setCurrentComponent(step)
     }

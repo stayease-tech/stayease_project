@@ -4,6 +4,16 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { LayoutDashboard } from "lucide-react";
 
+/**
+ * Sidebar — collapsible navigation sidebar shared across all portal dashboards.
+ * Highlights the active route and renders a dashboard shortcut at the top.
+ *
+ * @param {object} props
+ * @param {Function} props.toggleSidebar - Callback to toggle expanded/collapsed state.
+ * @param {boolean} props.isExpanded - Whether the sidebar is currently expanded.
+ * @param {Array<{name: string, link: string, icon: React.ReactNode, disabled?: boolean}>} props.menuItems - Navigation items to render.
+ * @returns {React.ReactElement}
+ */
 export default function Sidebar({ toggleSidebar, isExpanded, menuItems }) {
     const location = useLocation();
     const navigate = useNavigate();

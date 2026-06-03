@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 from django.shortcuts import render
 from django.http import JsonResponse
 from .models import residentContract_Detail
@@ -13,14 +15,33 @@ from django.shortcuts import get_object_or_404
 @ensure_csrf_cookie
 
 def resident_details(request, property_id):
+    """Handle GET /resident/<property_id>/ — render the resident onboarding form.
+
+    Args:
+        request: Django HttpRequest.
+        property_id: Unique identifier for the linked property contract.
+
+    Returns:
+        Rendered HTML response with the resident registration form pre-populated with contract data.
+    """
     property_contract = get_object_or_404(PropertyContract_Detail, uniqueId=property_id)
 
     return render(request, "resident/resident-form.html", {"property_contract": property_contract})
 
 def resident_success(request):
+    """Handle GET /resident/success/ — render the registration success confirmation page.
+
+    Returns:
+        Rendered HTML success page shown after a resident completes onboarding.
+    """
     return render(request, "resident/resident-success.html")
         
 def resident_table(request):
+    """Handle GET /resident/table/ — return all resident registration records as JSON.
+
+    Returns:
+        JsonResponse with `success` and serialized `resident_table` list, ordered by submission date.
+    """
     if request.method == 'GET':
         try:
             resident_table = residentContract_Detail.objects.all().order_by('-submitted_at')
@@ -32,6 +53,17 @@ def resident_table(request):
     return JsonResponse({'success': False, 'message': 'Invalid HTTP method'}, status=405)
 
 def resident_data(request):
+    """Handle POST /resident/submit/ — create a new resident registration record.
+
+    Args:
+        request: Django HttpRequest with POST body containing personal details (`fname`,
+            `lname`, `phone`, `email`, `address`, `dob`, `gender`, `identityType`,
+            `identityNumber`) and uploaded files (`frontCopy`, `backCopy`).
+
+    Returns:
+        JsonResponse with `success` flag and a result message. Returns 400-level errors
+        for duplicate uniqueId, email, or phone.
+    """
     if request.method == 'POST':
         try:
             uniqueId = request.POST.get('uniqueId')

@@ -1,11 +1,23 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import { useState, useEffect } from "react";
 import residentApi from "../residentApi";
 import Navbar from "../../shared/Navbar";
-import residentSidebar from "./Sidebar";
+import ResidentSidebar from "./Sidebar";
 import { toast } from "react-toastify";
 import { formatIndianPhone } from "../../shared/phone";
 
-export default function residentProfile({ isExpanded, setIsExpanded }) {
+/**
+ * ResidentProfile — displays and allows editing of the resident's personal details and stay information.
+ * Fetches profile data on mount and renders a read-only view with an inline edit form
+ * for name, email, and permanent address.
+ *
+ * @param {object} props
+ * @param {boolean} props.isExpanded - Whether the sidebar is in expanded state.
+ * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
+ * @returns {React.ReactElement}
+ */
+export default function ResidentProfile({ isExpanded, setIsExpanded }) {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -24,6 +36,10 @@ export default function residentProfile({ isExpanded, setIsExpanded }) {
             .finally(() => setLoading(false));
     }, []);
 
+    /**
+     * Persists edited profile fields (name, email, permanent address) to the API.
+     * Merges the updated values into local profile state and closes edit mode on success.
+     */
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -41,6 +57,14 @@ export default function residentProfile({ isExpanded, setIsExpanded }) {
         setSaving(false);
     };
 
+    /**
+     * Field — renders a single read-only label/value row with a bottom border.
+     *
+     * @param {object} props
+     * @param {string} props.label - Display label for the field.
+     * @param {string|null|undefined} props.value - Value to display; falls back to "—" when falsy.
+     * @returns {React.ReactElement}
+     */
     const Field = ({ label, value }) => (
         <div className="py-3 border-b border-gray-100 last:border-0">
             <p className="text-xs text-gray-500 mb-0.5">{label}</p>
@@ -50,7 +74,7 @@ export default function residentProfile({ isExpanded, setIsExpanded }) {
 
     return (
         <div className="bg-[#F5F5F0] min-h-screen">
-            <residentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
+            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">

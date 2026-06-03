@@ -1,6 +1,13 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import axios from "axios";
 import { toast } from "react-toastify";
 
+/**
+ * Axios instance pre-configured for the resident portal API.
+ * Automatically attaches the resident JWT access token and handles
+ * silent token refresh on 401 responses, redirecting to /login on failure.
+ */
 const residentApi = axios.create({
     baseURL: "/resident-portal",
 });

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 from django.urls import path, re_path
 from django.views.generic import TemplateView
 from . import views

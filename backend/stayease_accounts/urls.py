@@ -35,4 +35,6 @@ urlpatterns = [
     path('get-other-files/', views.get_other_files, name='get_other_files'),
     path('other-file-delete/<str:id>/', views.other_file_delete, name='other_file_delete'),
     path('get-liability-data/', views.get_liability_data, name='get_liability_data'),
+    path('get-dropdown-config/', views.get_dropdown_config, name='get_dropdown_config'),
+    path('get-staff-names/', views.get_staff_names, name='get_staff_names'),
 ]

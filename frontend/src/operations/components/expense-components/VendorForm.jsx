@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function VendorForm({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -124,27 +126,17 @@ function VendorForm({ isExpanded, setIsExpanded }) {
                         <label htmlFor="category" className="text-[#D4A017] max-sm:text-sm"><strong>Category: <span className="text-red-500">*</span></strong></label>
                         <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="category" required>
                             <option value="" disabled>Select the Category here</option>
-                            <option value="Water Tanker">Water Tanker</option>
-                            <option value="Electrician">Electrician</option>
-                            <option value="Plumber">Plumber</option>
-                            <option value="Fumigation">Fumigation</option>
-                            <option value="DTH">DTH</option>
-                            <option value="Garbage">Garbage</option>
-                            <option value="Water Purifier">Water Purifier</option>
-                            <option value="Consumables">Consumables</option>
-                            <option value="Shipping and Freight">Shipping and Freight</option>
-                            <option value="Soft Furnishing">Soft Furnishing</option>
-                            <option value="Subscriptions">Subscriptions</option>
-                            <option value="Utilities">Utilities</option>
-                            <option value="Others">Others</option>
+                            {getOptions('vendor_categories').map((cat, i) => (
+                                <option key={i} value={cat}>{cat}</option>
+                            ))}
                         </select>
 
                         <label htmlFor="billingType" className="text-[#D4A017] max-sm:text-sm"><strong>Billing Type: <span className="text-red-500">*</span></strong></label>
                         <select id="billingType" value={vendorData.billingType} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="billingType" required>
                             <option value="" disabled>Select the Billing Type here</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Others">Others</option>
+                            {getOptions('billing_types').map((b, i) => (
+                                <option key={i} value={b}>{b}</option>
+                            ))}
                         </select>
 
                         {vendorData.billingType === 'Bank Transfer' && <>

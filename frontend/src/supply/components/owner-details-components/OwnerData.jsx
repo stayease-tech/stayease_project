@@ -1,5 +1,6 @@
 import React from 'react'
 import { formatIndianPhone } from "../../../shared/phone";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function DetailRow({ label, value, editMode, children }) {
     return (
@@ -13,6 +14,7 @@ function DetailRow({ label, value, editMode, children }) {
 }
 
 function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
+    const { getOptions } = useDropdowns();
     const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
     const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
 
@@ -42,9 +44,9 @@ function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
                         <select name="ownerGender" value={ownerDetails.ownerGender}
                             onChange={ownerHandleChange} className={selectClass} required>
                             <option value="" disabled>Select gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
+                            {getOptions('genders').map((g, i) => (
+                                <option key={i} value={g}>{g}</option>
+                            ))}
                         </select>
                     </DetailRow>
                 </dl>

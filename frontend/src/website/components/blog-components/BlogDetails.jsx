@@ -82,7 +82,7 @@ const BlogCard = memo(({ post, index }) => (
             className="w-full h-[35vh] mt-5 object-cover rounded-sm group-hover:opacity-90 transition-opacity duration-300"
             loading={index < 4 ? "eager" : "lazy"} // First 4 images eager, rest lazy
             decoding="async"
-            fetchpriority={index < 2 ? "high" : "auto"} // First 2 images high priority
+            fetchPriority={index < 2 ? "high" : "auto"} // First 2 images high priority
         />
         <div className='mb-10 px-1 pt-3'>
             <p className='text-xs mb-3 text-gray-500'>{post.date}</p>

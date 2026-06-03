@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 from django.contrib.auth.models import User
 
 
@@ -36,7 +38,7 @@ def create_resident_user(resident_instance):
         defaults={
             'email': resident_instance.email or '',
             'first_name': resident_instance.residentsName or '',
-            'is_active': True,
+            'is_active': False,
         },
     )
     user.set_password(plain_password)

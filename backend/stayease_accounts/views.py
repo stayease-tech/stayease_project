@@ -8,25 +8,42 @@ from django.core.mail import EmailMessage
 from django.db.models import Sum, FloatField, Q, OuterRef, Subquery, Prefetch, Exists
 from django.db.models.functions import Cast
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from stayease_project.permissions import IsAdminGroup
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from datetime import datetime, timedelta
-from .models import User_Activity_Data, User_Login_Data, Vendor_Detail, RawdataFile, Rawdata_Detail, Expense_Detail, Expense_Category_Detail, Fixed_Expense_Detail, Liability_Detail, OtherFile
+from collections import defaultdict
+from django.contrib.auth.models import User
+from .models import User_Activity_Data, User_Login_Data, Vendor_Detail, RawdataFile, Rawdata_Detail, Expense_Detail, Expense_Category_Detail, Fixed_Expense_Detail, Liability_Detail, OtherFile, DropdownConfig
 from stayease_supply.models import Owner_Data, Property_Data, Room_Data, Bed_Data
 from stayease_sales.models import resident_Data
 
 # Create your views here.
 @login_required
 def auth_check(request):
+    """Handle GET /auth/check/ — confirm whether the current session is authenticated.
+
+    Returns:
+        JsonResponse with `isAuthenticated` bool and `username` if authenticated.
+    """
     if request.user.is_authenticated:
         return JsonResponse({"isAuthenticated": True, "username": request.user.username})
     return JsonResponse({"isAuthenticated": False})
     
 @csrf_exempt
 def login_view(request):
+    """Handle POST /auth/login/ — authenticate a dashboard user and create a session.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `username` and `password`.
+
+    Returns:
+        JsonResponse with user info, permissions, groups, and login session ID on success (200),
+        or an error message on invalid credentials (400).
+    """
     data = json.loads(request.body)
     username = data.get("username")
     password = data.get("password")
@@ -49,13 +66,22 @@ def login_view(request):
             login_time=timezone.now()
         )
 
-        return JsonResponse({"success": True, "username": user.username, "useremail": user.email, "permissions": permissions, "login_id": user_login_instance.id, "is_superuser": user.is_superuser})
+        groups = list(user.groups.values_list('name', flat=True))
+        return JsonResponse({"success": True, "username": user.username, "useremail": user.email, "permissions": permissions, "groups": groups, "login_id": user_login_instance.id, "is_superuser": user.is_superuser})
 
     return JsonResponse({"success": False, "message": "Invalid credentials"}, status=400)
 
 @csrf_exempt
 @login_required
 def logout_view(request):
+    """Handle POST /auth/logout/ — end the current session and record logout time.
+
+    Args:
+        request: Django HttpRequest with optional JSON body containing `loginId`.
+
+    Returns:
+        JsonResponse with `success: true` on success, or an error message on failure (405).
+    """
     if request.method != 'POST':
         return JsonResponse({"success": False, "message": "Invalid request method. POST expected."}, status=405)
 
@@ -75,6 +101,11 @@ def logout_view(request):
     return JsonResponse({"success": True})
 
 def get_user_activity_data(request):
+    """Handle GET /accounts/user-activity/ — retrieve all users with their login/logout history.
+
+    Returns:
+        JsonResponse with `user_activity_data` list containing login session details per user.
+    """
     if request.method == 'GET':
         try:
             user_activity_data = User_Activity_Data.objects.prefetch_related(
@@ -106,7 +137,53 @@ def get_user_activity_data(request):
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
+def get_dropdown_config(request):
+    """Handle GET /accounts/dropdown-config/ — return all dropdown options grouped by category.
+
+    Returns:
+        JsonResponse with `dropdown_config` dict mapping group names to lists of values.
+    """
+    if request.method == 'GET':
+        try:
+            configs = DropdownConfig.objects.all()
+            grouped = defaultdict(list)
+            for c in configs:
+                grouped[c.group].append(c.value)
+            return JsonResponse({'success': True, 'dropdown_config': dict(grouped)})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'success': False, 'message': 'Error fetching dropdown config.'})
+    return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
+
+def get_staff_names(request):
+    """Handle GET /accounts/staff-names/ — return a list of active staff users.
+
+    Returns:
+        JsonResponse with `staff_names` list containing id, name, and username per staff member.
+    """
+    if request.method == 'GET':
+        try:
+            staff = User.objects.filter(is_active=True, is_staff=True).values('id', 'first_name', 'last_name', 'username')
+            staff_list = []
+            for u in staff:
+                name = f"{u['first_name']} {u['last_name']}".strip() or u['username']
+                staff_list.append({'id': u['id'], 'name': name, 'username': u['username']})
+            return JsonResponse({'success': True, 'staff_names': staff_list})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'success': False, 'message': 'Error fetching staff names.'})
+    return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
+
 def get_resident_deductions(resident, room):
+    """Calculate total check-out deductions for a given resident and room.
+
+    Args:
+        resident: Resident name string to filter expenses by.
+        room: Room number string to filter expenses by.
+
+    Returns:
+        Float total of amount + GST across all approved check-out deduction categories.
+    """
     expense_query = Expense_Detail.objects.filter(
         headOfExpense='Resident',
         expenseType='Check-Out Deductions'
@@ -133,6 +210,16 @@ def get_resident_deductions(resident, room):
     return total
 
 def get_resident_amount(id, type):
+    """Fetch a specific field from the first liability record linked to a resident.
+
+    Args:
+        id: Primary key of the resident_Data instance.
+        type: Field name to retrieve — one of 'id', 'status', 'amount', 'utrNumber',
+            'transferredDate', 'createdAt', or 'updatedAt'.
+
+    Returns:
+        The requested field value, or None if no liability record exists.
+    """
     liability_query = Liability_Detail.objects.filter(liability_resident_id=id).first()
 
     if not liability_query:
@@ -163,6 +250,15 @@ def get_resident_amount(id, type):
 
 @csrf_exempt
 def vendor_form_submit(request):
+    """Handle POST /accounts/vendor/submit/ — create a new vendor record.
+
+    Args:
+        request: Django HttpRequest with JSON body containing vendor name, contact,
+            category, billing type, and optional banking/UPI details.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'POST':
         try:
             vendor_data = json.loads(request.body)
@@ -201,6 +297,11 @@ def vendor_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_vendor_data(request):
+    """Handle GET /accounts/vendor/ — return all vendors with their linked expense categories.
+
+    Returns:
+        JsonResponse with `vendor_table` list containing vendor details and nested categories.
+    """
     if request.method == 'GET':
         try:
             vendors = Vendor_Detail.objects.prefetch_related('vendor_categories').all()
@@ -256,6 +357,15 @@ def get_vendor_data(request):
 
 @csrf_exempt
 def vendor_data_update(request, id):
+    """Handle PUT /accounts/vendor/<id>/ — update changed fields on an existing vendor record.
+
+    Args:
+        request: Django HttpRequest with JSON body of fields to update.
+        id: Primary key of the Vendor_Detail to update.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -312,6 +422,11 @@ def vendor_data_update(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. PUT expected!'})
 
 def get_property_data(request):
+    """Handle GET /accounts/properties/ — return a list of all registered properties.
+
+    Returns:
+        JsonResponse with `properties` list containing id, name, and submission timestamps.
+    """
     if request.method == 'GET':
         try:
             property_data = Property_Data.objects.all()
@@ -331,6 +446,15 @@ def get_property_data(request):
             return JsonResponse({'success': False, 'message': 'Error fetching data. Please try again later!'})
 
 def get_owner_rooms(request, id):
+    """Handle GET /accounts/owner/<id>/rooms/ — return completed rooms for an owner or property.
+
+    Args:
+        request: Django HttpRequest.
+        id: Owner numeric ID or property name string to filter rooms by.
+
+    Returns:
+        JsonResponse with `rooms_data` list of serialized room records.
+    """
     if request.method == 'GET':
         try:
             if id.isdigit():
@@ -356,6 +480,16 @@ def get_owner_rooms(request, id):
             return JsonResponse({'success': False, 'message': 'Error fetching data. Please try again later!'})
         
 def get_resident_data(request, property_name, room):
+    """Handle GET /accounts/residents/<property_name>/<room>/ — return active residents in a room.
+
+    Args:
+        request: Django HttpRequest.
+        property_name: Name of the property to filter by.
+        room: Room number to filter by.
+
+    Returns:
+        JsonResponse with `residents_data` list of serialized active resident records.
+    """
     if request.method == 'GET':
         try:
             residents = resident_Data.objects.filter(
@@ -374,6 +508,12 @@ def get_resident_data(request, property_name, room):
             return JsonResponse({'success': False, 'message': 'Error fetching data. Please try again later!'})
         
 def get_owner_data(request):
+    """Handle GET /accounts/owners/ — return owners with rent totals and previous month expenses.
+
+    Returns:
+        JsonResponse with `owner_data` list including summed rents, approved expense details,
+        and the relevant month/year label for each owner.
+    """
     if request.method == 'GET':
         try:
             today = datetime.now().date()
@@ -463,6 +603,18 @@ def get_owner_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 def expense_email(expenseRaisedEmail, propertyName, headOfExpense, expenseType, categories, email_type, expense_instance=None):
+    """Send a threaded HTML email notification for an expense submission or status update.
+
+    Args:
+        expenseRaisedEmail: Email address of the staff member who raised the expense.
+        propertyName: Property the expense belongs to.
+        headOfExpense: Head category of the expense (e.g. 'Owner', 'Resident').
+        expenseType: Type label for the expense.
+        categories: List of category dicts for 'pendingStatus', or an Expense_Category_Detail
+            instance for 'statusUpdate'.
+        email_type: Either 'pendingStatus' (new submission) or 'statusUpdate' (approval change).
+        expense_instance: Optional Expense_Detail instance used to maintain the email thread ID.
+    """
     if expense_instance and expense_instance.email_thread_id:
         thread_message_id = expense_instance.email_thread_id
     else:
@@ -720,6 +872,14 @@ def expense_email(expenseRaisedEmail, propertyName, headOfExpense, expenseType, 
         
 @csrf_exempt
 def expense_form_submit(request):
+    """Handle POST /accounts/expense/submit/ — create an expense with category line items.
+
+    Accepts multipart/form-data. Creates an Expense_Detail header and one or more
+    Expense_Category_Detail rows, then sends a pending-status notification email.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'POST':
         try:
             data = {
@@ -865,6 +1025,12 @@ def expense_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
         
 def get_expense_data(request):
+    """Handle GET /accounts/expense/ — return all expenses with their category line items flattened.
+
+    Returns:
+        JsonResponse with `expense_table` list where each entry represents one category row
+        merged with its parent expense header fields.
+    """
     if request.method == 'GET':
         try:
             expenses = Expense_Detail.objects.prefetch_related('expense_categories').all()
@@ -916,6 +1082,15 @@ def get_expense_data(request):
 
 @csrf_exempt
 def accounts_form_update(request, id):
+    """Handle PUT /accounts/expense/<id>/update/ — update status and payment fields on a category.
+
+    Args:
+        request: Django HttpRequest with JSON body of fields to update.
+        id: Primary key of the Expense_Category_Detail to update.
+
+    Returns:
+        JsonResponse with `success` bool and a `message`; also triggers a status-update email.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -976,6 +1151,16 @@ def accounts_form_update(request, id):
 
 @csrf_exempt
 def accounts_form_delete(request, id):
+    """Handle DELETE /accounts/expense/<id>/delete/ — delete an expense or a single category.
+
+    Args:
+        request: Django HttpRequest with optional query param `model_type=expense`.
+        id: Primary key of the record to delete.
+
+    Returns:
+        JsonResponse with `success` bool and a `message`; also deletes the parent expense
+        header when the last category is removed.
+    """
     if request.method == 'DELETE':
         model_type = request.GET.get('model_type')
 
@@ -1015,6 +1200,13 @@ def accounts_form_delete(request, id):
 
 @csrf_exempt
 def fixed_expense_form_submit(request):
+    """Handle POST /accounts/fixed-expense/submit/ — create a monthly rental payout record.
+
+    Accepts multipart/form-data with owner, property, rental, TDS, and deduction fields.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'POST':
         try:
             owner_instance = Owner_Data.objects.get(id=request.POST.get('ownerId'))
@@ -1042,6 +1234,11 @@ def fixed_expense_form_submit(request):
             return JsonResponse({'success': False, 'message': 'Error submitting data. Please try again later!'})
         
 def get_fixed_expense_data(request):
+    """Handle GET /accounts/fixed-expense/ — return all fixed monthly expense records.
+
+    Returns:
+        JsonResponse with `expense_table` list containing rental, TDS, and transfer details.
+    """
     if request.method == 'GET':
         try:
             fixed_expenses = Fixed_Expense_Detail.objects.all()
@@ -1081,6 +1278,17 @@ def get_fixed_expense_data(request):
 
 @csrf_exempt
 def accounts_fixed_expense_update(request, id):
+    """Handle PUT /accounts/fixed-expense/<id>/update/ — update a fixed expense record.
+
+    Sends a rental payment confirmation email to the owner when status is set to 'Completed'.
+
+    Args:
+        request: Django HttpRequest with JSON body of fields to update.
+        id: Primary key of the Fixed_Expense_Detail to update.
+
+    Returns:
+        JsonResponse with `success` bool, `message`, and `updatedTime` on success.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -1180,6 +1388,15 @@ def accounts_fixed_expense_update(request, id):
 
 @csrf_exempt
 def accounts_fixed_expense_delete(request, id):
+    """Handle DELETE /accounts/fixed-expense/<id>/delete/ — remove a fixed expense record.
+
+    Args:
+        request: Django HttpRequest.
+        id: Primary key of the Fixed_Expense_Detail to delete.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'DELETE':
         try:
             fixed_expense_data = Fixed_Expense_Detail.objects.get(id=id)
@@ -1193,6 +1410,12 @@ def accounts_fixed_expense_delete(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. DELETE expected!'})
 
 def get_beds_data(request):
+    """Handle GET /accounts/beds/ — return active residents with bed, room, and liability data.
+
+    Returns:
+        JsonResponse with `beds_table` list combining property, room, resident,
+        KYC, and deposit refund details for all active occupied beds.
+    """
     if request.method == 'GET':
         try:
             properties = Property_Data.objects.prefetch_related(
@@ -1265,8 +1488,14 @@ def get_beds_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAdminGroup])
 def get_liability_data(request):
+    """Handle GET /accounts/liability/ — return all liability records (admin only).
+
+    Returns:
+        JsonResponse with `liability_data` list containing resident name, refund status,
+        amount, and transfer details.
+    """
     if request.method == 'GET':
         try:
             liabilities = Liability_Detail.objects.select_related('liability_resident').all()
@@ -1291,6 +1520,17 @@ def get_liability_data(request):
 
 @csrf_exempt
 def liability_form_submit(request):
+    """Handle POST /accounts/liability/submit/ — create a deposit refund liability for a resident.
+
+    Optionally sends a bank-details request email to the resident if `checkSendEmail` is true.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `residentId`, `status`,
+            `checkSendEmail`, `amount`, `utrNumber`, and `transferredDate`.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'POST':
         try:
             liability_data = json.loads(request.body)
@@ -1375,6 +1615,17 @@ def liability_form_submit(request):
 
 @csrf_exempt
 def liability_data_update(request, id):
+    """Handle PUT /accounts/liability/<id>/update/ — update a resident's deposit liability record.
+
+    Resends the bank-details email to the resident if `checkSendEmail` is set to true.
+
+    Args:
+        request: Django HttpRequest with JSON body of fields to update.
+        id: Primary key of the Liability_Detail to update.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -1490,6 +1741,14 @@ def liability_data_update(request, id):
 
 @csrf_exempt
 def rawdata_file_upload(request):
+    """Handle POST /accounts/rawdata/upload/ — upload a raw bank statement file.
+
+    Args:
+        request: Django HttpRequest with multipart file field `rawdataFile`.
+
+    Returns:
+        JsonResponse with `success` bool, `message`, and `file_id` of the created record.
+    """
     if request.method == 'POST':
         try:
             new_file = RawdataFile.objects.create(rawdataFile = request.FILES.get("rawdataFile"))
@@ -1505,6 +1764,11 @@ def rawdata_file_upload(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_rawdata_file(request):
+    """Handle GET /accounts/rawdata/ — return a list of all uploaded raw data files.
+
+    Returns:
+        JsonResponse with `rawdata_files` list of all RawdataFile records as dicts.
+    """
     if request.method == 'GET':
         try:
             serialized_data = list(RawdataFile.objects.all().values())
@@ -1519,6 +1783,15 @@ def get_rawdata_file(request):
 
 @csrf_exempt
 def rawdata_file_delete(request, id):
+    """Handle DELETE /accounts/rawdata/<id>/delete/ — remove a raw data file record.
+
+    Args:
+        request: Django HttpRequest.
+        id: Primary key of the RawdataFile to delete.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'DELETE':
         try:
             rawdataFile = RawdataFile.objects.get(id=id)
@@ -1532,6 +1805,15 @@ def rawdata_file_delete(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. DELETE expected!'})
 
 def get_rawdata_content(request, id):
+    """Handle GET /accounts/rawdata/<id>/content/ — return a presigned S3 URL and parsed rows.
+
+    Args:
+        request: Django HttpRequest.
+        id: Primary key of the RawdataFile whose content to retrieve.
+
+    Returns:
+        JsonResponse with `file_url` presigned URL and `rawdata` list of parsed transaction rows.
+    """
     if request.method == 'GET':
         try:
             file_obj = RawdataFile.objects.get(pk=id)
@@ -1581,6 +1863,17 @@ def get_rawdata_content(request, id):
 
 @csrf_exempt
 def rawdata_form_submit(request, id):
+    """Handle POST /accounts/rawdata/<id>/submit/ — add a parsed transaction row to a file.
+
+    Accepts multipart/form-data with transaction fields and an optional receipt image.
+
+    Args:
+        request: Django HttpRequest with form fields for date, desc, type, amounts, and category.
+        id: Primary key of the parent RawdataFile record.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'POST':
         try:
             rawdata_instance = get_object_or_404(RawdataFile, id=id)
@@ -1625,6 +1918,17 @@ def rawdata_form_submit(request, id):
 @api_view(["PUT"])
 @csrf_exempt
 def rawdata_form_update(request, id):
+    """Handle PUT /accounts/rawdata/<id>/update/ — update an existing raw data transaction row.
+
+    Handles optional receipt file replacement and owner instance re-assignment.
+
+    Args:
+        request: Django HttpRequest with multipart form data of fields to update.
+        id: Primary key of the Rawdata_Detail to update.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'PUT':
         try:
             rawdata_instance = get_object_or_404(Rawdata_Detail, pk=id)
@@ -1693,6 +1997,15 @@ def rawdata_form_update(request, id):
 
 @csrf_exempt
 def rawdata_form_delete(request, id):
+    """Handle DELETE /accounts/rawdata/<id>/row/delete/ — remove a single raw data transaction row.
+
+    Args:
+        request: Django HttpRequest.
+        id: Primary key of the Rawdata_Detail to delete.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'DELETE':
         try:
             rawdata_detail = Rawdata_Detail.objects.get(id=id)
@@ -1714,6 +2027,14 @@ def rawdata_form_delete(request, id):
 
 @csrf_exempt
 def other_files_upload(request):
+    """Handle POST /accounts/other-files/upload/ — upload a miscellaneous document for a property.
+
+    Args:
+        request: Django HttpRequest with multipart fields `propertyName`, `fileName`, and `file`.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'POST':
         try:
             OtherFile.objects.create(
@@ -1731,6 +2052,11 @@ def other_files_upload(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_other_files(request):
+    """Handle GET /accounts/other-files/ — return a list of all uploaded miscellaneous files.
+
+    Returns:
+        JsonResponse with `other_files` list of all OtherFile records as dicts.
+    """
     if request.method == 'GET':
         try:
             serialized_data = list(OtherFile.objects.all().values())
@@ -1745,6 +2071,15 @@ def get_other_files(request):
 
 @csrf_exempt
 def other_file_delete(request, id):
+    """Handle DELETE /accounts/other-files/<id>/delete/ — remove a miscellaneous file record.
+
+    Args:
+        request: Django HttpRequest.
+        id: Primary key of the OtherFile to delete.
+
+    Returns:
+        JsonResponse with `success` bool and a `message` describing the outcome.
+    """
     if request.method == 'DELETE':
         try:
             rawdataFile = OtherFile.objects.get(id=id)
@@ -1761,7 +2096,6 @@ def other_file_delete(request, id):
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status as drf_status
-from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from stayease_project.throttles import LoginRateThrottle
 
@@ -1772,6 +2106,14 @@ class MobileLoginView(APIView):
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
+        """Handle POST /mobile/login/ — authenticate staff and return JWT access/refresh tokens.
+
+        Args:
+            request: DRF Request with JSON body containing `username` and `password`.
+
+        Returns:
+            Response with `access`, `refresh` tokens, user metadata, and login session ID.
+        """
         username = request.data.get('username')
         password = request.data.get('password')
 
@@ -1796,6 +2138,8 @@ class MobileLoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
+        groups = list(user.groups.values_list('name', flat=True))
+
         return Response({
             'success': True,
             'access': str(refresh.access_token),
@@ -1803,6 +2147,7 @@ class MobileLoginView(APIView):
             'username': user.username,
             'useremail': user.email,
             'permissions': permissions,
+            'groups': groups,
             'login_id': user_login_instance.id,
             'is_superuser': user.is_superuser,
         })
@@ -1814,6 +2159,14 @@ class MobilePartnerLoginView(APIView):
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request):
+        """Handle POST /mobile/partner/login/ — verify partner OTP and return JWT tokens.
+
+        Args:
+            request: DRF Request with JSON body containing `phone` and `otp`.
+
+        Returns:
+            Response with `access`, `refresh` tokens and `user_type` on successful OTP verification.
+        """
         phone = request.data.get('phone')
         otp = request.data.get('otp')
 
@@ -1821,9 +2174,7 @@ class MobilePartnerLoginView(APIView):
             return Response({'success': False, 'message': 'Phone and OTP required.'}, status=drf_status.HTTP_400_BAD_REQUEST)
 
         # Delegate to the existing partner OTP verification logic
-        import requests as http_requests
         try:
-            # Call the existing verify-otp endpoint internally
             from stayease_partners.views import verify_otp_internal
             result = verify_otp_internal(phone, otp)
             if not result:
@@ -1831,20 +2182,24 @@ class MobilePartnerLoginView(APIView):
         except Exception:
             return Response({'success': False, 'message': 'OTP verification failed.'}, status=drf_status.HTTP_401_UNAUTHORIZED)
 
-        # Partners don't have Django users, generate a stateless token
-        from rest_framework_simplejwt.tokens import AccessToken
-        token = AccessToken()
-        token['phone'] = phone
-        token['user_type'] = 'partners'
-        token.set_exp(lifetime=timedelta(hours=8))
+        # Get or create a Django User for this partner (enables RBAC)
+        from django.contrib.auth.models import Group
+        user, created = User.objects.get_or_create(
+            username=f'partner_{phone}',
+            defaults={'is_staff': False, 'is_active': True}
+        )
+        if created:
+            user.set_unusable_password()
+            user.save()
 
-        refresh = RefreshToken()
-        refresh['phone'] = phone
-        refresh['user_type'] = 'partners'
+        # Ensure user is in the Partner group
+        partner_group, _ = Group.objects.get_or_create(name='Partner')
+        user.groups.add(partner_group)
 
+        refresh = RefreshToken.for_user(user)
         return Response({
             'success': True,
-            'access': str(token),
+            'access': str(refresh.access_token),
             'refresh': str(refresh),
             'phone': phone,
             'user_type': 'partners',

@@ -2,6 +2,11 @@ from django.db import models
 
 # Create your models here.
 class PropertyContract_Detail(models.Model):
+    """Represents a property contract record linking a room to a resident.
+
+    Stores lease terms, fee schedule, and resident contact for a specific accommodation.
+    """
+
     uniqueId = models.CharField(unique=True)
     communityManager = models.CharField(max_length=100)
     roomNo = models.CharField()

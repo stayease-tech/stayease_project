@@ -9,11 +9,21 @@ from django.db.models.functions import Cast, Coalesce
 from django.db.models import Sum, IntegerField
 from dateutil.relativedelta import relativedelta
 from django.views.decorators.csrf import ensure_csrf_cookie
+from rest_framework.decorators import api_view, permission_classes
+from stayease_project.permissions import IsPartner
 from stayease_accounts.models import Expense_Category_Detail
 from stayease_supply.models import Owner_Data, Property_Data, Bed_Data
 from .models import YearlyDeductionSummary
 
 def get_total_rent(owner_id):
+    """Return the sum of rent (cast to integer) across all properties for a given owner.
+
+    Args:
+        owner_id: Primary key of the Owner_Data record.
+
+    Returns:
+        int: Total rent amount; 0 if no properties exist.
+    """
     total_rent = Property_Data.objects.filter(
         owner_id=owner_id
     ).select_related('owner').aggregate(
@@ -23,6 +33,14 @@ def get_total_rent(owner_id):
     return total_rent
 
 def get_prev_month_deductions(owner_id):
+    """Return the total approved owner deduction expenses for the previous calendar month.
+
+    Args:
+        owner_id: Primary key of the Owner_Data record.
+
+    Returns:
+        int: Sum of approved deduction amounts; 0 if none exist.
+    """
     current_date = datetime.now()
 
     prev_month_date = current_date - relativedelta(months=1)
@@ -42,6 +60,15 @@ def get_prev_month_deductions(owner_id):
     return total_deductions        
 
 def get_yearly_income(owner, monthly_rent_after_deductions):
+    """Accumulate monthly net rent into the owner's yearly deduction summary record.
+
+    Args:
+        owner: Owner_Data instance to associate with.
+        monthly_rent_after_deductions: Net rent value to append for the current month.
+
+    Returns:
+        float: Updated cumulative yearly total for this owner.
+    """
     current_date = datetime.now()
     current_year = current_date.year
 
@@ -59,7 +86,17 @@ def get_yearly_income(owner, monthly_rent_after_deductions):
     
     return yearly_summary.cumulative_total
 
+@api_view(['GET'])
+@permission_classes([IsPartner])
 def get_expense_data(request):
+    """Handle GET /partner/expenses/ — retrieve owner summary and expense breakdown by phone number.
+
+    Args:
+        request: Django HttpRequest with query param `phone` matching an owner's phone number.
+
+    Returns:
+        JsonResponse with `owner_data` summary dict and `expenses` list of expense category records.
+    """
     if request.method == "GET":
         phone_number = request.GET.get('phone')
         owner_row = Owner_Data.objects.filter(ownerPhone=phone_number)
@@ -131,7 +168,17 @@ def get_expense_data(request):
 
             return JsonResponse({"owner_data": owner_data, "expenses": expenses})
 
+@api_view(['GET'])
+@permission_classes([IsPartner])
 def get_overall_data(request):
+    """Handle GET /partner/overview/ — retrieve all properties for an owner identified by phone.
+
+    Args:
+        request: Django HttpRequest with query param `phone` matching an owner's phone number.
+
+    Returns:
+        JsonResponse with `properties` list containing full property details and document URLs.
+    """
     if request.method == "GET":
         phone_number = request.GET.get('phone')
         owner_row = Owner_Data.objects.filter(ownerPhone=phone_number)
@@ -180,7 +227,17 @@ def get_overall_data(request):
 
             return JsonResponse({"properties": properties})
 
+@api_view(['GET'])
+@permission_classes([IsPartner])
 def get_owner_data(request):
+    """Handle GET /partner/owner/ — retrieve full owner profile and financial summary by phone.
+
+    Args:
+        request: Django HttpRequest with query param `phone` matching an owner's phone number.
+
+    Returns:
+        JsonResponse with `owner_data` dict containing personal, bank, KYC, and rent fields.
+    """
     if request.method == "GET":
         phone_number = request.GET.get('phone')
         owner_row = Owner_Data.objects.filter(ownerPhone=phone_number)
@@ -229,7 +286,17 @@ def get_owner_data(request):
 
             return JsonResponse({"owner_data": owner_data})
         
+@api_view(['GET'])
+@permission_classes([IsPartner])
 def get_property_data(request):
+    """Handle GET /partner/properties/ — retrieve properties with occupancy rates for an owner.
+
+    Args:
+        request: Django HttpRequest with query param `phone` matching an owner's phone number.
+
+    Returns:
+        JsonResponse with `properties` list, each entry including occupancy rate and bed counts.
+    """
     if request.method == "GET":
         phone_number = request.GET.get('phone')
         owner_row = Owner_Data.objects.filter(ownerPhone=phone_number)
@@ -299,6 +366,14 @@ def get_property_data(request):
 
 @ensure_csrf_cookie
 def send_otp(request):
+    """Handle POST /partner/send-otp/ — generate and dispatch a one-time password via SMS.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `ownerPhone`.
+
+    Returns:
+        JsonResponse with a `message` indicating success or the reason for failure.
+    """
     if request.method == "POST":
         data = json.loads(request.body)
 
@@ -337,6 +412,14 @@ www.mystayease.com"""
     
 @ensure_csrf_cookie
 def verify_otp(request):
+    """Handle POST /partner/verify-otp/ — validate the OTP and establish a partner session.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `ownerPhone` and `otp`.
+
+    Returns:
+        JsonResponse with a `message` indicating login success or the validation error.
+    """
     data = json.loads(request.body)
 
     ownerPhone = data.get("ownerPhone")

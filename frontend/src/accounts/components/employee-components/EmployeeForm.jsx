@@ -3,8 +3,10 @@ import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function EmployeeForm({ isExpanded, setIsExpanded }) {
+  const { getOptions } = useDropdowns();
   const [employeeData, setEmployeeData] = useState({
     firstName: '',
     lastName: '',
@@ -155,8 +157,9 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
               <option value="" disabled>
                 Select the gender here
               </option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
+              {getOptions('genders').map((g, i) => (
+                <option key={i} value={g}>{g}</option>
+              ))}
             </select>
 
             <label htmlFor="role" className="text-[#D4A017] max-sm:text-sm">
@@ -172,10 +175,9 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
               <option value="" disabled>
                 Select the role here
               </option>
-              <option value="Supply">Supply</option>
-              <option value="Sales">Sales</option>
-              <option value="Accounts">Accounts</option>
-              <option value="Operations">Operations</option>
+              {getOptions('employee_roles').map((r, i) => (
+                <option key={i} value={r}>{r}</option>
+              ))}
             </select>
 
             <button

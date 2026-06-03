@@ -21,7 +21,7 @@ const PageHeader = memo(({ headertitle, subheader }) => {
                     className="object-cover absolute inset-0 w-full h-full opacity-50"
                     loading="eager"
                     decoding="async"
-                    fetchpriority="high" // Prioritize this image as it's above the fold
+                    fetchPriority="high" // Prioritize this image as it's above the fold
                 />
             </div>
 

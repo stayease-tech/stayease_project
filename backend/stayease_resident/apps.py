@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 from django.apps import AppConfig
 
 

@@ -1,7 +1,8 @@
 import json
 from django.utils import timezone
 from django.http import JsonResponse
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from stayease_project.permissions import IsSupplyTeam
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
@@ -12,12 +13,26 @@ from .models import User_Activity_Data, User_Login_Data, Owner_Data, Property_Da
 
 @login_required
 def auth_check(request):
+    """Handle GET /auth/check/ — verify whether the current session user is authenticated.
+
+    Returns:
+        JsonResponse with `isAuthenticated` boolean and `username` if authenticated.
+    """
     if request.user.is_authenticated:
         return JsonResponse({"isAuthenticated": True, "username": request.user.username})
     return JsonResponse({"isAuthenticated": False})
 
 @csrf_exempt
 def login_view(request):
+    """Handle POST /login/ — authenticate a supply portal user and open a session.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `username` and `password`.
+
+    Returns:
+        JsonResponse with `success`, `username`, `useremail`, `permissions`, and `login_id`
+        on success, or an error message with status 400 on failure.
+    """
     data = json.loads(request.body)
     username = data.get("username")
     password = data.get("password")
@@ -45,21 +60,39 @@ def login_view(request):
     return JsonResponse({"success": False, "message": "Invalid credentials"}, status=400)
 
 def logout_view(request):
-    data = json.loads(request.body)
-    login_id = data.get("loginId")
+    """Handle POST /logout/ — end the user session and record the logout timestamp.
 
-    login_instance = User_Login_Data.objects.get(
-        id=login_id
-    )
-                
-    if login_instance:
-        login_instance.logout_time = timezone.now()
-        login_instance.save()
+    Args:
+        request: Django HttpRequest with optional JSON body containing `loginId`.
+
+    Returns:
+        JsonResponse with `success` true on logout, or error details on bad method/data.
+    """
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "message": "Invalid request method. POST expected."}, status=405)
+
+    try:
+        data = json.loads(request.body or '{}')
+    except json.JSONDecodeError:
+        data = {}
+
+    login_id = data.get("loginId")
+    if login_id:
+        login_instance = User_Login_Data.objects.filter(id=login_id).first()
+        if login_instance and not login_instance.logout_time:
+            login_instance.logout_time = timezone.now()
+            login_instance.save(update_fields=["logout_time"])
 
     logout(request)
     return JsonResponse({"success": True})
 
 def get_user_activity_data(request):
+    """Handle GET /user-activity/ — retrieve all users with their full login/logout history.
+
+    Returns:
+        JsonResponse with `success` and `user_activity_data` list, each entry containing
+        user identity and a nested list of login session timestamps.
+    """
     if request.method == 'GET':
         try:
             user_activity_data = User_Activity_Data.objects.prefetch_related(
@@ -93,6 +126,15 @@ def get_user_activity_data(request):
 
 @csrf_exempt
 def owner_form_submit(request):
+    """Handle POST /owner/submit/ — validate and create a new owner record with KYC documents.
+
+    Args:
+        request: Django HttpRequest with multipart form data including owner personal details,
+            bank account fields, and optional document file uploads.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'POST':
         try:
             import re
@@ -147,6 +189,11 @@ def owner_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_owner_data(request):
+    """Handle GET /owner/list/ — retrieve all owner records with their document URLs.
+
+    Returns:
+        JsonResponse with `success` and `supply_table` list of serialised owner objects.
+    """
     if request.method == 'GET':
         try:
             owner_data = Owner_Data.objects.all()
@@ -191,8 +238,18 @@ def get_owner_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(["PUT"])
+@permission_classes([IsSupplyTeam])
 @csrf_exempt
 def owner_form_update(request, id):
+    """Handle PUT /owner/update/<id>/ — update changed fields on an existing owner record.
+
+    Args:
+        request: Django HttpRequest with multipart form data for updated fields and files.
+        id: Primary key of the Owner_Data record to update.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'PUT':
         try:
             owner_data = Owner_Data.objects.get(id=id)
@@ -235,6 +292,15 @@ def owner_form_update(request, id):
 
 @csrf_exempt
 def owner_form_delete(request, id):
+    """Handle DELETE /owner/delete/<id>/ — delete an owner if no properties are assigned.
+
+    Args:
+        request: Django HttpRequest using DELETE method.
+        id: Primary key of the Owner_Data record to delete.
+
+    Returns:
+        JsonResponse with `success` and a message; blocks deletion if properties exist.
+    """
     if request.method == 'DELETE':
         try:
             owner_data = Owner_Data.objects.get(id=id)
@@ -259,6 +325,16 @@ def owner_form_delete(request, id):
 
 @csrf_exempt
 def property_data_submit(request, id):
+    """Handle POST /property/submit/<id>/ — create a new property under the given owner.
+
+    Args:
+        request: Django HttpRequest with multipart form data including property details,
+            JSON amenity/meal lists, room/basement floor counts, and document uploads.
+        id: Primary key of the Owner_Data record to associate the property with.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'POST':
         try:
             owner_instance = Owner_Data.objects.get(id=id)
@@ -360,6 +436,15 @@ def property_data_submit(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_property_data(request, id):
+    """Handle GET /property/list/<id>/ — retrieve property records for an owner or all owners.
+
+    Args:
+        request: Django HttpRequest using GET method.
+        id: Owner primary key to filter by, or 0 to return all properties.
+
+    Returns:
+        JsonResponse with `success` and `property_table` list of serialised property objects.
+    """
     if request.method == 'GET':
         try:
             if int(id) == 0:
@@ -413,8 +498,19 @@ def get_property_data(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(["PUT"])
+@permission_classes([IsSupplyTeam])
 @csrf_exempt
 def property_form_update(request, id):
+    """Handle PUT /property/update/<id>/ — update changed fields on an existing property record.
+
+    Args:
+        request: Django HttpRequest with multipart form data for updated scalar fields,
+            JSON amenity/meal arrays, and optional file replacements.
+        id: Primary key of the Property_Data record to update.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'PUT':
         try:
             property_data = Property_Data.objects.get(id=id)
@@ -487,6 +583,15 @@ def property_form_update(request, id):
 
 @csrf_exempt
 def property_form_delete(request, id):
+    """Handle DELETE /property/delete/<id>/ — delete a property and update the owner's count.
+
+    Args:
+        request: Django HttpRequest using DELETE method.
+        id: Primary key of the Property_Data record to delete.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'DELETE':
         try:
             property_data = Property_Data.objects.get(id=id)
@@ -508,6 +613,16 @@ def property_form_delete(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. DELETE expected!'})
 
 def room_form_submit(request, id):
+    """Handle POST /room/submit/<id>/ — assign room number, type, and beds to a pending room.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `propertyId`, `roomNo`,
+            `roomType`, and a `beds` list with per-bed configuration fields.
+        id: Primary key of the Room_Data record being completed.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'POST':
         try:
             room_data = json.loads(request.body)
@@ -549,6 +664,15 @@ def room_form_submit(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_room_data(request, id):
+    """Handle GET /room/list/<id>/ — retrieve rooms and their beds for a property or all properties.
+
+    Args:
+        request: Django HttpRequest using GET method.
+        id: Property primary key to filter by, or 0 to return all rooms.
+
+    Returns:
+        JsonResponse with `success` and `room_table` list, each entry including a `beds` sub-list.
+    """
     if request.method == 'GET':
         try:
             if int(id) == 0:
@@ -598,6 +722,16 @@ def get_room_data(request, id):
 
 @csrf_exempt
 def room_data_update(request, id):
+    """Handle PUT /room/update/<id>/ — update room fields and replace or patch its bed records.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `propertyId` and any changed
+            room or bed fields; if `roomType` changes, all beds are replaced.
+        id: Primary key of the Room_Data record to update.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'PUT':
         try:
             room_data = json.loads(request.body)
@@ -654,6 +788,12 @@ def room_data_update(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. PUT expected!'})
     
 def get_property_details(request):
+    """Handle GET /property-details/ — retrieve all public property listings with media and pricing.
+
+    Returns:
+        JsonResponse with `success` and `property_data` list, each entry including neighbourhood
+        images and price board entries as nested objects.
+    """
     if request.method == 'GET':
         try:
             property = Property_Detail.objects.prefetch_related('neighbourhoodImages').all()
@@ -700,6 +840,15 @@ def get_property_details(request):
             return JsonResponse({'success': False, 'message': 'Error submitting data. Please try again later.'})
         
 def property_form_submit(request):
+    """Handle POST /property-details/submit/ — create a public property listing with images and price board.
+
+    Args:
+        request: Django HttpRequest with multipart form data containing property info,
+            optional room-type images, neighbourhood image uploads, and room type/rent pairs.
+
+    Returns:
+        JsonResponse with `success` and a status message.
+    """
     if request.method == 'POST':
         try:
             property_instance = Property_Detail(

@@ -5,8 +5,10 @@ import Navbar from '../Navbar';
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function BedsDetails({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -371,8 +373,9 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                                             <span className="py-1 px-2 w-full">
                                                                 <select id="rentStatus" value={bedsDetails.rentStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="rentStatus" required>
                                                                     <option value="" disabled>Select the status here</option>
-                                                                    <option value="Received">Received</option>
-                                                                    <option value="Not Received">Not Received</option>
+                                                                    {getOptions('deposit_statuses').map((t, i) => (
+                                                                        <option key={i} value={t}>{t}</option>
+                                                                    ))}
                                                                 </select>
                                                             </span>
                                                         </td>
@@ -389,10 +392,9 @@ function BedsDetails({ isExpanded, setIsExpanded }) {
                                                                 <span className="py-1 px-2 w-full">
                                                                     <select id="transferType" value={bedsDetails.transferType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="transferType" required>
                                                                         <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                                        <option value="IMPS">IMPS</option>
-                                                                        <option value="NEFT">NEFT</option>
-                                                                        <option value="UPI">UPI</option>
-                                                                        <option value="Cash">Cash</option>
+                                                                        {getOptions('transfer_types').map((t, i) => (
+                                                                            <option key={i} value={t}>{t}</option>
+                                                                        ))}
                                                                     </select>
                                                                 </span>
                                                             </td>

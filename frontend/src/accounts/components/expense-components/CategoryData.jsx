@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function CategoryData({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const location = useLocation();
     const data = location.state?.data;
@@ -353,10 +355,9 @@ function CategoryData({ isExpanded, setIsExpanded }) {
                                                     <span className="py-1 px-2 w-full">
                                                         <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
                                                             <option value="" disabled>Select the status of the payment here</option>
-                                                            <option value="Pending">Pending</option>
-                                                            <option value="Approved">Approved</option>
-                                                            <option value="Rejected">Rejected</option>
-                                                            <option value="Completed">Completed</option>
+                                                            {getOptions('expense_statuses').map((s, i) => (
+                                                                <option key={i} value={s}>{s}</option>
+                                                            ))}
                                                         </select>
                                                     </span>
                                                 </td>
@@ -373,10 +374,9 @@ function CategoryData({ isExpanded, setIsExpanded }) {
                                                         <span className="py-1 px-2 w-full">
                                                             <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="transferType" required>
                                                                 <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                                <option value="IMPS">IMPS</option>
-                                                                <option value="NEFT">NEFT</option>
-                                                                <option value="UPI">UPI</option>
-                                                                <option value="Cash">Cash</option>
+                                                                {getOptions('transfer_types').map((t, i) => (
+                                                                    <option key={i} value={t}>{t}</option>
+                                                                ))}
                                                             </select>
                                                         </span>
                                                     </td>
@@ -474,10 +474,9 @@ function CategoryData({ isExpanded, setIsExpanded }) {
                                                     <span className="py-1 px-2 w-full">
                                                         <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
                                                             <option value="" disabled>Select the status of the payment here</option>
-                                                            <option value="Pending">Pending</option>
-                                                            <option value="Approved">Approved</option>
-                                                            <option value="Rejected">Rejected</option>
-                                                            <option value="Completed">Completed</option>
+                                                            {getOptions('expense_statuses').map((s, i) => (
+                                                                <option key={i} value={s}>{s}</option>
+                                                            ))}
                                                         </select>
                                                     </span>
                                                 </td>
@@ -494,10 +493,9 @@ function CategoryData({ isExpanded, setIsExpanded }) {
                                                         <span className="py-1 px-2 w-full">
                                                             <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="transferType" required>
                                                                 <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                                <option value="IMPS">IMPS</option>
-                                                                <option value="NEFT">NEFT</option>
-                                                                <option value="UPI">UPI</option>
-                                                                <option value="Cash">Cash</option>
+                                                                {getOptions('transfer_types').map((t, i) => (
+                                                                    <option key={i} value={t}>{t}</option>
+                                                                ))}
                                                             </select>
                                                         </span>
                                                     </td>

@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 from django.urls import path
 from . import views
 
@@ -20,13 +22,15 @@ urlpatterns = [
     # Rent / Invoices
     path('rent-history/', views.resident_rent_history, name='resident_rent_history'),
     path('invoices/<int:pk>/', views.resident_invoice_detail, name='resident_invoice_detail'),
-    path('payments/payu/init/', views.resident_payu_init, name='resident_payu_init'),
-    path('payments/payu/success/', views.payu_success, name='payu_success'),
-    path('payments/payu/failure/', views.payu_failure, name='payu_failure'),
-    path('payments/payu/webhook/', views.payu_webhook, name='payu_webhook'),
-    path('payments/payu/si-consent/', views.resident_si_consent_init, name='resident_si_consent_init'),
-    path('payments/payu/si-success/', views.payu_si_success, name='payu_si_success'),
-    path('payments/payu/si-failure/', views.payu_si_failure, name='payu_si_failure'),
+
+    # Razorpay Payments
+    path('payments/init/', views.resident_payment_init, name='resident_payment_init'),
+    path('payments/verify/', views.resident_payment_verify, name='resident_payment_verify'),
+    path('payments/qr/generate/', views.resident_payment_qr, name='resident_payment_qr'),
+    path('payments/qr/status/', views.resident_payment_qr_status, name='resident_payment_qr_status'),
+    path('payments/webhook/', views.razorpay_webhook, name='razorpay_webhook'),
+    path('payments/subscription/init/', views.resident_subscription_init, name='resident_subscription_init'),
+    path('payments/subscription/verify/', views.resident_subscription_verify, name='resident_subscription_verify'),
     path('payments/mandate/status/', views.resident_mandate_status, name='resident_mandate_status'),
     path('payments/mandate/cancel/', views.resident_mandate_cancel, name='resident_mandate_cancel'),
 

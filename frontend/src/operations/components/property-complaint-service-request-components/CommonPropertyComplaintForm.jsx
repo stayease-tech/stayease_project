@@ -1,13 +1,10 @@
 import React, { useState, useCallback, useEffect } from "react";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function CommonPropertyComplaintForm() {
-    const electricalElectronicsArr = ['Light / Fan / Switchboard issue', 'Air Conditioner (AC) not working', 'Refrigerator / Microwave / Induction / Other appliance', 'TV / DTH connection issue', 'Power socket / Wiring fault'];
-    const plumbingBathroomArr = ['Water leakage / Tap issue', 'Drainage blockage', 'Water heater / Geyser not working', 'No water supply / Low pressure'];
-    const furnituresFixturesArr = ['Bed / Cot / Mattress issue', 'Wardrobe / Drawer / Door / Handle problem', 'Chair / Sofa / Table damage', 'Curtain rod / Window / Door alignment issue'];
-    const kitchenEquipmentArr = ['Gas stove / Burner not functioning', 'Water purifier issue', 'Chimney / Exhaust fan issue', 'Kitchen cabinet / Storage damage'];
-    const internetConnectivityArr = ['Wi-Fi not working / Slow speed', 'Router / Modem issue', 'No internet connection'];
+    const { getOptions } = useDropdowns();
 
     let publicUrl = process.env.PUBLIC_URL + '/';
 
@@ -71,19 +68,19 @@ function CommonPropertyComplaintForm() {
 
     const dataHandleToggle = (step) => {
         if (step === 'electricalElectronics') {
-            setItemCategory(electricalElectronicsArr)
+            setItemCategory(getOptions('complaint__electrical_electronics'))
         }
         if (step === 'plumbingBathroom') {
-            setItemCategory(plumbingBathroomArr)
+            setItemCategory(getOptions('complaint__plumbing_bathroom'))
         }
         if (step === 'furnituresFixtures') {
-            setItemCategory(furnituresFixturesArr)
+            setItemCategory(getOptions('complaint__furniture_fixtures'))
         }
         if (step === 'kitchenEquipment') {
-            setItemCategory(kitchenEquipmentArr)
+            setItemCategory(getOptions('complaint__kitchen_equipment'))
         }
         if (step === 'internetConnectivity') {
-            setItemCategory(internetConnectivityArr)
+            setItemCategory(getOptions('complaint__internet_connectivity'))
         }
         setCurrentComponent(step)
     }
@@ -538,10 +535,9 @@ function CommonPropertyComplaintForm() {
                             required
                         >
                             <option value="" disabled>Select the Preferred Time for Visit / Inspection here</option>
-                            <option value="Morning">Morning</option>
-                            <option value="Afternoon">Afternoon</option>
-                            <option value="Evening">Evening</option>
-                            <option value="Anytime">Anytime</option>
+                            {getOptions('preferred_times').map((t, i) => (
+                                <option key={i} value={t}>{t}</option>
+                            ))}
                         </select>
                     </div>
 

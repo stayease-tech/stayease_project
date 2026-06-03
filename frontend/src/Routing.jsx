@@ -5,6 +5,11 @@ import Login from "./auth/Login";
 import PublicLayout from "./shared/PublicLayout";
 import Dashboard from "./shared/Dashboard";
 
+/**
+ * Loading — full-screen spinner shown while lazy-loaded chunks are fetching.
+ *
+ * @returns {React.ReactElement}
+ */
 // === Loading spinner ===
 const Loading = () => (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -136,6 +141,14 @@ const ResidentChangePassword = lazy(() => import("./resident/components/Resident
 // === OPERATIONS KYC - lazy loaded ===
 const OpsKycManagement = lazy(() => import("./operations/components/kyc-components/KycManagement"));
 
+/**
+ * Protected — thin wrapper around ProtectedRoute for cleaner JSX in the route table.
+ *
+ * @param {object} props
+ * @param {string} props.type - The user role required to access the wrapped route.
+ * @param {React.ReactNode} props.children - The page component to protect.
+ * @returns {React.ReactElement}
+ */
 // === Helper: wrap dashboard routes with ProtectedRoute ===
 function Protected({ type, children }) {
     return (
@@ -145,6 +158,12 @@ function Protected({ type, children }) {
     );
 }
 
+/**
+ * Routing — defines the full client-side route tree for the application.
+ * Manages sidebar expansion state and passes it down to protected page components.
+ *
+ * @returns {React.ReactElement}
+ */
 function Routing() {
     const [isExpanded, setIsExpanded] = useState(() => {
         try { return JSON.parse(sessionStorage.getItem('isExpanded')) ?? false; } catch { return false; }

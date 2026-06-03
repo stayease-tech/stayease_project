@@ -2,6 +2,7 @@
   "name": "pms-stayease",
   "version": "1.0.0",
   "private": true,
+  "author": "Aravind Adari",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && ../.venv/bin/python manage.py runserver",

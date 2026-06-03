@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function RoomForm({ isExpanded, setIsExpanded }) {
+  const { getOptions } = useDropdowns();
   const navigate = useNavigate();
 
   const oneBhk = ['A1', 'A2'];
@@ -191,15 +193,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                 required
               >
                 <option value="" disabled>Select the Room type here</option>
-                <option value="1 BHK">1 BHK</option>
-                <option value="1.5 BHK">1.5 BHK</option>
-                <option value="2 BHK">2 BHK</option>
-                <option value="2.5 BHK">2.5 BHK</option>
-                <option value="3 BHK">3 BHK</option>
-                <option value="Bareshell">Bareshell</option>
-                <option value="Private Space">Private Space</option>
-                <option value="Work Space">Work Space</option>
-                <option value="Common Area">Common Area</option>
+                {getOptions('room_types').map((t, i) => (
+                  <option key={i} value={t}>{t}</option>
+                ))}
               </select>
 
               <button
@@ -223,8 +219,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                       required
                     >
                       <option value="" disabled>Select the Balcony Access here</option>
-                      <option value="With Balcony">With Balcony</option>
-                      <option value="Without Balcony">Without Balcony</option>
+                      {getOptions('balcony_options').map((t, i) => (
+                        <option key={i} value={t}>{t}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -240,8 +237,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                       required
                     >
                       <option value="" disabled>Select the Bath Access here</option>
-                      <option value="Attached">Attached</option>
-                      <option value="Shared">Shared</option>
+                      {getOptions('bathroom_options').map((t, i) => (
+                        <option key={i} value={t}>{t}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -257,10 +255,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                       required
                     >
                       <option value="" disabled>Select the Room Type here</option>
-                      <option value="Private">Private</option>
-                      <option value="Double Sharing">Double Sharing</option>
-                      <option value="Single Private">Single Private</option>
-                      <option value="Triple Sharing">Triple Sharing</option>
+                      {getOptions('sharing_types').map((t, i) => (
+                        <option key={i} value={t}>{t}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -276,9 +273,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                       required
                     >
                       <option value="" disabled>Select the Energy Plan here</option>
-                      <option value="Inclusive">Inclusive</option>
-                      <option value="Exclusive">Exclusive</option>
-                      <option value="Capping">Capping</option>
+                      {getOptions('electricity_options').map((t, i) => (
+                        <option key={i} value={t}>{t}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -294,9 +291,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                       required
                     >
                       <option value="" disabled>Select the Hall Access here</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                      <option value="NA">NA</option>
+                      {getOptions('yes_no_options').map((t, i) => (
+                        <option key={i} value={t}>{t}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -312,9 +309,9 @@ function RoomForm({ isExpanded, setIsExpanded }) {
                       required
                     >
                       <option value="" disabled>Select the Kitchen Access here</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                      <option value="NA">NA</option>
+                      {getOptions('yes_no_na_options').map((t, i) => (
+                        <option key={i} value={t}>{t}</option>
+                      ))}
                     </select>
                   </div>
 

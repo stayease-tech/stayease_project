@@ -11,6 +11,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 # Create your views here.
 def property_table(request):
+    """Handle GET /property/table/ — return all property contract records as JSON.
+
+    Returns:
+        JsonResponse with `success` and serialized `property_table` list, ordered by submission date.
+    """
     if request.method == 'GET':
         try:
             property_table = PropertyContract_Detail.objects.all().order_by('-submitted_at')
@@ -21,6 +26,15 @@ def property_table(request):
             return JsonResponse({'success': False, 'message': 'Error submitting data. Please try again later.'})
 
 def submit_contract(request):
+    """Handle POST /property/submit/ — create a new property contract record.
+
+    Args:
+        request: Django HttpRequest with POST body containing contract fields such as
+            `uniqueId`, `communityManager`, `roomNo`, `accommodationType`, and lease dates.
+
+    Returns:
+        JsonResponse with `success` flag and a result message.
+    """
     if request.method == 'POST':
         try:
             uniqueId = request.POST.get('uniqueId')

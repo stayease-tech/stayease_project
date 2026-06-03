@@ -12,20 +12,36 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from stayease_project.permissions import IsOperationsTeam, IsSalesTeam, IsAdminGroup
 from .models import User_Activity_Data, User_Login_Data, MoveInChecklistDetail, MoveInFeedback, MoveOutChecklistDetail, MoveOutFeedback, PropertyComplaintDetail, ComplaintCategory, Feedback
 from stayease_supply.models import Room_Data
+from django.conf import settings
 from stayease_sales.models import resident_Data
 from stayease_accounts.models import Vendor_Detail
 
 # Create your views here.
 @login_required
 def auth_check(request):
+    """Handle GET /auth/check/ — verify whether the current session user is authenticated.
+
+    Returns:
+        JsonResponse with ``isAuthenticated`` bool and ``username`` if logged in.
+    """
     if request.user.is_authenticated:
         return JsonResponse({"isAuthenticated": True, "username": request.user.username})
     return JsonResponse({"isAuthenticated": False})
     
 @csrf_exempt
 def login_view(request):
+    """Handle POST /login/ — authenticate a staff user and create a login activity record.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``username`` and ``password``.
+
+    Returns:
+        JsonResponse with ``success``, ``username``, ``permissions``, and ``login_id`` on success,
+        or an error message with HTTP 400 on failure.
+    """
     data = json.loads(request.body)
     username = data.get("username")
     password = data.get("password")
@@ -53,6 +69,14 @@ def login_view(request):
     return JsonResponse({"success": False, "message": "Invalid credentials"}, status=400)
 
 def logout_view(request):
+    """Handle POST /logout/ — end the user session and stamp the logout time on the login record.
+
+    Args:
+        request: Django HttpRequest with optional JSON body containing ``loginId``.
+
+    Returns:
+        JsonResponse with ``success`` bool.
+    """
     if request.method != 'POST':
         return JsonResponse({"success": False, "message": "Invalid request method. POST expected."}, status=405)
 
@@ -72,6 +96,11 @@ def logout_view(request):
     return JsonResponse({"success": True})
 
 def get_user_activity_data(request):
+    """Handle GET /user-activity/ — return all staff users with their full login/logout history.
+
+    Returns:
+        JsonResponse with ``user_activity_data`` list on success, or an error message.
+    """
     if request.method == 'GET':
         try:
             user_activity_data = User_Activity_Data.objects.prefetch_related(
@@ -104,6 +133,12 @@ def get_user_activity_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 def get_checklistfeedback_data(request):
+    """Handle GET /checklist-feedback/ — retrieve all move-in and move-out checklists and feedback for completed residents.
+
+    Returns:
+        JsonResponse with four lists: ``moveInChecklist_data``, ``moveInFeedback_data``,
+        ``moveOutChecklist_data``, and ``moveOutFeedback_data``.
+    """
     if request.method == 'GET':
         try:
             moveIn_checklists = MoveInChecklistDetail.objects.select_related(
@@ -257,6 +292,11 @@ def get_checklistfeedback_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 def format_date(date):
+    """Convert a ``YYYY-MM-DD`` date string to human-readable ``DD-Mon-YYYY`` format.
+
+    Returns:
+        Formatted date string, or an empty string if ``date`` is falsy.
+    """
     if not date:
         return ''
     date_obj = datetime.strptime(date, "%Y-%m-%d")
@@ -264,6 +304,11 @@ def format_date(date):
     return formatted_date
 
 def format_time(time):
+    """Convert a ``HH:MM`` time string to 12-hour ``HH:MM AM/PM`` format.
+
+    Returns:
+        Formatted time string, or an empty string if ``time`` is falsy.
+    """
     if not time:
         return ''
     time_obj = datetime.strptime(time, "%H:%M")
@@ -271,6 +316,11 @@ def format_time(time):
     return formatted_time
 
 def send_email_check_in(data):
+    """Send a pre-arrival confirmation email to the resident with room and check-in details.
+
+    Args:
+        data: A ``resident_Data`` instance whose email and room details are used.
+    """
     bed_data_instance = data.bed_data_instance
 
     if bed_data_instance:
@@ -336,6 +386,14 @@ def send_email_check_in(data):
 
 @csrf_exempt
 def moveinchecklist_form_submit(request):
+    """Handle POST /moveinchecklist/ — save a move-in checklist and trigger the check-in confirmation email.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``residentId`` and all checklist fields.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'POST':
         try:
             moveinchecklist_data = json.loads(request.body)
@@ -371,6 +429,14 @@ def moveinchecklist_form_submit(request):
 
 @csrf_exempt
 def moveinfeedback_form_submit(request):
+    """Handle POST /moveinfeedback/ — save the resident's move-in experience ratings.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``residentId`` and rating fields.
+
+    Returns:
+        JsonResponse with ``success`` bool; returns an error if feedback was already submitted.
+    """
     if request.method == 'POST':
         try:
             moveinfeedback_data = json.loads(request.body)
@@ -405,6 +471,11 @@ def moveinfeedback_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def send_email_check_out(data):
+    """Send a checkout confirmation email to the resident with stay summary and feedback link.
+
+    Args:
+        data: A ``resident_Data`` instance whose email and room details are used.
+    """
     bed_data_instance = data.bed_data_instance
 
     if bed_data_instance:
@@ -470,6 +541,14 @@ def send_email_check_out(data):
 
 @csrf_exempt
 def moveoutchecklist_form_submit(request):
+    """Handle POST /moveoutchecklist/ — save a move-out checklist and send a checkout email to the resident.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``residentId`` and all checklist fields.
+
+    Returns:
+        JsonResponse with ``success`` bool; returns an error if the checklist was already submitted.
+    """
     if request.method == 'POST':
         try:
             moveoutchecklist_data = json.loads(request.body)
@@ -512,6 +591,14 @@ def moveoutchecklist_form_submit(request):
 
 @csrf_exempt
 def moveoutfeedback_form_submit(request):
+    """Handle POST /moveoutfeedback/ — save the resident's end-of-stay ratings.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``residentId`` and rating fields.
+
+    Returns:
+        JsonResponse with ``success`` bool; returns an error if feedback was already submitted.
+    """
     if request.method == 'POST':
         try:
             moveoutfeedback_data = json.loads(request.body)
@@ -548,6 +635,11 @@ def moveoutfeedback_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_propertycomplaint_data(request):
+    """Handle GET /complaints/ — fetch all property complaints with category, vendor, and feedback details.
+
+    Returns:
+        JsonResponse with a flat ``complaints_array`` where each entry corresponds to one complaint category.
+    """
     if request.method == 'GET':
         try:
             complaints = PropertyComplaintDetail.objects.select_related(
@@ -570,6 +662,9 @@ def get_propertycomplaint_data(request):
                         'bedLabel': complaint.propertyComplaint_bed.bed_data_instance.bedLabel,
                         'phoneNumber': complaint.propertyComplaint_bed.phoneNumber,
                         'complaint_id': complaint.id,
+                        'resident_category': complaint.get_category_display() if complaint.category else '',
+                        'resident_location': complaint.get_location_display() if complaint.location else '',
+                        'resident_urgency': complaint.get_urgency_display() if complaint.urgency else '',
                         'issue_desc': complaint.issueDesc,
                         'preferredTime': complaint.preferredTime,
                         'submittedDateAndTime': complaint.submittedDateAndTime,
@@ -606,6 +701,8 @@ def get_propertycomplaint_data(request):
 email_threads = {}
 
 class ComplaintEmailThread:
+    """Manages in-memory email threading for complaint-related notifications so all emails share one email thread."""
+
     def __init__(self, ticket_number, resident_email, resident_name, category_type):
         self.thread_id = f"<complaint-{ticket_number}-{uuid.uuid4()}@mystayease.com>"
         self.ticket_number = ticket_number
@@ -773,6 +870,14 @@ class ComplaintEmailThread:
 
 @csrf_exempt
 def propertycomplaint_form_submit(request):
+    """Handle POST /complaint/ — create a property complaint with per-category ticket numbers and send the initial email.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``residentId``, issue details, and category data.
+
+    Returns:
+        JsonResponse with ``success`` bool and a confirmation message.
+    """
     if request.method == 'POST':
         try:
             propertyComplaint_data = json.loads(request.body)
@@ -848,6 +953,15 @@ def propertycomplaint_form_submit(request):
 
 @csrf_exempt
 def operations_form_update(request, id):
+    """Handle PUT /complaint/<id>/ — update vendor, schedule, and status for a complaint category and send a status email.
+
+    Args:
+        request: Django HttpRequest with JSON body containing updatable fields and optional ``vendorId``.
+        id: Primary key of the ``ComplaintCategory`` to update.
+
+    Returns:
+        JsonResponse with ``success`` bool and a status message.
+    """
     if request.method == 'PUT':
         try:
             data = json.loads(request.body)
@@ -921,6 +1035,14 @@ def operations_form_update(request, id):
 
 @csrf_exempt
 def feedback_form_submit(request):
+    """Handle POST /feedback/ — save a resident's resolution feedback for a specific complaint category.
+
+    Args:
+        request: Django HttpRequest with JSON body containing ``complaintId``, ``issueResolved``, ``ratings``, and ``suggestions``.
+
+    Returns:
+        JsonResponse with ``success`` bool; returns an error if feedback was already submitted.
+    """
     if request.method == 'POST':
         try:
             feedback_data = json.loads(request.body)
@@ -951,6 +1073,11 @@ def feedback_form_submit(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
 def get_room_data(request):
+    """Handle GET /rooms/ — list rooms and beds for Stayease Harmonia with the most recent resident per bed.
+
+    Returns:
+        JsonResponse with ``room_bed_data`` list containing room number and bed details.
+    """
     if request.method == 'GET':
         try:
             rooms_with_beds = Room_Data.objects.filter(
@@ -994,7 +1121,7 @@ def get_room_data(request):
 # ─── KYC Management (Operations) ──────────────────────────────────
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsOperationsTeam | IsSalesTeam | IsAdminGroup])
 def get_kyc_pending(request):
     """List all residents with pending/rejected KYC for operations review."""
     if request.method == 'GET':
@@ -1002,7 +1129,7 @@ def get_kyc_pending(request):
             status_filter = request.GET.get('status', 'Pending')
             residents = resident_Data.objects.filter(
                 kycApprovalStatus=status_filter
-            ).select_related('bed_data_instance__room__property').order_by('-id')
+            ).select_related('bed_data_instance__room__property', 'residentUser').order_by('-id')
 
             data = []
             for t in residents:
@@ -1031,6 +1158,11 @@ def get_kyc_pending(request):
                     'studentEmployeeIdNumber': t.studentEmployeeIdNumber,
                     'studentEmployeeIdCopy': t.studentEmployeeIdCopy.url if t.studentEmployeeIdCopy else None,
                     'kycRejectionReason': t.kycRejectionReason,
+                    'leaseAgreement': t.leaseAgreement.url if t.leaseAgreement else None,
+                    'leaseUploadedAt': t.leaseUploadedAt.isoformat() if t.leaseUploadedAt else None,
+                    'leaseUploadedBy': t.leaseUploadedBy,
+                    'portalEnabled': t.residentUser.is_active if t.residentUser else False,
+                    'hasPortalAccount': t.residentUser is not None,
                 })
 
             return JsonResponse({'success': True, 'residents': data})
@@ -1042,7 +1174,7 @@ def get_kyc_pending(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsOperationsTeam | IsSalesTeam | IsAdminGroup])
 def kyc_approve(request, resident_id):
     """Approve a resident's KYC."""
     if request.method == 'POST':
@@ -1053,6 +1185,41 @@ def kyc_approve(request, resident_id):
             resident.kycApprovalDate = timezone.now()
             resident.kycRejectionReason = None
             resident.save()
+
+            # Send KYC approved email notification
+            if resident.email:
+                try:
+                    portal_url = f"{settings.FRONTEND_BASE_URL}/resident/lease"
+                    html_body = f"""
+                        <html>
+                        <body>
+                            <p>Dear {resident.residentsName},</p>
+
+                            <p>Great news! Your KYC verification has been <strong>approved</strong>.</p>
+
+                            <p>The next step is your Lease Agreement. Your lease document will be shared with you shortly. Once it's ready, you can view and download it from your resident portal.</p>
+
+                            <p><a href="{portal_url}" style="display:inline-block;padding:10px 24px;background:#D4A017;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Go to Lease Agreement</a></p>
+
+                            <p>If you have any questions, feel free to reach out to us by replying to this email.</p>
+
+                            <p>--<br>
+                            Warm regards,<br>
+                            <strong>Stayease</strong></p>
+                        </body>
+                        </html>
+                    """
+                    email = EmailMessage(
+                        subject='KYC Approved — Next Step: Lease Agreement',
+                        body=html_body,
+                        from_email='hello@mystayease.com',
+                        to=[resident.email],
+                    )
+                    email.content_subtype = "html"
+                    email.send()
+                except Exception as e:
+                    print(f"KYC approval email failed: {e}")
+
             return JsonResponse({'success': True, 'message': f'KYC approved for {resident.residentsName}.'})
         except resident_Data.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'resident not found.'})
@@ -1064,7 +1231,7 @@ def kyc_approve(request, resident_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsOperationsTeam | IsSalesTeam | IsAdminGroup])
 def kyc_reject(request, resident_id):
     """Reject a resident's KYC with a reason."""
     if request.method == 'POST':
@@ -1080,6 +1247,43 @@ def kyc_reject(request, resident_id):
             resident.kycApprovedBy = None
             resident.kycApprovalDate = None
             resident.save()
+
+            # Send KYC rejected email notification
+            if resident.email:
+                try:
+                    portal_url = f"{settings.FRONTEND_BASE_URL}/resident/kyc"
+                    html_body = f"""
+                        <html>
+                        <body>
+                            <p>Dear {resident.residentsName},</p>
+
+                            <p>We regret to inform you that your KYC verification has been <strong>rejected</strong>.</p>
+
+                            <p><strong>Reason:</strong> {reason}</p>
+
+                            <p>Please re-upload your documents with the corrections and submit again for verification.</p>
+
+                            <p><a href="{portal_url}" style="display:inline-block;padding:10px 24px;background:#D4A017;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Re-upload KYC Documents</a></p>
+
+                            <p>If you have any questions, feel free to reach out to us by replying to this email.</p>
+
+                            <p>--<br>
+                            Warm regards,<br>
+                            <strong>Stayease</strong></p>
+                        </body>
+                        </html>
+                    """
+                    email = EmailMessage(
+                        subject='KYC Rejected — Action Required',
+                        body=html_body,
+                        from_email='hello@mystayease.com',
+                        to=[resident.email],
+                    )
+                    email.content_subtype = "html"
+                    email.send()
+                except Exception as e:
+                    print(f"KYC rejection email failed: {e}")
+
             return JsonResponse({'success': True, 'message': f'KYC rejected for {resident.residentsName}.'})
         except resident_Data.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'resident not found.'})

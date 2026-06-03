@@ -2,6 +2,7 @@ import React from 'react';
 import { City, Country, State } from 'country-state-city';
 import { FaUpload } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function getFileName(fileValue) {
     if (!fileValue) return 'No file uploaded';
@@ -32,13 +33,14 @@ function DetailRow({ label, value, editMode, children }) {
 }
 
 function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, triggerFileInput }) {
+    const { getOptions } = useDropdowns();
     const country = Country.getCountryByCode('IN');
     const states = State.getStatesOfCountry(country.isoCode);
     const state = states.find((state) => state.name === propertyDetails.state);
     const cities = City.getCitiesOfState(state?.countryCode, state?.isoCode);
 
-    const mealTypes = ["Veg", "Non-Veg"];
-    const amenities = ["Prime Locations", "Fully Furnished", "Parking Space", "Regular Housekeeping", "Free Wi-Fi", "Modular Kitchen", "CCTV Surveillance", "Washing Machine", "Workspace Setup", "Common Area", "Digital Lock Access", "Water Purifier", "OTT Subscriptions", "Community Intercom"];
+    const mealTypes = getOptions('property_meal_types');
+    const amenities = getOptions('property_amenities');
 
     const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
     const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
@@ -63,8 +65,9 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                         <select name="propertyType" value={propertyDetails.propertyType}
                             onChange={propertyHandleChange} className={selectClass} required>
                             <option value="" disabled>Select property type</option>
-                            <option value="PG/Hostel">PG/Hostel</option>
-                            <option value="Apartment">Apartment</option>
+                            {getOptions('property_types').map((t, i) => (
+                                <option key={i} value={t}>{t}</option>
+                            ))}
                         </select>
                     </DetailRow>
 
@@ -75,9 +78,13 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                     </DetailRow>
 
                     <DetailRow label="Status" value={propertyDetails.status || '—'} editMode={dataEditView}>
-                        <input type="text" name="status" value={propertyDetails.status}
-                            onChange={propertyHandleChange} className={inputClass}
-                            placeholder="Enter status" />
+                        <select name="status" value={propertyDetails.status}
+                            onChange={propertyHandleChange} className={selectClass} required>
+                            <option value="" disabled>Select status</option>
+                            {getOptions('property_statuses').map((s, i) => (
+                                <option key={i} value={s}>{s}</option>
+                            ))}
+                        </select>
                     </DetailRow>
 
                     <DetailRow label="Rating" value={propertyDetails.rating || '—'} editMode={dataEditView}>
@@ -164,9 +171,9 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                         <select name="rentFree" value={propertyDetails.rentFree}
                             onChange={propertyHandleChange} className={selectClass} required>
                             <option value="" disabled>Select rent free amount</option>
-                            <option value="0">0</option>
-                            <option value="15000">15,000</option>
-                            <option value="25000">25,000</option>
+                            {getOptions('rent_free_options').map((r, i) => (
+                                <option key={i} value={r}>{Number(r).toLocaleString('en-IN')}</option>
+                            ))}
                         </select>
                     </DetailRow>
                 </dl>

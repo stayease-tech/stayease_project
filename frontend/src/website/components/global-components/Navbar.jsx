@@ -97,7 +97,7 @@ export default function Navbar() {
                         width="72"
                         height="72"
                         className="h-18 w-auto object-cover"
-                        fetchpriority="high"
+                        fetchPriority="high"
                         decoding="async"
                     />
 

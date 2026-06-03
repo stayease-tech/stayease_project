@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 const currentDate = new Date();
 
 const year = currentDate.getFullYear();

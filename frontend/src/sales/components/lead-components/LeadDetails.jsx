@@ -6,8 +6,10 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function LeadDetails({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -211,18 +213,9 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="leadSource" value={leadDetails.leadSource} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="leadSource" required>
                                                         <option value="" disabled>Select the Lead Source here</option>
-                                                        <option value="Transfer">Transfer</option>
-                                                        <option value="New">New</option>
-                                                        <option value="Referal">Referal</option>
-                                                        <option value="Walkin">Walkin</option>
-                                                        <option value="Instagram">Instagram</option>
-                                                        <option value="Facebook">Facebook</option>
-                                                        <option value="Whatsapp">Whatsapp</option>
-                                                        <option value="Inbound">Inbound</option>
-                                                        <option value="Google">Google</option>
-                                                        <option value="Website">Website</option>
-                                                        <option value="LinkedIn">LinkedIn</option>
-                                                        <option value="Pamphlet">Pamphlet</option>
+                                                        {getOptions('lead_sources').map((src, i) => (
+                                                            <option key={i} value={src}>{src}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -303,12 +296,9 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="leadResult" value={leadDetails.leadResult} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="leadResult" required>
                                                         <option value="" disabled>Select the Lead Status here</option>
-                                                        <option value="Not Converted">Not Converted</option>
-                                                        <option value="Converted - Visit">Converted - Visit</option>
-                                                        <option value="Followup">Followup</option>
-                                                        <option value="Contacted">Contacted</option>
-                                                        <option value="Not Contacted">Not Contacted</option>
-                                                        <option value="Converted - Closed">Converted - Closed</option>
+                                                        {getOptions('lead_statuses').map((s, i) => (
+                                                            <option key={i} value={s}>{s}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </td>
@@ -325,21 +315,9 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                                                     <span className="py-1 px-2 w-full">
                                                         <select id="notConvertedReason" value={leadDetails.notConvertedReason} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="notConvertedReason" required>
                                                             <option value="" disabled>Select the Reason here</option>
-                                                            <option value="Price">Price</option>
-                                                            <option value="Availability">Availability</option>
-                                                            <option value="Location">Location</option>
-                                                            <option value="Food">Food</option>
-                                                            <option value="Directly disconnected">Directly disconnected</option>
-                                                            <option value="Number not reachable">Number not reachable</option>
-                                                            <option value="Wrong number">Wrong number</option>
-                                                            <option value="No call availability on this number">No call availability on this number</option>
-                                                            <option value="Not looking for any colive space">Not looking for any colive space</option>
-                                                            <option value="Yet to confirm">Yet to confirm</option>
-                                                            <option value="Called multiple times no response">Called multiple times no response</option>
-                                                            <option value="Shortstay">Shortstay</option>
-                                                            <option value="Longstay">Longstay</option>
-                                                            <option value="Shift to another property">Shift to another property</option>
-                                                            <option value="Not responded">Not responded</option>
+                                                            {getOptions('not_converted_reasons').map((r, i) => (
+                                                                <option key={i} value={r}>{r}</option>
+                                                            ))}
                                                         </select>
                                                     </span>
                                                 </td>

@@ -10,9 +10,19 @@ import json
 @ensure_csrf_cookie
 # Create your views here.
 def index_page(request):
+    """Handle GET / — render the main index HTML page and set the CSRF cookie."""
     return render(request, "index.html")
 
 def normal_enquiry(request):
+    """Handle POST /enquiry/normal/ — save a general enquiry and send a notification email.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `name`, `phone`,
+            `email`, `comments`, and `submittedAt`.
+
+    Returns:
+        JsonResponse with a `message` key on success (200) or an `error` key on failure (400/405).
+    """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -46,6 +56,15 @@ def normal_enquiry(request):
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 def visit_enquiry(request):
+    """Handle POST /enquiry/visit/ — save a property visit request and send a notification email.
+
+    Args:
+        request: Django HttpRequest with JSON body containing `name`, `phone`,
+            `email`, `property`, and `submittedAt`.
+
+    Returns:
+        JsonResponse with a `message` key on success (200) or an `error` key on failure (400/405).
+    """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)

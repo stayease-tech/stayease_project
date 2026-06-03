@@ -6,8 +6,10 @@ import { IoMdAddCircle } from "react-icons/io";
 import { FaEdit, FaEye } from "react-icons/fa";
 import axios from 'axios';
 import { UseCSVDownload } from '../UseCSVDownload';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function BedsTable({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const downloadCSV = UseCSVDownload();
 
@@ -158,12 +160,9 @@ function BedsTable({ isExpanded, setIsExpanded }) {
                                     required
                                 >
                                     <option value="All">{`All (${data.length})`}</option>
-                                    <option value="Completed">{`Completed (${data.filter(bed =>
-                                        bed.salesStatus === 'Completed'
-                                    ).length})`}</option>
-                                    <option value="Pending">{`Pending (${data.filter(bed =>
-                                        bed.salesStatus === 'Pending'
-                                    ).length})`}</option>
+                                    {getOptions('sales_statuses').map((s, i) => (
+                                        <option key={i} value={s}>{`${s} (${data.filter(bed => bed.salesStatus === s).length})`}</option>
+                                    ))}
                                 </select>
 
                                 <input

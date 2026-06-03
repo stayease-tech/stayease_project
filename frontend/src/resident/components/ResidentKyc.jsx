@@ -1,29 +1,101 @@
-import { useState, useEffect } from "react";
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
 import Navbar from "../../shared/Navbar";
-import residentSidebar from "./Sidebar";
-import { ShieldCheck, Upload, AlertCircle, CheckCircle } from "lucide-react";
+import ResidentSidebar from "./Sidebar";
+import { ShieldCheck, Upload, AlertCircle, CheckCircle, FileUp, X } from "lucide-react";
 import { toast } from "react-toastify";
+import { useDropdowns } from "../../shared/DropdownContext";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+/**
+ * residentKyc — KYC document upload and status page for the resident portal.
+ * Shows the current approval status, displays existing document copies,
+ * and provides a form to upload Aadhaar, PAN, and student/employee ID documents.
+ * Automatically redirects to /resident/lease when KYC is already approved.
+ *
+ * @param {object} props
+ * @param {boolean} props.isExpanded - Whether the sidebar is in expanded state.
+ * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
+ * @returns {React.ReactElement}
+ */
 export default function residentKyc({ isExpanded, setIsExpanded }) {
+    const navigate = useNavigate();
+    const { getOptions } = useDropdowns();
     const [kyc, setKyc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [selectedFiles, setSelectedFiles] = useState({});
 
+    const idTypeOptions = getOptions('student_employee_id_types');
+    const idTypes = idTypeOptions.length ? idTypeOptions : ['Student ID', 'Employee ID'];
+
+    /**
+     * Fetches the resident's current KYC status and document data from the API.
+     * Redirects to the lease page if KYC is already approved.
+     */
     const fetchKyc = () => {
         residentApi.get("/kyc/status/")
-            .then((res) => { if (res.data.success) setKyc(res.data); })
+            .then((res) => {
+                if (res.data.success) {
+                    setKyc(res.data);
+                    // Redirect to lease page if KYC is already approved
+                    if (res.data.kycApprovalStatus === "Approved") {
+                        navigate("/resident/lease", { replace: true });
+                    }
+                }
+            })
             .catch(console.error)
             .finally(() => setLoading(false));
     };
 
     useEffect(fetchKyc, []);
 
+    /**
+     * Tracks a user-selected file for a given form field, enforcing the 5 MB size limit.
+     * Passing `null` as the file removes the field's staged selection.
+     *
+     * @param {string} fieldName - The form field key the file belongs to (e.g. "aadharFrontCopy").
+     * @param {File|null} file - The selected File object, or null to clear the selection.
+     */
+    const handleFileSelect = (fieldName, file) => {
+        if (!file) {
+            setSelectedFiles((prev) => { const next = { ...prev }; delete next[fieldName]; return next; });
+            return;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            toast.error(`"${file.name}" exceeds the 5 MB limit.`);
+            return;
+        }
+        setSelectedFiles((prev) => ({ ...prev, [fieldName]: file }));
+    };
+
+    /**
+     * Submits the KYC document upload form as multipart/form-data.
+     * Replaces empty native file inputs with tracked files from `selectedFiles` state,
+     * then posts to the API and refreshes KYC status on success.
+     *
+     * @param {React.FormEvent<HTMLFormElement>} e - The form submit event.
+     */
     const handleUpload = async (e) => {
         e.preventDefault();
         setUploading(true);
 
         const formData = new FormData(e.target);
+
+        // Remove native file inputs and replace with tracked files
+        for (const key of [...formData.keys()]) {
+            if (formData.get(key) instanceof File && formData.get(key).size === 0) {
+                formData.delete(key);
+            }
+        }
+        for (const [key, file] of Object.entries(selectedFiles)) {
+            formData.set(key, file);
+        }
+
         try {
             const res = await residentApi.post("/kyc/upload/", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
@@ -31,6 +103,7 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
             });
             if (res.data.success) {
                 toast.success("Documents uploaded successfully!");
+                setSelectedFiles({});
                 fetchKyc();
             } else {
                 toast.error(res.data.message || "Upload failed.");
@@ -53,7 +126,7 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
 
     return (
         <div className="bg-[#F5F5F0] min-h-screen">
-            <residentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
+            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
             <Navbar isExpanded={isExpanded} />
             <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
                 <div className="page-header">
@@ -98,14 +171,8 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
                                                     <label className="block text-xs text-gray-500 mb-1">Aadhaar Number</label>
                                                     <input name="aadharNumber" className="form-input" placeholder="XXXX XXXX XXXX" defaultValue={kyc?.aadharNumber || ""} />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Front Copy</label>
-                                                    <input name="aadharFrontCopy" type="file" accept="image/*,.pdf" className="form-input text-xs" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Back Copy</label>
-                                                    <input name="aadharBackCopy" type="file" accept="image/*,.pdf" className="form-input text-xs" />
-                                                </div>
+                                                <FileUploadButton label="Front Copy" name="aadharFrontCopy" file={selectedFiles.aadharFrontCopy} onSelect={handleFileSelect} />
+                                                <FileUploadButton label="Back Copy" name="aadharBackCopy" file={selectedFiles.aadharBackCopy} onSelect={handleFileSelect} />
                                             </div>
                                         </fieldset>
 
@@ -116,14 +183,8 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
                                                     <label className="block text-xs text-gray-500 mb-1">PAN Number</label>
                                                     <input name="panNumber" className="form-input" placeholder="ABCDE1234F" defaultValue={kyc?.panNumber || ""} />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Front Copy</label>
-                                                    <input name="panFrontCopy" type="file" accept="image/*,.pdf" className="form-input text-xs" />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">Back Copy</label>
-                                                    <input name="panBackCopy" type="file" accept="image/*,.pdf" className="form-input text-xs" />
-                                                </div>
+                                                <FileUploadButton label="Front Copy" name="panFrontCopy" file={selectedFiles.panFrontCopy} onSelect={handleFileSelect} />
+                                                <FileUploadButton label="Back Copy" name="panBackCopy" file={selectedFiles.panBackCopy} onSelect={handleFileSelect} />
                                             </div>
                                         </fieldset>
 
@@ -140,18 +201,16 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
                                                     <label className="block text-xs text-gray-500 mb-1">ID Type</label>
                                                     <select name="studentEmployeeIdType" className="form-input" defaultValue={kyc?.studentEmployeeIdType || ""}>
                                                         <option value="">Select type</option>
-                                                        <option value="Student ID">Student ID</option>
-                                                        <option value="Employee ID">Employee ID</option>
+                                                        {idTypes.map((t, i) => (
+                                                            <option key={i} value={t}>{t}</option>
+                                                        ))}
                                                     </select>
                                                 </div>
                                                 <div>
                                                     <label className="block text-xs text-gray-500 mb-1">ID Number</label>
                                                     <input name="studentEmployeeIdNumber" className="form-input" defaultValue={kyc?.studentEmployeeIdNumber || ""} />
                                                 </div>
-                                                <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">ID Copy</label>
-                                                    <input name="studentEmployeeIdCopy" type="file" accept="image/*,.pdf" className="form-input text-xs" />
-                                                </div>
+                                                <FileUploadButton label="ID Copy" name="studentEmployeeIdCopy" file={selectedFiles.studentEmployeeIdCopy} onSelect={handleFileSelect} />
                                             </div>
                                         </fieldset>
 
@@ -170,6 +229,69 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
     );
 }
 
+/**
+ * FileUploadButton — file picker with a styled preview of the selected file.
+ * Shows a dashed upload button when no file is chosen, and a dismissible
+ * filename chip once a file has been selected.
+ *
+ * @param {object} props
+ * @param {string} props.label - Display label shown above the button.
+ * @param {string} props.name - Form field name passed to the `onSelect` callback.
+ * @param {File|null} props.file - Currently staged file, or null when none is selected.
+ * @param {Function} props.onSelect - Callback `(name, file | null) => void` fired on change or clear.
+ * @returns {React.ReactElement}
+ */
+function FileUploadButton({ label, name, file, onSelect }) {
+    const inputRef = useRef(null);
+
+    return (
+        <div>
+            <label className="block text-xs text-gray-500 mb-1">{label}</label>
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                className="hidden"
+                onChange={(e) => {
+                    onSelect(name, e.target.files[0] || null);
+                    e.target.value = "";
+                }}
+            />
+            {file ? (
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <FileUp size={16} className="text-green-600 flex-shrink-0" />
+                    <span className="text-sm text-green-800 truncate flex-1">{file.name}</span>
+                    <button type="button" onClick={() => onSelect(name, null)} className="text-green-600 hover:text-red-500">
+                        <X size={14} />
+                    </button>
+                </div>
+            ) : (
+                <button
+                    type="button"
+                    onClick={() => inputRef.current?.click()}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed border-[#D4A017] rounded-lg text-sm font-medium text-[#D4A017] bg-[#D4A017]/5 hover:bg-[#D4A017]/10 transition-colors"
+                >
+                    <Upload size={16} />
+                    Choose File
+                </button>
+            )}
+            <p className="text-[10px] text-gray-400 mt-1">Images or PDF, max 5 MB</p>
+        </div>
+    );
+}
+
+/**
+ * DocCard — displays a summary of a single uploaded identity document.
+ * Shows the document label, ID number (or "Not provided"), and links to
+ * open the front and back image/PDF copies in a new tab.
+ *
+ * @param {object} props
+ * @param {string} props.label - Document type label (e.g. "Aadhaar", "PAN").
+ * @param {string|null|undefined} props.number - The ID number on the document.
+ * @param {string|null|undefined} props.frontUrl - URL of the front-side copy.
+ * @param {string|null|undefined} props.backUrl - URL of the back-side copy.
+ * @returns {React.ReactElement}
+ */
 function DocCard({ label, number, frontUrl, backUrl }) {
     return (
         <div className="border border-gray-200 rounded-lg p-3">

@@ -5,8 +5,10 @@ import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function RawdataDetails({ isExpanded, setIsExpanded }) {
+    const { getOptions, getExpenseCategories } = useDropdowns();
     const navigate = useNavigate();
 
     const [dataEditView, setDataEditView] = useState(false);
@@ -66,43 +68,7 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
     };
 
     useEffect(() => {
-        const operationsCategories = ["BGV Charges", "Consumables", "Field Staff", "Printing and Stationary", "Property Maintenance", "Property Payroll", "Property Repairs", "Shipping and Freight", "Soft Furnishing", "Subscriptions", "Travel", "Utilities", "Other Operations Expense"];
-
-        const salesCategories = ["Agreement", "Deposit Refund"];
-
-        const marketingCategories = ["Meta", "Google", "Offline Marketing"];
-
-        const transformationCategories = ["Purchase-Furniture", "Soft Furnishing"];
-
-        const expansionCategories = ["Agreement Purchase", "Consultant Charges"];
-
-        const hrAndAdminCategories = ["Travel expense", "Food expense", "Purchase - IT", "purchase - HR", "Stationery", "Apparels", "Service - IT", "Other Expense"];
-
-        const residentDeductionsCategory = ["Property maintenance", "Damage Cost", "Electricity", "Monthly maintenance"];
-
-        const residentPayableCategory = ["Desposit Refund", "Delay Charges"];
-
-        const residentReceivableCategory = ["Rent", "Monthly maintenance"];
-
-        const ownerDeductionsCategory = ["Electricity", "Asd", "RTO - furniture", "RTO - appliances", "Repair- furniture", "Repair - appliances", "Replacement- furniture", "Replacement - appliances", "Painting", "Repairs- others", "Lift", "Dg", "Water tankers", "Replacement - others"];
-
-        const ownerPayoutCategory = ["Rent", "Arrears"];
-
-        const categoryMap = {
-            'Operations': operationsCategories,
-            'Sales': salesCategories,
-            'Marketing': marketingCategories,
-            'Transformation': transformationCategories,
-            'Expansion': expansionCategories,
-            'HR & Admin': hrAndAdminCategories,
-            'Resident Deductions': residentDeductionsCategory,
-            'Resident Payable': residentPayableCategory,
-            'Resident Receivable': residentReceivableCategory,
-            'Owner Deductions': ownerDeductionsCategory,
-            'Owner Payout': ownerPayoutCategory
-        };
-
-        setExpenseCategory(categoryMap[rawDataForm.expenseType] || []);
+        setExpenseCategory(getExpenseCategories(rawDataForm.expenseType));
     }, [rawDataForm.expenseType]);
 
     const rawDataFormHandleChange = (e) => {
@@ -367,10 +333,9 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
                                                 <span className="py-1 px-2 w-full">
                                                     <select id="headOfExpense" value={rawDataForm.headOfExpense} onChange={(e) => rawDataFormHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="headOfExpense" required>
                                                         <option value="" disabled>Select the Head of Expense here</option>
-                                                        <option value="Owners">Owners</option>
-                                                        <option value="Stayease">Stayease</option>
-                                                        <option value="Property">Property</option>
-                                                        <option value="Resident">Resident</option>
+                                                        {getOptions('head_of_expense').map((h, i) => (
+                                                            <option key={i} value={h}>{h}</option>
+                                                        ))}
                                                     </select>
                                                 </span>
                                             </>}
@@ -387,25 +352,23 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
                                                     <select id="expenseType" value={rawDataForm.expenseType} onChange={(e) => rawDataFormHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="expenseType" required>
                                                         <option value="" disabled>Select the Expense Type here</option>
 
-                                                        {(rawDataForm.headOfExpense !== 'Owners' && rawDataForm.headOfExpense !== 'Resident') && <>
-                                                            <option value="Operations">Operations</option>
-                                                            <option value="Sales">Sales</option>
-                                                            <option value="Marketing">Marketing</option>
-                                                            <option value="Transformation">Transformation</option>
-                                                            <option value="Expansion">Expansion</option>
-                                                            <option value="HR & Admin">HR & Admin</option>
-                                                        </>}
+                                                        {(rawDataForm.headOfExpense !== 'Owners' && rawDataForm.headOfExpense !== 'Resident') &&
+                                                            getOptions('expense_types__stayease_property').map((t, i) => (
+                                                                <option key={i} value={t}>{t}</option>
+                                                            ))
+                                                        }
 
-                                                        {rawDataForm.headOfExpense === 'Owners' && <>
-                                                            <option value="Owner Deductions">Owner Deductions</option>
-                                                            <option value="Owner Payout">Owner Payout</option>
-                                                        </>}
+                                                        {rawDataForm.headOfExpense === 'Owners' &&
+                                                            getOptions('expense_types__owners').map((t, i) => (
+                                                                <option key={i} value={t}>{t}</option>
+                                                            ))
+                                                        }
 
-                                                        {rawDataForm.headOfExpense === 'Resident' && <>
-                                                            <option value="Resident Deductions">Resident Deductions</option>
-                                                            <option value="Resident Payable">Resident Payable</option>
-                                                            <option value="Resident Receivable">Resident Receivable</option>
-                                                        </>}
+                                                        {rawDataForm.headOfExpense === 'Resident' &&
+                                                            getOptions('expense_types__resident').map((t, i) => (
+                                                                <option key={i} value={t}>{t}</option>
+                                                            ))
+                                                        }
                                                     </select>
                                                 </span>
                                             </>}

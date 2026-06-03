@@ -3,8 +3,10 @@ import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function ExpenseTable({ isExpanded, setIsExpanded }) {
+    const { getOptions } = useDropdowns();
     const navigate = useNavigate();
 
     const [data, setData] = useState([]);
@@ -100,18 +102,9 @@ function ExpenseTable({ isExpanded, setIsExpanded }) {
                             <div className="flex gap-2">
                                 <select id="status" value={status} onChange={statusHandleChange} className="block mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="status" required>
                                     <option value="All">{`All (${data.length})`}</option>
-                                    <option value="Pending">{`Pending (${data.filter(expense =>
-                                        expense.status === 'Pending'
-                                    ).length})`}</option>
-                                    <option value="Approved">{`Approved (${data.filter(expense =>
-                                        expense.status === 'Approved'
-                                    ).length})`}</option>
-                                    <option value="Rejected">{`Rejected (${data.filter(expense =>
-                                        expense.status === 'Rejected'
-                                    ).length})`}</option>
-                                    <option value="Completed">{`Completed (${data.filter(expense =>
-                                        expense.status === 'Completed'
-                                    ).length})`}</option>
+                                    {getOptions('expense_statuses').map((s, i) => (
+                                        <option key={i} value={s}>{`${s} (${data.filter(expense => expense.status === s).length})`}</option>
+                                    ))}
                                 </select>
 
                                 <input

@@ -4,8 +4,10 @@ import Navbar from '../Navbar';
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { useDropdowns } from "../../../shared/DropdownContext";
 
 function VendorData({ isExpanded, setIsExpanded }) {
+  const { getOptions } = useDropdowns();
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -184,13 +186,9 @@ function VendorData({ isExpanded, setIsExpanded }) {
                         <span className="py-1 px-2 w-full">
                           <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="category" required>
                             <option value="" disabled>Select the Category here</option>
-                            <option value="Water Tanker">Water Tanker</option>
-                            <option value="Electrician">Electrician</option>
-                            <option value="Plumber">Plumber</option>
-                            <option value="Fumigation">Fumigation</option>
-                            <option value="DTH">DTH</option>
-                            <option value="Garbage">Garbage</option>
-                            <option value="Water Purifier">Water Purifier</option>
+                            {getOptions('vendor_categories').map((cat, i) => (
+                              <option key={i} value={cat}>{cat}</option>
+                            ))}
                           </select>
                         </span>
                       </td>
@@ -206,8 +204,9 @@ function VendorData({ isExpanded, setIsExpanded }) {
                         <span className="py-1 px-2 w-full">
                           <select id="billingType" value={vendorData.billingType} onChange={vendorHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="billingType" required>
                             <option value="" disabled>Select the Billing Type here</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="UPI">UPI</option>
+                            {getOptions('billing_types').map((b, i) => (
+                              <option key={i} value={b}>{b}</option>
+                            ))}
                           </select>
                         </span>
                       </td>
