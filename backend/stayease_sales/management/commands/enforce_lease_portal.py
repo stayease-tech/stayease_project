@@ -3,25 +3,20 @@ from stayease_sales.models import resident_Data
 
 
 class Command(BaseCommand):
-    help = 'Disable portal for existing residents without a lease agreement uploaded.'
+    help = 'Report residents without a lease agreement (portal access is now always enabled for active residents).'
 
     def handle(self, *args, **options):
         residents = resident_Data.objects.filter(
             residentUser__isnull=False,
             residentUser__is_active=True,
+            leaseAgreement='',
         ).select_related('residentUser')
 
-        disabled = 0
-        skipped = 0
+        count = 0
         for r in residents:
-            if not r.leaseAgreement:
-                r.residentUser.is_active = False
-                r.residentUser.save(update_fields=['is_active'])
-                disabled += 1
-                self.stdout.write(f"  Disabled: {r.residentsName} ({r.phoneNumber})")
-            else:
-                skipped += 1
+            self.stdout.write(f"  No lease: {r.residentsName} ({r.phoneNumber})")
+            count += 1
 
         self.stdout.write(self.style.SUCCESS(
-            f"\nDone. Disabled {disabled} portal(s). Skipped {skipped} (lease already uploaded)."
+            f"\nDone. {count} resident(s) without a lease agreement (portal access not affected)."
         ))
