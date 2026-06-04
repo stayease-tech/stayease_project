@@ -62,14 +62,28 @@ function detectUserType(permissions) {
     return best;
 }
 
+// Install a request interceptor once so the CSRF token is always read fresh
+// from the cookie before each request. This avoids a stale-token 403 that
+// occurs when the cookie is first set by the login response (which is
+// csrf_exempt) after setupAxiosDefaults() has already run.
+let _csrfInterceptorInstalled = false;
+
 /**
- * Configures axios to send cookies and the CSRF token with every request.
+ * Configures axios to send cookies and always attach a fresh CSRF token.
+ * Safe to call multiple times — the interceptor is only installed once.
  *
  * @returns {void}
  */
 function setupAxiosDefaults() {
     axios.defaults.withCredentials = true;
-    axios.defaults.headers.common["X-CSRFToken"] = Cookies.get("csrftoken");
+    if (!_csrfInterceptorInstalled) {
+        axios.interceptors.request.use((config) => {
+            const token = Cookies.get("csrftoken");
+            if (token) config.headers["X-CSRFToken"] = token;
+            return config;
+        });
+        _csrfInterceptorInstalled = true;
+    }
 }
 
 /**
