@@ -1330,6 +1330,16 @@ def resident_complaint_submit(request):
         preferredTime=preferred_time,
     )
 
+    now = timezone.now()
+    ticket_number = f"STY-{now.strftime('%y%m%d')}-{now.microsecond % 900 + 100}"
+    ComplaintCategory.objects.create(
+        complaint=complaint,
+        category_type=category,
+        items='',
+        ticket_number=ticket_number,
+        status='Open',
+    )
+
     return Response({'success': True, 'message': 'Maintenance request submitted successfully.', 'complaintId': complaint.id})
 
 
