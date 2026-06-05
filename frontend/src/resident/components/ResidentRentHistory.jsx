@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
 import { IndianRupee, ChevronLeft, ChevronRight, Download, CheckCircle2, Calendar, CreditCard, Hash } from "lucide-react";
 import { jsPDF } from "jspdf";
+import { DashPage } from "../../shared/Dashboard";
 
 /**
  * Generates and triggers a download of a PDF payment receipt for the given record.
@@ -107,7 +106,7 @@ function generateInvoicePdf(record) {
  * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
  * @returns {React.ReactElement}
  */
-export default function residentRentHistory({ isExpanded, setIsExpanded }) {
+export default function residentRentHistory() {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -158,10 +157,7 @@ export default function residentRentHistory({ isExpanded, setIsExpanded }) {
     };
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
                 <div className="page-header">
                     <div>
                         <h1>Rent History</h1>
@@ -291,7 +287,6 @@ export default function residentRentHistory({ isExpanded, setIsExpanded }) {
                         </div>
                     </div>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }

@@ -1,3 +1,4 @@
+// Copyright Aravind Adari
 import { MdOutlineStickyNote2, MdPeople, MdSettings } from "react-icons/md";
 import { FaRegBuilding } from "react-icons/fa";
 import { LiaBedSolid } from "react-icons/lia";
@@ -15,6 +16,6 @@ const menuItems = [
     { name: "Settings", icon: <MdSettings />, link: "/admin/settings", disabled: true },
 ];
 
-export default function Sidebar({ toggleSidebar, isExpanded }) {
-    return <SharedSidebar toggleSidebar={toggleSidebar} isExpanded={isExpanded} menuItems={menuItems} />;
+export default function Sidebar() {
+    return <SharedSidebar menuItems={menuItems} />;
 }

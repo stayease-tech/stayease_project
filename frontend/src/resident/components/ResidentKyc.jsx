@@ -3,11 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
 import { ShieldCheck, Upload, AlertCircle, CheckCircle, FileUp, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { useDropdowns } from "../../shared/DropdownContext";
+import { DashPage } from "../../shared/Dashboard";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
@@ -22,7 +21,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
  * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
  * @returns {React.ReactElement}
  */
-export default function residentKyc({ isExpanded, setIsExpanded }) {
+export default function residentKyc() {
     const navigate = useNavigate();
     const { getOptions } = useDropdowns();
     const [kyc, setKyc] = useState(null);
@@ -125,10 +124,7 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
         : ShieldCheck;
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
                 <div className="page-header">
                     <div><h1>KYC Verification</h1><p>Upload and manage your identity documents</p></div>
                 </div>
@@ -224,8 +220,7 @@ export default function residentKyc({ isExpanded, setIsExpanded }) {
 
                     </>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }
 

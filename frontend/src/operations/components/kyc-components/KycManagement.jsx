@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Navbar from "../../../shared/Navbar";
 import { ShieldCheck, Check, X, Eye, ChevronDown } from "lucide-react";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-export default function KycManagement({ isExpanded, setIsExpanded }) {
+export default function KycManagement() {
     const { getOptions } = useDropdowns();
     const TABS = getOptions('kyc_approval_statuses');
     const [residents, setResidents] = useState([]);
@@ -14,8 +14,6 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
     const [rejectReason, setRejectReason] = useState("");
     const [processing, setProcessing] = useState(false);
     const [msg, setMsg] = useState({ text: "", type: "" });
-
-    const Sidebar = useSidebar();
 
     const fetchResidents = (status) => {
         setLoading(true);
@@ -35,6 +33,8 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
             if (res.data.success) {
                 setMsg({ text: res.data.message, type: "success" });
                 fetchResidents(filter);
+            } else {
+                setMsg({ text: res.data.message || "Failed to approve.", type: "error" });
             }
         } catch {
             setMsg({ text: "Failed to approve.", type: "error" });
@@ -71,10 +71,7 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
     };
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            {Sidebar && <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />}
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
                 <div className="page-header">
                     <div>
                         <h1>KYC Management</h1>
@@ -197,8 +194,7 @@ export default function KycManagement({ isExpanded, setIsExpanded }) {
                         ))}
                     </div>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }
 
@@ -214,13 +210,4 @@ function DocSection({ label, number, frontUrl, backUrl }) {
             </div>
         </div>
     );
-}
-
-/** Lazy sidebar loader */
-function useSidebar() {
-    const [Comp, setComp] = useState(null);
-    useEffect(() => {
-        import("../Sidebar").then((mod) => setComp(() => mod.default));
-    }, []);
-    return Comp;
 }

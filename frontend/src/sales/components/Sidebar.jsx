@@ -1,3 +1,4 @@
+// Copyright Aravind Adari
 import { LiaBedSolid } from "react-icons/lia";
 import { MdLeaderboard, MdPersonAdd } from "react-icons/md";
 import { FaFileContract, FaFilePdf } from "react-icons/fa";
@@ -15,6 +16,6 @@ const menuItems = [
     { name: "KYC Management", icon: <HiShieldCheck />, link: "/sales/sales-kyc-management" },
 ];
 
-export default function Sidebar({ toggleSidebar, isExpanded }) {
-    return <SharedSidebar toggleSidebar={toggleSidebar} isExpanded={isExpanded} menuItems={menuItems} />;
+export default function Sidebar() {
+    return <SharedSidebar menuItems={menuItems} />;
 }

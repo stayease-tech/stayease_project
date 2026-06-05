@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
 import { MessageSquare, Plus, ChevronRight, Zap, Droplets, Sofa, CookingPot, Wifi, HelpCircle, ChevronLeft } from "lucide-react";
 import { toast } from "react-toastify";
+import { DashPage } from "../../shared/Dashboard";
 
 const CATEGORY_OPTIONS = [
     { value: "electricalElectronics", label: "Electrical & Electronics", icon: Zap },
@@ -49,7 +48,7 @@ const PAGE_SIZE = 10;
  * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
  * @returns {React.ReactElement}
  */
-export default function residentComplaints({ isExpanded, setIsExpanded }) {
+export default function residentComplaints() {
     const navigate = useNavigate();
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -147,10 +146,7 @@ export default function residentComplaints({ isExpanded, setIsExpanded }) {
     const paginated = complaints.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
                 <div className="page-header">
                     <div><h1>Maintenance Requests</h1><p>Raise and track your maintenance requests</p></div>
                     <button className="btn btn-primary flex items-center gap-2" onClick={() => { setShowForm(!showForm); setErrors({}); }}>
@@ -363,7 +359,6 @@ export default function residentComplaints({ isExpanded, setIsExpanded }) {
                         )}
                     </>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }

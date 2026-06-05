@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function LeadDetails({ isExpanded, setIsExpanded }) {
+function LeadDetails() {
     const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
@@ -88,7 +87,7 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
         const changedData = getChangedData();
 
         if (Object.keys(changedData).length === 0) {
-            alert('No data is updated!');
+            toast.info('No data is updated!');
             setIsSaving(false);
             return;
         }
@@ -115,13 +114,13 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
             setOriginalData(prev => ({ ...prev, ...changedData }));
 
             if (response.data.success) {
-                alert(response.data.message);
+                toast.success(response.data.message);
 
                 navigate(`/sales/sales-leads-table`);
             }
         } catch (err) {
             console.error('Error updating form:', err);
-            alert('There was an error updating the form. Please try again!');
+            toast.error('There was an error updating the form. Please try again!');
         } finally {
             setIsSaving(false);
         }
@@ -139,27 +138,22 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                 withCredentials: true,
             });
 
-            alert(response.data.message);
-
             if (response.data.success) {
+                toast.success(response.data.message);
                 navigate('/sales/sales-leads-table');
+            } else {
+                toast.error(response.data.message);
             }
         } catch (err) {
             console.error('Error deleting form:', err);
-            alert('There was an error deleting the form. Please try again!');
+            toast.error('There was an error deleting the form. Please try again!');
         } finally {
             setIsDeleting(false);
         }
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+        <DashPage>
                     <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={handleLeadUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LEADS DATA</h1>
 
@@ -328,9 +322,7 @@ function LeadDetails({ isExpanded, setIsExpanded }) {
                             </table>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

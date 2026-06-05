@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function EmployeeForm({ isExpanded, setIsExpanded }) {
+function EmployeeForm() {
   const { getOptions } = useDropdowns();
   const [employeeData, setEmployeeData] = useState({
     firstName: '',
@@ -64,18 +63,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
   };
 
   return (
-    <div>
-      <Sidebar
-        isExpanded={isExpanded}
-        toggleSidebar={() => setIsExpanded(!isExpanded)}
-      />
-
-      <div className="flex-1 duration-300">
-        <Navbar isExpanded={isExpanded} />
-
-        <div
-          className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-[1rem]`}
-        >
+    <DashPage>
           <form
             className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800"
             onSubmit={employeeHandleSubmit}
@@ -188,9 +176,7 @@ function EmployeeForm({ isExpanded, setIsExpanded }) {
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
           </form>
-        </div>
-      </div>
-    </div>
+    </DashPage>
   );
 }
 

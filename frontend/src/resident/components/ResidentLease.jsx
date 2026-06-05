@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
 import { FileText, Download } from "lucide-react";
+import { DashPage } from "../../shared/Dashboard";
 
-export default function residentLease({ isExpanded, setIsExpanded }) {
+export default function residentLease() {
     const [docs, setDocs] = useState([]);
     const [leaseAgreement, setLeaseAgreement] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,10 +23,7 @@ export default function residentLease({ isExpanded, setIsExpanded }) {
     }, []);
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
                 <div className="page-header">
                     <div><h1>Lease Agreement</h1><p>View and download your lease agreement</p></div>
                 </div>
@@ -92,7 +88,6 @@ export default function residentLease({ isExpanded, setIsExpanded }) {
                         ))}
                     </div>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }

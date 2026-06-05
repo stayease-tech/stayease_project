@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function CategoryData({ isExpanded, setIsExpanded }) {
+function CategoryData() {
     const { getOptions } = useDropdowns();
     const navigate = useNavigate();
     const location = useLocation();
@@ -170,13 +169,7 @@ function CategoryData({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={categoryHandleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">EXPENSE CATEGORY DATA</h1>
 
@@ -588,9 +581,7 @@ function CategoryData({ isExpanded, setIsExpanded }) {
                             }
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

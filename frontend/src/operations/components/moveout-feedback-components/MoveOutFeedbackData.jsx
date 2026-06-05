@@ -1,20 +1,13 @@
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useNavigate, useLocation } from "react-router-dom";
+import { DashPage } from "../../../shared/Dashboard";
 
-function MoveOutFeedbackData({ isExpanded, setIsExpanded }) {
+function MoveOutFeedbackData() {
     const navigate = useNavigate();
     const location = useLocation();
     const moveOutFeedbackData = location.state?.data;
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+        <DashPage>
                     <div className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800">
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">MOVE-IN FEEDBACK DATA</h1>
 
@@ -65,9 +58,7 @@ function MoveOutFeedbackData({ isExpanded, setIsExpanded }) {
                             </table>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

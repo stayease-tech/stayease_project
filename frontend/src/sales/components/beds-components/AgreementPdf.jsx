@@ -1,12 +1,12 @@
 /* global html2pdf */
 import React, { useState, useRef } from 'react';
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
+import { DashPage } from "../../../shared/Dashboard";
 
-function AgreementPdf({ isExpanded, setIsExpanded }) {
+function AgreementPdf() {
     let publicUrl = process.env.PUBLIC_URL + '/';
     const navigate = useNavigate();
     const location = useLocation();
@@ -81,7 +81,11 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                 withCredentials: true,
             });
 
-            alert(response.data.message);
+            if (response.data.success) {
+                toast.success(response.data.message);
+            } else {
+                toast.error(response.data.message);
+            }
 
             console.log(pdfDetails)
 
@@ -95,7 +99,7 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
             }
         } catch (err) {
             console.error('Error submitting file:', err);
-            alert('There was an error submitting the file. Please try again!');
+            toast.error('There was an error submitting the file. Please try again!');
         } finally {
             setIsSubmitting(false);
         }
@@ -124,27 +128,21 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
 
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
 
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-
-                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+        <DashPage>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">AGREEMENT</h1>
 
                         <div className="sm:flex justify-between">
                             <button
-                                className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => bedsDetailsFlag ? navigate(`/sales/sales-resident-details/${bedData?.resident_data?.id}`, { state: { bedsData, bedData, flag } }) : navigate(`/sales/sales-beds-table`)}
+                                className="btn btn-primary mb-5" onClick={() => bedsDetailsFlag ? navigate(`/sales/sales-resident-details/${bedData?.resident_data?.id}`, { state: { bedsData, bedData, flag } }) : navigate(`/sales/sales-beds-table`)}
                                 type="button">Prev</button>
 
-                            <div className='sm:flex gap-3'>
+                            <div className='flex gap-3'>
                                 <button
-                                    className="block mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm max-sm:w-full" onClick={openModal} type="button">Send PDF</button>
+                                    className="btn btn-primary mb-5" onClick={openModal} type="button">Send PDF</button>
                                 <button
-                                    className="block mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm max-sm:w-full" onClick={handleDownload}
+                                    className="btn btn-primary mb-5" onClick={handleDownload}
                                     type="button">Download PDF</button>
                             </div>
                         </div>
@@ -1115,10 +1113,11 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                 </section>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+
+        </DashPage>
+
+
     )
 }
 

@@ -1,9 +1,11 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+// Copyright Aravind Adari
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import Login from "./auth/Login";
 import PublicLayout from "./shared/PublicLayout";
 import Dashboard from "./shared/Dashboard";
+import { SidebarProvider } from "./shared/SidebarContext";
 
 /**
  * Loading — full-screen spinner shown while lazy-loaded chunks are fetching.
@@ -160,171 +162,163 @@ function Protected({ type, children }) {
 
 /**
  * Routing — defines the full client-side route tree for the application.
- * Manages sidebar expansion state and passes it down to protected page components.
+ * Wraps all portal routes in SidebarProvider so sidebar state is shared via context.
  *
  * @returns {React.ReactElement}
  */
 function Routing() {
-    const [isExpanded, setIsExpanded] = useState(() => {
-        try { return JSON.parse(sessionStorage.getItem('isExpanded')) ?? false; } catch { return false; }
-    });
-
-    useEffect(() => {
-        sessionStorage.setItem('isExpanded', JSON.stringify(isExpanded));
-    }, [isExpanded]);
-
-    const sp = { isExpanded, setIsExpanded };
-
     return (
-        <Suspense fallback={<Loading />}>
-            <Routes>
-                {/* ========== LOGIN ========== */}
-                <Route path="/login" element={<Login />} />
+        <SidebarProvider>
+            <Suspense fallback={<Loading />}>
+                <Routes>
+                    {/* ========== LOGIN ========== */}
+                    <Route path="/login" element={<Login />} />
 
-                {/* ========== DASHBOARDS (PROTECTED) ========== */}
-                <Route path="/admin/dashboard" element={<Protected type="admin"><Dashboard {...sp} /></Protected>} />
-                <Route path="/accounts/dashboard" element={<Protected type="accounts"><Dashboard {...sp} /></Protected>} />
-                <Route path="/operations/dashboard" element={<Protected type="operations"><Dashboard {...sp} /></Protected>} />
-                <Route path="/sales/dashboard" element={<Protected type="sales"><Dashboard {...sp} /></Protected>} />
-                <Route path="/supply/dashboard" element={<Protected type="supply"><Dashboard {...sp} /></Protected>} />
+                    {/* ========== DASHBOARDS (PROTECTED) ========== */}
+                    <Route path="/admin/dashboard" element={<Protected type="admin"><Dashboard /></Protected>} />
+                    <Route path="/accounts/dashboard" element={<Protected type="accounts"><Dashboard /></Protected>} />
+                    <Route path="/operations/dashboard" element={<Protected type="operations"><Dashboard /></Protected>} />
+                    <Route path="/sales/dashboard" element={<Protected type="sales"><Dashboard /></Protected>} />
+                    <Route path="/supply/dashboard" element={<Protected type="supply"><Dashboard /></Protected>} />
 
-                {/* ========== WEBSITE (PUBLIC) ========== */}
-                <Route path="/" element={<PublicLayout><WebHome /></PublicLayout>} />
-                <Route path="/about" element={<PublicLayout><WebMainAbout /></PublicLayout>} />
-                <Route path="/properties" element={<PublicLayout><WebProperties /></PublicLayout>} />
-                <Route path="/properties/:slug" element={<PublicLayout><WebPropertyDetails /></PublicLayout>} />
-                <Route path="/blog" element={<PublicLayout><WebBlog /></PublicLayout>} />
-                <Route path="/blog/the-rise-of-co-living-in-bangalore" element={<PublicLayout><Blog1 /></PublicLayout>} />
-                <Route path="/blog/how-to-find-the-perfect-pg" element={<PublicLayout><Blog2 /></PublicLayout>} />
-                <Route path="/blog/mastering-budget-living-in-bangalore" element={<PublicLayout><Blog3 /></PublicLayout>} />
-                <Route path="/blog/unlocking-hassle-free-co-living" element={<PublicLayout><Blog4 /></PublicLayout>} />
-                <Route path="/blog/best-neighborhoods-for-coliving" element={<PublicLayout><Blog5 /></PublicLayout>} />
-                <Route path="/blog/guide-to-pg-accommodation" element={<PublicLayout><Blog6 /></PublicLayout>} />
-                <Route path="/blog/why-co-living-best-for-young-professionals" element={<PublicLayout><Blog7 /></PublicLayout>} />
-                <Route path="/blog/top-amenities-in-modern-co-living" element={<PublicLayout><Blog8 /></PublicLayout>} />
-                <Route path="/contact" element={<PublicLayout><WebContact /></PublicLayout>} />
-                <Route path="/resident-login" element={<PublicLayout><WebResidentLogin /></PublicLayout>} />
-                <Route path="/privacy-policy" element={<PublicLayout><WebPrivacyPolicy /></PublicLayout>} />
-                <Route path="/Terms-conditions" element={<PublicLayout><WebTermsConditions /></PublicLayout>} />
-                <Route path="/refund-policy" element={<PublicLayout><WebRefundPolicy /></PublicLayout>} />
+                    {/* ========== WEBSITE (PUBLIC) ========== */}
+                    <Route path="/" element={<PublicLayout><WebHome /></PublicLayout>} />
+                    <Route path="/about" element={<PublicLayout><WebMainAbout /></PublicLayout>} />
+                    <Route path="/properties" element={<PublicLayout><WebProperties /></PublicLayout>} />
+                    <Route path="/properties/:slug" element={<PublicLayout><WebPropertyDetails /></PublicLayout>} />
+                    <Route path="/blog" element={<PublicLayout><WebBlog /></PublicLayout>} />
+                    <Route path="/blog/the-rise-of-co-living-in-bangalore" element={<PublicLayout><Blog1 /></PublicLayout>} />
+                    <Route path="/blog/how-to-find-the-perfect-pg" element={<PublicLayout><Blog2 /></PublicLayout>} />
+                    <Route path="/blog/mastering-budget-living-in-bangalore" element={<PublicLayout><Blog3 /></PublicLayout>} />
+                    <Route path="/blog/unlocking-hassle-free-co-living" element={<PublicLayout><Blog4 /></PublicLayout>} />
+                    <Route path="/blog/best-neighborhoods-for-coliving" element={<PublicLayout><Blog5 /></PublicLayout>} />
+                    <Route path="/blog/guide-to-pg-accommodation" element={<PublicLayout><Blog6 /></PublicLayout>} />
+                    <Route path="/blog/why-co-living-best-for-young-professionals" element={<PublicLayout><Blog7 /></PublicLayout>} />
+                    <Route path="/blog/top-amenities-in-modern-co-living" element={<PublicLayout><Blog8 /></PublicLayout>} />
+                    <Route path="/contact" element={<PublicLayout><WebContact /></PublicLayout>} />
+                    <Route path="/resident-login" element={<PublicLayout><WebResidentLogin /></PublicLayout>} />
+                    <Route path="/privacy-policy" element={<PublicLayout><WebPrivacyPolicy /></PublicLayout>} />
+                    <Route path="/Terms-conditions" element={<PublicLayout><WebTermsConditions /></PublicLayout>} />
+                    <Route path="/refund-policy" element={<PublicLayout><WebRefundPolicy /></PublicLayout>} />
 
-                {/* ========== ACCOUNTS (PROTECTED) ========== */}
-                <Route path="/accounts/accounts-user-activity-data" element={<Protected type="accounts"><AccActivityStats {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-login-data/:id" element={<Protected type="accounts"><AccLoginData {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-vendor-form" element={<Protected type="accounts"><AccVendorForm {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-vendor-table" element={<Protected type="accounts"><AccVendorTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-vendor-data/:id" element={<Protected type="accounts"><AccVendorData {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-expense-form" element={<Protected type="accounts"><AccExpenseForm {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-expense-table" element={<Protected type="accounts"><AccExpenseTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-expense-table/:id" element={<Protected type="accounts"><AccExpenseTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-category-data/:id" element={<Protected type="accounts"><AccCategoryData {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-rawdatafile-upload" element={<Protected type="accounts"><AccRawdataFileUpload {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-rawdatafile-table" element={<Protected type="accounts"><AccRawdataFileTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-rawdata-table/:id" element={<Protected type="accounts"><AccRawdataTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-rawdata-form/:id" element={<Protected type="accounts"><AccRawdataForm {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-rawdata-data/:id" element={<Protected type="accounts"><AccRawdataDetails {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-liability-table" element={<Protected type="accounts"><AccLiabilityTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-liability-form/:id" element={<Protected type="accounts"><AccLiabilityForm {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-liability-data/:id" element={<Protected type="accounts"><AccLiabilityData {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-otherfiles-upload" element={<Protected type="accounts"><AccOtherFilesForm {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-otherfiles-table" element={<Protected type="accounts"><AccOtherFilesTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-beds-table" element={<Protected type="accounts"><AccBedsTable {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-beds-details/:id" element={<Protected type="accounts"><AccBedsDetails {...sp} /></Protected>} />
-                <Route path="/accounts/accounts-agreement-pdf/:id" element={<Protected type="accounts"><AccAgreementPdf {...sp} /></Protected>} />
+                    {/* ========== ACCOUNTS (PROTECTED) ========== */}
+                    <Route path="/accounts/accounts-user-activity-data" element={<Protected type="accounts"><AccActivityStats /></Protected>} />
+                    <Route path="/accounts/accounts-login-data/:id" element={<Protected type="accounts"><AccLoginData /></Protected>} />
+                    <Route path="/accounts/accounts-vendor-form" element={<Protected type="accounts"><AccVendorForm /></Protected>} />
+                    <Route path="/accounts/accounts-vendor-table" element={<Protected type="accounts"><AccVendorTable /></Protected>} />
+                    <Route path="/accounts/accounts-vendor-data/:id" element={<Protected type="accounts"><AccVendorData /></Protected>} />
+                    <Route path="/accounts/accounts-expense-form" element={<Protected type="accounts"><AccExpenseForm /></Protected>} />
+                    <Route path="/accounts/accounts-expense-table" element={<Protected type="accounts"><AccExpenseTable /></Protected>} />
+                    <Route path="/accounts/accounts-expense-table/:id" element={<Protected type="accounts"><AccExpenseTable /></Protected>} />
+                    <Route path="/accounts/accounts-category-data/:id" element={<Protected type="accounts"><AccCategoryData /></Protected>} />
+                    <Route path="/accounts/accounts-rawdatafile-upload" element={<Protected type="accounts"><AccRawdataFileUpload /></Protected>} />
+                    <Route path="/accounts/accounts-rawdatafile-table" element={<Protected type="accounts"><AccRawdataFileTable /></Protected>} />
+                    <Route path="/accounts/accounts-rawdata-table/:id" element={<Protected type="accounts"><AccRawdataTable /></Protected>} />
+                    <Route path="/accounts/accounts-rawdata-form/:id" element={<Protected type="accounts"><AccRawdataForm /></Protected>} />
+                    <Route path="/accounts/accounts-rawdata-data/:id" element={<Protected type="accounts"><AccRawdataDetails /></Protected>} />
+                    <Route path="/accounts/accounts-liability-table" element={<Protected type="accounts"><AccLiabilityTable /></Protected>} />
+                    <Route path="/accounts/accounts-liability-form/:id" element={<Protected type="accounts"><AccLiabilityForm /></Protected>} />
+                    <Route path="/accounts/accounts-liability-data/:id" element={<Protected type="accounts"><AccLiabilityData /></Protected>} />
+                    <Route path="/accounts/accounts-otherfiles-upload" element={<Protected type="accounts"><AccOtherFilesForm /></Protected>} />
+                    <Route path="/accounts/accounts-otherfiles-table" element={<Protected type="accounts"><AccOtherFilesTable /></Protected>} />
+                    <Route path="/accounts/accounts-beds-table" element={<Protected type="accounts"><AccBedsTable /></Protected>} />
+                    <Route path="/accounts/accounts-beds-details/:id" element={<Protected type="accounts"><AccBedsDetails /></Protected>} />
+                    <Route path="/accounts/accounts-agreement-pdf/:id" element={<Protected type="accounts"><AccAgreementPdf /></Protected>} />
 
-                {/* ========== OPERATIONS (PROTECTED + some public) ========== */}
-                <Route path="/operations/operations-user-activity-data" element={<Protected type="operations"><OpsActivityStats {...sp} /></Protected>} />
-                <Route path="/operations/operations-login-data/:id" element={<Protected type="operations"><OpsLoginData {...sp} /></Protected>} />
-                <Route path="/operations/operations-beds-table" element={<Protected type="operations"><OpsBedsTable {...sp} /></Protected>} />
-                <Route path="/operations/operations-agreement-pdf/:id" element={<Protected type="operations"><OpsAgreementPdf {...sp} /></Protected>} />
-                <Route path="/operations/operations-checklistfeedback-table" element={<Protected type="operations"><OpsChecklistFeedbackTable {...sp} /></Protected>} />
-                <Route path="/operations/operations-moveinchecklist-form/:id" element={<Protected type="operations"><OpsMoveInChecklistForm {...sp} /></Protected>} />
-                <Route path="/operations/operations-moveinchecklist-data/:id" element={<Protected type="operations"><OpsMoveInChecklistData {...sp} /></Protected>} />
-                <Route path="/operations/operations-moveinfeedback-form/:id" element={<OpsMoveInFeedbackForm {...sp} />} />
-                <Route path="/operations/operations-moveinfeedback-data/:id" element={<Protected type="operations"><OpsMoveInFeedbackData {...sp} /></Protected>} />
-                <Route path="/operations/operations-moveoutchecklist-form/:id" element={<Protected type="operations"><OpsMoveOutChecklistForm {...sp} /></Protected>} />
-                <Route path="/operations/operations-moveoutchecklist-data/:id" element={<Protected type="operations"><OpsMoveOutChecklistData {...sp} /></Protected>} />
-                <Route path="/operations/operations-moveoutfeedback-form/:id" element={<OpsMoveOutFeedbackForm {...sp} />} />
-                <Route path="/operations/operations-moveoutfeedback-data/:id" element={<Protected type="operations"><OpsMoveOutFeedbackData {...sp} /></Protected>} />
-                {/* Public operations routes (complaint/feedback forms accessible without auth) */}
-                <Route path="/operations/operations-propertycomplaint-form" element={<OpsCommonPropertyComplaintForm />} />
-                <Route path="/operations/operations-propertycomplaint-form/:id" element={<OpsPropertyComplaintForm />} />
-                <Route path="/operations/operations-propertycomplaint-table" element={<Protected type="operations"><OpsPropertyComplaintTable {...sp} /></Protected>} />
-                <Route path="/operations/operations-propertycomplaint-data/:id" element={<Protected type="operations"><OpsPropertyComplaintData {...sp} /></Protected>} />
-                <Route path="/operations/operations-feedback-form/:id" element={<OpsFeedbackForm />} />
-                <Route path="/operations/operations-expense-form" element={<Protected type="operations"><OpsExpenseForm {...sp} /></Protected>} />
-                <Route path="/operations/operations-expense-table" element={<Protected type="operations"><OpsExpenseTable {...sp} /></Protected>} />
-                <Route path="/operations/operations-vendor-form" element={<Protected type="operations"><OpsVendorForm {...sp} /></Protected>} />
-                <Route path="/operations/operations-kyc-management" element={<Protected type="operations"><OpsKycManagement {...sp} /></Protected>} />
+                    {/* ========== OPERATIONS (PROTECTED + some public) ========== */}
+                    <Route path="/operations/operations-user-activity-data" element={<Protected type="operations"><OpsActivityStats /></Protected>} />
+                    <Route path="/operations/operations-login-data/:id" element={<Protected type="operations"><OpsLoginData /></Protected>} />
+                    <Route path="/operations/operations-beds-table" element={<Protected type="operations"><OpsBedsTable /></Protected>} />
+                    <Route path="/operations/operations-agreement-pdf/:id" element={<Protected type="operations"><OpsAgreementPdf /></Protected>} />
+                    <Route path="/operations/operations-checklistfeedback-table" element={<Protected type="operations"><OpsChecklistFeedbackTable /></Protected>} />
+                    <Route path="/operations/operations-moveinchecklist-form/:id" element={<Protected type="operations"><OpsMoveInChecklistForm /></Protected>} />
+                    <Route path="/operations/operations-moveinchecklist-data/:id" element={<Protected type="operations"><OpsMoveInChecklistData /></Protected>} />
+                    <Route path="/operations/operations-moveinfeedback-form/:id" element={<OpsMoveInFeedbackForm />} />
+                    <Route path="/operations/operations-moveinfeedback-data/:id" element={<Protected type="operations"><OpsMoveInFeedbackData /></Protected>} />
+                    <Route path="/operations/operations-moveoutchecklist-form/:id" element={<Protected type="operations"><OpsMoveOutChecklistForm /></Protected>} />
+                    <Route path="/operations/operations-moveoutchecklist-data/:id" element={<Protected type="operations"><OpsMoveOutChecklistData /></Protected>} />
+                    <Route path="/operations/operations-moveoutfeedback-form/:id" element={<OpsMoveOutFeedbackForm />} />
+                    <Route path="/operations/operations-moveoutfeedback-data/:id" element={<Protected type="operations"><OpsMoveOutFeedbackData /></Protected>} />
+                    {/* Public operations routes (complaint/feedback forms accessible without auth) */}
+                    <Route path="/operations/operations-propertycomplaint-form" element={<OpsCommonPropertyComplaintForm />} />
+                    <Route path="/operations/operations-propertycomplaint-form/:id" element={<OpsPropertyComplaintForm />} />
+                    <Route path="/operations/operations-propertycomplaint-table" element={<Protected type="operations"><OpsPropertyComplaintTable /></Protected>} />
+                    <Route path="/operations/operations-propertycomplaint-data/:id" element={<Protected type="operations"><OpsPropertyComplaintData /></Protected>} />
+                    <Route path="/operations/operations-feedback-form/:id" element={<OpsFeedbackForm />} />
+                    <Route path="/operations/operations-expense-form" element={<Protected type="operations"><OpsExpenseForm /></Protected>} />
+                    <Route path="/operations/operations-expense-table" element={<Protected type="operations"><OpsExpenseTable /></Protected>} />
+                    <Route path="/operations/operations-vendor-form" element={<Protected type="operations"><OpsVendorForm /></Protected>} />
+                    <Route path="/operations/operations-kyc-management" element={<Protected type="operations"><OpsKycManagement /></Protected>} />
 
-                {/* ========== SALES (PROTECTED) ========== */}
-                <Route path="/sales/sales-user-activity-data" element={<Protected type="sales"><SalesActivityStats {...sp} /></Protected>} />
-                <Route path="/sales/sales-login-data/:id" element={<Protected type="sales"><SalesLoginData {...sp} /></Protected>} />
-                <Route path="/sales/sales-beds-table" element={<Protected type="sales"><SalesBedsTable {...sp} /></Protected>} />
-                <Route path="/sales/sales-residents-table/:id" element={<Protected type="sales"><SalesResidentsTable {...sp} /></Protected>} />
-                <Route path="/sales/sales-resident-form/:id" element={<Protected type="sales"><SalesResidentForm {...sp} /></Protected>} />
-                <Route path="/sales/sales-resident-details/:id" element={<Protected type="sales"><SalesResidentDetails {...sp} /></Protected>} />
-                <Route path="/sales/sales-agreement-pdf/:id" element={<Protected type="sales"><SalesAgreementPdf {...sp} /></Protected>} />
-                <Route path="/sales/sales-leads-form" element={<Protected type="sales"><SalesLeadForm {...sp} /></Protected>} />
-                <Route path="/sales/sales-leads-table" element={<Protected type="sales"><SalesLeadTable {...sp} /></Protected>} />
-                <Route path="/sales/sales-leads-details/:id" element={<Protected type="sales"><SalesLeadDetails {...sp} /></Protected>} />
-                <Route path="/sales/sales-expense-form" element={<Protected type="sales"><SalesExpenseForm {...sp} /></Protected>} />
-                <Route path="/sales/sales-expense-table" element={<Protected type="sales"><SalesExpenseTable {...sp} /></Protected>} />
-                <Route path="/sales/sales-vendor-form" element={<Protected type="sales"><SalesVendorForm {...sp} /></Protected>} />
-                <Route path="/sales/sales-kyc-management" element={<Protected type="sales"><SalesKycManagement {...sp} /></Protected>} />
+                    {/* ========== SALES (PROTECTED) ========== */}
+                    <Route path="/sales/sales-user-activity-data" element={<Protected type="sales"><SalesActivityStats /></Protected>} />
+                    <Route path="/sales/sales-login-data/:id" element={<Protected type="sales"><SalesLoginData /></Protected>} />
+                    <Route path="/sales/sales-beds-table" element={<Protected type="sales"><SalesBedsTable /></Protected>} />
+                    <Route path="/sales/sales-residents-table/:id" element={<Protected type="sales"><SalesResidentsTable /></Protected>} />
+                    <Route path="/sales/sales-resident-form/:id" element={<Protected type="sales"><SalesResidentForm /></Protected>} />
+                    <Route path="/sales/sales-resident-details/:id" element={<Protected type="sales"><SalesResidentDetails /></Protected>} />
+                    <Route path="/sales/sales-agreement-pdf/:id" element={<Protected type="sales"><SalesAgreementPdf /></Protected>} />
+                    <Route path="/sales/sales-leads-form" element={<Protected type="sales"><SalesLeadForm /></Protected>} />
+                    <Route path="/sales/sales-leads-table" element={<Protected type="sales"><SalesLeadTable /></Protected>} />
+                    <Route path="/sales/sales-leads-details/:id" element={<Protected type="sales"><SalesLeadDetails /></Protected>} />
+                    <Route path="/sales/sales-expense-form" element={<Protected type="sales"><SalesExpenseForm /></Protected>} />
+                    <Route path="/sales/sales-expense-table" element={<Protected type="sales"><SalesExpenseTable /></Protected>} />
+                    <Route path="/sales/sales-vendor-form" element={<Protected type="sales"><SalesVendorForm /></Protected>} />
+                    <Route path="/sales/sales-kyc-management" element={<Protected type="sales"><SalesKycManagement /></Protected>} />
 
-                {/* ========== SUPPLY (PROTECTED) ========== */}
-                <Route path="/supply/supply-user-activity-data" element={<Protected type="supply"><SupActivityStats {...sp} /></Protected>} />
-                <Route path="/supply/supply-login-data/:id" element={<Protected type="supply"><SupLoginData {...sp} /></Protected>} />
-                <Route path="/supply/supply-owner-form" element={<Protected type="supply"><SupOwnerForm {...sp} /></Protected>} />
-                <Route path="/supply/supply-owner-table" element={<Protected type="supply"><SupOwnerTable {...sp} /></Protected>} />
-                <Route path="/supply/supply-owner-details/:id" element={<Protected type="supply"><SupOwnerDetails {...sp} /></Protected>} />
-                <Route path="/supply/supply-property-form/:id" element={<Protected type="supply"><SupPropertyForm {...sp} /></Protected>} />
-                <Route path="/supply/supply-property-table" element={<Protected type="supply"><SupPropertyTable {...sp} /></Protected>} />
-                <Route path="/supply/supply-property-table/:id" element={<Protected type="supply"><SupPropertyTable {...sp} /></Protected>} />
-                <Route path="/supply/supply-property-details/:id" element={<Protected type="supply"><SupPropertyDetails {...sp} /></Protected>} />
-                <Route path="/supply/supply-room-form/:id" element={<Protected type="supply"><SupRoomForm {...sp} /></Protected>} />
-                <Route path="/supply/supply-room-table" element={<Protected type="supply"><SupRoomTable {...sp} /></Protected>} />
-                <Route path="/supply/supply-room-table/:id" element={<Protected type="supply"><SupRoomTable {...sp} /></Protected>} />
-                <Route path="/supply/supply-room-details/:id" element={<Protected type="supply"><SupRoomDetails {...sp} /></Protected>} />
-                <Route path="/supply/supply-expense-form" element={<Protected type="supply"><SupExpenseForm {...sp} /></Protected>} />
-                <Route path="/supply/supply-expense-table" element={<Protected type="supply"><SupExpenseTable {...sp} /></Protected>} />
-                <Route path="/supply/supply-vendor-form" element={<Protected type="supply"><SupVendorForm {...sp} /></Protected>} />
+                    {/* ========== SUPPLY (PROTECTED) ========== */}
+                    <Route path="/supply/supply-user-activity-data" element={<Protected type="supply"><SupActivityStats /></Protected>} />
+                    <Route path="/supply/supply-login-data/:id" element={<Protected type="supply"><SupLoginData /></Protected>} />
+                    <Route path="/supply/supply-owner-form" element={<Protected type="supply"><SupOwnerForm /></Protected>} />
+                    <Route path="/supply/supply-owner-table" element={<Protected type="supply"><SupOwnerTable /></Protected>} />
+                    <Route path="/supply/supply-owner-details/:id" element={<Protected type="supply"><SupOwnerDetails /></Protected>} />
+                    <Route path="/supply/supply-property-form/:id" element={<Protected type="supply"><SupPropertyForm /></Protected>} />
+                    <Route path="/supply/supply-property-table" element={<Protected type="supply"><SupPropertyTable /></Protected>} />
+                    <Route path="/supply/supply-property-table/:id" element={<Protected type="supply"><SupPropertyTable /></Protected>} />
+                    <Route path="/supply/supply-property-details/:id" element={<Protected type="supply"><SupPropertyDetails /></Protected>} />
+                    <Route path="/supply/supply-room-form/:id" element={<Protected type="supply"><SupRoomForm /></Protected>} />
+                    <Route path="/supply/supply-room-table" element={<Protected type="supply"><SupRoomTable /></Protected>} />
+                    <Route path="/supply/supply-room-table/:id" element={<Protected type="supply"><SupRoomTable /></Protected>} />
+                    <Route path="/supply/supply-room-details/:id" element={<Protected type="supply"><SupRoomDetails /></Protected>} />
+                    <Route path="/supply/supply-expense-form" element={<Protected type="supply"><SupExpenseForm /></Protected>} />
+                    <Route path="/supply/supply-expense-table" element={<Protected type="supply"><SupExpenseTable /></Protected>} />
+                    <Route path="/supply/supply-vendor-form" element={<Protected type="supply"><SupVendorForm /></Protected>} />
 
-                {/* ========== PARTNERS (PROTECTED) ========== */}
-                <Route path="/partners/partners-home" element={<Protected type="partners"><PartnersHome /></Protected>} />
-                <Route path="/partners/partners-properties" element={<Protected type="partners"><PartnersProperties /></Protected>} />
-                <Route path="/partners/partners-property-details" element={<Protected type="partners"><PartnersPropertyDetails /></Protected>} />
-                <Route path="/partners/partners-expenses" element={<Protected type="partners"><PartnersExpenses /></Protected>} />
-                <Route path="/partners/partners-kyc-details" element={<Protected type="partners"><PartnersKycDetails /></Protected>} />
-                <Route path="/partners/partners-bank-details" element={<Protected type="partners"><PartnersBankDetails /></Protected>} />
-                <Route path="/partners/partners-owner-details" element={<Protected type="partners"><PartnersOwnerDetails /></Protected>} />
+                    {/* ========== PARTNERS (PROTECTED) ========== */}
+                    <Route path="/partners/partners-home" element={<Protected type="partners"><PartnersHome /></Protected>} />
+                    <Route path="/partners/partners-properties" element={<Protected type="partners"><PartnersProperties /></Protected>} />
+                    <Route path="/partners/partners-property-details" element={<Protected type="partners"><PartnersPropertyDetails /></Protected>} />
+                    <Route path="/partners/partners-expenses" element={<Protected type="partners"><PartnersExpenses /></Protected>} />
+                    <Route path="/partners/partners-kyc-details" element={<Protected type="partners"><PartnersKycDetails /></Protected>} />
+                    <Route path="/partners/partners-bank-details" element={<Protected type="partners"><PartnersBankDetails /></Protected>} />
+                    <Route path="/partners/partners-owner-details" element={<Protected type="partners"><PartnersOwnerDetails /></Protected>} />
 
-                {/* ========== RESIDENT PORTAL (PROTECTED) ========== */}
-                <Route path="/resident/dashboard" element={<Protected type="resident"><ResidentDashboard {...sp} /></Protected>} />
-                <Route path="/resident/profile" element={<Protected type="resident"><ResidentProfile {...sp} /></Protected>} />
-                <Route path="/resident/kyc" element={<Protected type="resident"><ResidentKyc {...sp} /></Protected>} />
-                <Route path="/resident/rent-history" element={<Protected type="resident"><ResidentRentHistory {...sp} /></Protected>} />
-                <Route path="/resident/invoice/:id" element={<Protected type="resident"><ResidentInvoice {...sp} /></Protected>} />
-                <Route path="/resident/complaints" element={<Protected type="resident"><ResidentComplaints {...sp} /></Protected>} />
-                <Route path="/resident/complaint/:id" element={<Protected type="resident"><ResidentComplaintDetail {...sp} /></Protected>} />
-                <Route path="/resident/lease" element={<Protected type="resident"><ResidentLease {...sp} /></Protected>} />
-                <Route path="/resident/payments" element={<Protected type="resident"><ResidentPayments {...sp} /></Protected>} />
-                <Route path="/resident/payment-result" element={<ResidentPaymentResult />} />
-                <Route path="/resident/change-password" element={<Protected type="resident"><ResidentChangePassword {...sp} /></Protected>} />
+                    {/* ========== RESIDENT PORTAL (PROTECTED) ========== */}
+                    <Route path="/resident/dashboard" element={<Protected type="resident"><ResidentDashboard /></Protected>} />
+                    <Route path="/resident/profile" element={<Protected type="resident"><ResidentProfile /></Protected>} />
+                    <Route path="/resident/kyc" element={<Protected type="resident"><ResidentKyc /></Protected>} />
+                    <Route path="/resident/rent-history" element={<Protected type="resident"><ResidentRentHistory /></Protected>} />
+                    <Route path="/resident/invoice/:id" element={<Protected type="resident"><ResidentInvoice /></Protected>} />
+                    <Route path="/resident/complaints" element={<Protected type="resident"><ResidentComplaints /></Protected>} />
+                    <Route path="/resident/complaint/:id" element={<Protected type="resident"><ResidentComplaintDetail /></Protected>} />
+                    <Route path="/resident/lease" element={<Protected type="resident"><ResidentLease /></Protected>} />
+                    <Route path="/resident/payments" element={<Protected type="resident"><ResidentPayments /></Protected>} />
+                    <Route path="/resident/payment-result" element={<ResidentPaymentResult />} />
+                    <Route path="/resident/change-password" element={<Protected type="resident"><ResidentChangePassword /></Protected>} />
 
-                {/* ========== OLD LOGIN REDIRECTS ========== */}
-                {/* Redirect old per-app login URLs to unified login */}
-                <Route path="/accounts/accounts-login" element={<Navigate to="/login" replace />} />
-                <Route path="/operations/operations-login" element={<Navigate to="/login" replace />} />
-                <Route path="/sales/sales-login" element={<Navigate to="/login" replace />} />
-                <Route path="/supply/supply-login" element={<Navigate to="/login" replace />} />
-                <Route path="/partners/partners-login" element={<Navigate to="/login" replace />} />
+                    {/* ========== OLD LOGIN REDIRECTS ========== */}
+                    {/* Redirect old per-app login URLs to unified login */}
+                    <Route path="/accounts/accounts-login" element={<Navigate to="/login" replace />} />
+                    <Route path="/operations/operations-login" element={<Navigate to="/login" replace />} />
+                    <Route path="/sales/sales-login" element={<Navigate to="/login" replace />} />
+                    <Route path="/supply/supply-login" element={<Navigate to="/login" replace />} />
+                    <Route path="/partners/partners-login" element={<Navigate to="/login" replace />} />
 
-                {/* ========== FALLBACK ========== */}
-                <Route path="*" element={<PublicLayout><WebNotFound /></PublicLayout>} />
-            </Routes>
-        </Suspense>
+                    {/* ========== FALLBACK ========== */}
+                    <Route path="*" element={<PublicLayout><WebNotFound /></PublicLayout>} />
+                </Routes>
+            </Suspense>
+        </SidebarProvider>
     );
 }
 

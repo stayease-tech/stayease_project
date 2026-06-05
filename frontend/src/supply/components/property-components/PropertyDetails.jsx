@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
 import PropertyData from "../property-details-components/PropertyData";
 import PropertyKyc from "../property-details-components/PropertyKyc";
+import { DashPage } from "../../../shared/Dashboard";
 
-function PropertyDetails({ isExpanded, setIsExpanded }) {
+function PropertyDetails() {
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -188,7 +188,7 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
         });
 
         if (formData.entries().next().done) {
-            alert('No data is updated!')
+            toast.info('No data is updated!');
             setIsSaving(false);
             return;
         }
@@ -198,17 +198,18 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
                 withCredentials: true,
             });
 
-            alert(response.data.message);
-
             if (response.data.success) {
+                toast.success(response.data.message);
                 (propertyId === 0) ?
                     navigate(`/supply/supply-property-table`)
                     :
                     navigate(`/supply/supply-property-table/${propertyData.owner_id}`);
+            } else {
+                toast.error(response.data.message);
             }
         } catch (err) {
             console.error('Error submitting form:', err);
-            alert('There was an error submitting the form. Please try again!');
+            toast.error('There was an error submitting the form. Please try again!');
         } finally {
             setIsSaving(false);
         }
@@ -227,30 +228,25 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
                 withCredentials: true,
             });
 
-            alert(response.data.message);
-
             if (response.data.success) {
+                toast.success(response.data.message);
                 (propertyId === 0) ?
                     navigate(`/supply/supply-property-table`)
                     :
                     navigate(`/supply/supply-property-table/${propertyData.owner_id}`);
+            } else {
+                toast.error(response.data.message);
             }
         } catch (err) {
             console.error('Error deleting form:', err);
-            alert('There was an error deleting the form. Please try again!');
+            toast.error('There was an error deleting the form. Please try again!');
         } finally {
             setIsDeleting(false);
         }
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handlePropertyUpdate}>
                         {/* Header */}
                         <div className="mb-6">
@@ -325,9 +321,7 @@ function PropertyDetails({ isExpanded, setIsExpanded }) {
                             <PropertyKyc dataEditView={dataEditView} propertyDetails={propertyDetails} propertyData={propertyData} propertyHandleChange={propertyHandleChange} triggerFileInput={triggerFileInput} />
                         )}
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

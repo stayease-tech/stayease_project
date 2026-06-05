@@ -1,8 +1,10 @@
+// Copyright Aravind Adari
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import axios from "axios";
 import Navbar from "./Navbar";
+import { useSidebar } from "./SidebarContext";
 import {
     LayoutDashboard, Users, FileText, Building2,
     TrendingUp, ClipboardList, BedDouble, Wrench,
@@ -37,31 +39,30 @@ function QuickAction({ label, onClick }) {
 }
 
 // ── Main router ────────────────────────────────
-export default function Dashboard({ isExpanded, setIsExpanded }) {
+export default function Dashboard() {
     const { userType } = useAuth();
 
     switch (userType) {
         case "admin":
-            return <AdminDashboard isExpanded={isExpanded} setIsExpanded={setIsExpanded} />;
+            return <AdminDashboard />;
         case "accounts":
-            return <AccountsDashboard isExpanded={isExpanded} setIsExpanded={setIsExpanded} />;
+            return <AccountsDashboard />;
         case "operations":
-            return <OperationsDashboard isExpanded={isExpanded} setIsExpanded={setIsExpanded} />;
+            return <OperationsDashboard />;
         case "sales":
-            return <SalesDashboard isExpanded={isExpanded} setIsExpanded={setIsExpanded} />;
+            return <SalesDashboard />;
         case "supply":
-            return <SupplyDashboard isExpanded={isExpanded} setIsExpanded={setIsExpanded} />;
+            return <SupplyDashboard />;
         default:
-            return <FallbackDashboard isExpanded={isExpanded} setIsExpanded={setIsExpanded} />;
+            return <FallbackDashboard />;
     }
 }
 
 // ── ACCOUNTS ───────────────────────────────────
-function AccountsDashboard({ isExpanded, setIsExpanded }) {
+function AccountsDashboard() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ vendors: null, expenses: null, beds: null, liabilities: null, rawdatafiles: null });
     const [loading, setLoading] = useState(true);
-    const Sidebar = useSidebar("accounts");
 
     useEffect(() => {
         Promise.allSettled([
@@ -82,7 +83,7 @@ function AccountsDashboard({ isExpanded, setIsExpanded }) {
     }, []);
 
     return (
-        <DashPage Sidebar={Sidebar} isExpanded={isExpanded} setIsExpanded={setIsExpanded}>
+        <DashPage>
             <div className="page-header">
                 <div>
                     <h1>Accounts Dashboard</h1>
@@ -117,11 +118,10 @@ function AccountsDashboard({ isExpanded, setIsExpanded }) {
 }
 
 // ── OPERATIONS ─────────────────────────────────
-function OperationsDashboard({ isExpanded, setIsExpanded }) {
+function OperationsDashboard() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ beds: null, complaints: null, expenses: null });
     const [loading, setLoading] = useState(true);
-    const Sidebar = useSidebar("operations");
 
     useEffect(() => {
         Promise.allSettled([
@@ -138,7 +138,7 @@ function OperationsDashboard({ isExpanded, setIsExpanded }) {
     }, []);
 
     return (
-        <DashPage Sidebar={Sidebar} isExpanded={isExpanded} setIsExpanded={setIsExpanded}>
+        <DashPage>
             <div className="page-header">
                 <div>
                     <h1>Operations Dashboard</h1>
@@ -171,11 +171,10 @@ function OperationsDashboard({ isExpanded, setIsExpanded }) {
 }
 
 // ── SALES ──────────────────────────────────────
-function SalesDashboard({ isExpanded, setIsExpanded }) {
+function SalesDashboard() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ beds: null, leads: null, expenses: null });
     const [loading, setLoading] = useState(true);
-    const Sidebar = useSidebar("sales");
 
     useEffect(() => {
         Promise.allSettled([
@@ -192,7 +191,7 @@ function SalesDashboard({ isExpanded, setIsExpanded }) {
     }, []);
 
     return (
-        <DashPage Sidebar={Sidebar} isExpanded={isExpanded} setIsExpanded={setIsExpanded}>
+        <DashPage>
             <div className="page-header">
                 <div>
                     <h1>Sales Dashboard</h1>
@@ -224,11 +223,10 @@ function SalesDashboard({ isExpanded, setIsExpanded }) {
 }
 
 // ── SUPPLY ─────────────────────────────────────
-function SupplyDashboard({ isExpanded, setIsExpanded }) {
+function SupplyDashboard() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ owners: null, properties: null, rooms: null, expenses: null });
     const [loading, setLoading] = useState(true);
-    const Sidebar = useSidebar("supply");
 
     useEffect(() => {
         Promise.allSettled([
@@ -247,7 +245,7 @@ function SupplyDashboard({ isExpanded, setIsExpanded }) {
     }, []);
 
     return (
-        <DashPage Sidebar={Sidebar} isExpanded={isExpanded} setIsExpanded={setIsExpanded}>
+        <DashPage>
             <div className="page-header">
                 <div>
                     <h1>Supply Dashboard</h1>
@@ -280,11 +278,10 @@ function SupplyDashboard({ isExpanded, setIsExpanded }) {
 }
 
 // ── ADMIN ──────────────────────────────────────
-function AdminDashboard({ isExpanded, setIsExpanded }) {
+function AdminDashboard() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ vendors: null, expenses: null, beds: null, complaints: null, properties: null });
     const [loading, setLoading] = useState(true);
-    const Sidebar = useSidebar("admin");
 
     useEffect(() => {
         Promise.allSettled([
@@ -305,7 +302,7 @@ function AdminDashboard({ isExpanded, setIsExpanded }) {
     }, []);
 
     return (
-        <DashPage Sidebar={Sidebar} isExpanded={isExpanded} setIsExpanded={setIsExpanded}>
+        <DashPage>
             <div className="page-header">
                 <div>
                     <h1>Admin Dashboard</h1>
@@ -361,7 +358,7 @@ function Loader() {
 }
 
 /** Lazily import the correct module sidebar */
-function useSidebar(module) {
+function useModuleSidebar(module) {
     const [SidebarComp, setSidebarComp] = useState(null);
     useEffect(() => {
         let cancelled = false;
@@ -371,6 +368,7 @@ function useSidebar(module) {
             operations: () => import("../operations/components/Sidebar"),
             sales: () => import("../sales/components/Sidebar"),
             supply: () => import("../supply/components/Sidebar"),
+            resident: () => import("../resident/components/Sidebar"),
         };
         if (loaders[module]) {
             loaders[module]().then((mod) => { if (!cancelled) setSidebarComp(() => mod.default); });
@@ -380,24 +378,25 @@ function useSidebar(module) {
     return SidebarComp;
 }
 
-/** Dashboard page wrapper — sidebar + navbar + content area */
+/**
+ * DashPage — viewport-contained portal layout shell.
+ * Reads sidebar state from SidebarContext. Auto-resolves the correct
+ * module sidebar based on the authenticated user's type.
+ * Export so table/form pages can reuse this shell.
+ */
+export function DashPage({ children }) {
+    const { userType } = useAuth();
+    const { isExpanded } = useSidebar();
+    const Sidebar = useModuleSidebar(userType);
 
-function DashPage({ Sidebar, isExpanded, setIsExpanded, children }) {
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            {Sidebar && (
-                <Sidebar
-                    isExpanded={isExpanded}
-                    toggleSidebar={() => setIsExpanded(!isExpanded)}
-                />
-            )}
-            <Navbar isExpanded={isExpanded} />
-            <div
-                className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${
-                    isExpanded ? "ml-64" : "ml-16"
-                }`}
-            >
-                {children}
+        <div className="bg-[#F5F5F0] h-screen overflow-hidden flex flex-col">
+            {Sidebar && <Sidebar />}
+            <Navbar />
+            <div className={`flex flex-1 overflow-hidden transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+                <main className="flex-1 overflow-y-auto pt-20 px-6 lg:px-8 pb-6">
+                    {children}
+                </main>
             </div>
         </div>
     );

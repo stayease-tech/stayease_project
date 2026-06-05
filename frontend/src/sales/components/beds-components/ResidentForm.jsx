@@ -1,8 +1,6 @@
 // Copyright (c) 2026 Aravind Adari. All rights reserved.
 
 import React, { useState, useEffect } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -11,6 +9,7 @@ import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import { User, Phone, Mail, MapPin, Briefcase, Bed, Calendar, IndianRupee, ShieldCheck, CheckCircle, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
 const FIELD_CLS = "w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4A017]/30 focus:border-[#D4A017] transition-colors";
 const LABEL_CLS = "block text-xs font-medium text-gray-500 mb-1.5";
@@ -84,7 +83,7 @@ function getSubmitErrorMessage(err) {
     return "There was an error submitting the form.";
 }
 
-export default function residentForm({ isExpanded, setIsExpanded }) {
+export default function residentForm() {
     const { getOptions, getStaffNamesList } = useDropdowns();
     const navigate = useNavigate();
     const { id } = useParams();
@@ -250,11 +249,8 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
     // ── Success screen ─────────────────────────────────────────────
     if (credentials) {
         return (
-            <div>
-                <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-                <div className={`min-h-screen bg-[#F5F5F0] transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
-                    <Navbar isExpanded={isExpanded} />
-                    <div className="pt-20 px-6 md:px-10 pb-10 flex items-start justify-center">
+            <DashPage>
+                <div className="pt-20 px-6 md:px-10 pb-10 flex items-start justify-center">
                         <div className="w-full max-w-lg mt-10 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                             <div className="p-8 text-center">
                                 <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
@@ -299,20 +295,15 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                                 </div>
                             </div>
                         </div>
-                    </div>
                 </div>
-            </div>
+            </DashPage>
         );
     }
 
     // ── Form ───────────────────────────────────────────────────────
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <div className={`min-h-screen bg-[#F5F5F0] transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
-                <Navbar isExpanded={isExpanded} />
-                <div className="pt-20 px-6 md:px-10 pb-10">
-                    <div className="max-w-3xl mx-auto">
+        <DashPage>
+            <div className="max-w-3xl mx-auto">
 
                     {/* Page Header */}
                     <div className="flex items-center justify-between mb-6">
@@ -503,11 +494,8 @@ export default function residentForm({ isExpanded, setIsExpanded }) {
                             </button>
                         </div>
                     </form>
-                    </div>
-                </div>
             </div>
-        </div>
+        </DashPage>
     );
 }
-
 

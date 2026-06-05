@@ -2,8 +2,6 @@
 
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { Link } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
@@ -12,8 +10,9 @@ import { toast } from "react-toastify";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../shared/dateInput";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function residentDetails({ isExpanded, setIsExpanded }) {
+function residentDetails() {
     const { getOptions, getStaffNamesList } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
@@ -81,7 +80,7 @@ function residentDetails({ isExpanded, setIsExpanded }) {
         }));
 
         if (name === 'checkIn' && residentDetails.checkOut && value > residentDetails.checkOut) {
-            alert('Check-in date must be before check-out date');
+            toast.warning('Check-in date must be before check-out date');
             setresidentDetails(prev => ({
                 ...prev,
                 checkOut: ''
@@ -89,7 +88,7 @@ function residentDetails({ isExpanded, setIsExpanded }) {
         }
 
         if (name === 'checkOut' && residentDetails.checkIn && value < residentDetails.checkIn) {
-            alert('Check-out date must be after check-in date');
+            toast.warning('Check-out date must be after check-in date');
             setresidentDetails(prev => ({
                 ...prev,
                 checkOut: residentDetails.checkIn
@@ -161,7 +160,7 @@ function residentDetails({ isExpanded, setIsExpanded }) {
         const changedData = getChangedData();
 
         if (Object.keys(changedData).length === 0) {
-            alert('No data is updated!');
+            toast.info('No data is updated!');
             return;
         }
 
@@ -199,27 +198,22 @@ function residentDetails({ isExpanded, setIsExpanded }) {
 
             setOriginalData(prev => ({ ...prev, ...changedData }));
 
-            alert(response.data.message);
-
             if (response.data.success) {
+                toast.success(response.data.message);
                 navigate(`/sales/sales-beds-table`);
+            } else {
+                toast.error(response.data.message);
             }
         } catch (err) {
             console.error('Error updating form:', err);
-            alert('There was an error updating the form. Please try again!');
+            toast.error('There was an error updating the form. Please try again!');
         } finally {
             setIsSaving(false);
         }
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+        <DashPage>
                     <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={bedsHandleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA</h1>
 
@@ -772,9 +766,7 @@ function residentDetails({ isExpanded, setIsExpanded }) {
                             </table>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

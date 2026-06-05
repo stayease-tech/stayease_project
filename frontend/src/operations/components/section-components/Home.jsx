@@ -2,7 +2,7 @@ import React from 'react';
 import Sidebar from '../Sidebar';
 import Navbar from '../Navbar';
 
-function Home({ isExpanded, setIsExpanded }) {
+function Home() {
     return (
         <div>
 

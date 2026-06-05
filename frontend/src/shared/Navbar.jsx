@@ -1,19 +1,20 @@
+// Copyright Aravind Adari
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUser, FiLogOut } from "react-icons/fi";
 import { useAuth } from "../auth/AuthContext";
+import { useSidebar } from "./SidebarContext";
 
 /**
  * Navbar — top navigation bar for all authenticated portal views.
  * Displays the brand logo, a user avatar dropdown, and auto-logs out at 23:59:59.
  *
- * @param {object} props
- * @param {boolean} props.isExpanded - Whether the sidebar is expanded, used to offset the navbar's left edge.
  * @returns {React.ReactElement}
  */
-export default function Navbar({ isExpanded }) {
+export default function Navbar() {
     const navigate = useNavigate();
     const auth = useAuth();
+    const { isExpanded } = useSidebar();
 
     const [open, setOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);

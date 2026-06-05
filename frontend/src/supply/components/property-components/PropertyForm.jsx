@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Navbar from '../Navbar';
-import Sidebar from '../Sidebar';
 import PropertyData from "../property-form-components/PropertyData";
 import PropertyKyc from "../property-form-components/PropertyKyc";
 import NoOfBasements from "../property-form-components/NoOfBasements";
@@ -9,8 +7,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
+import { DashPage } from "../../../shared/Dashboard";
 
-function PropertyForm({ isExpanded, setIsExpanded }) {
+function PropertyForm() {
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -247,13 +246,7 @@ function PropertyForm({ isExpanded, setIsExpanded }) {
   }
 
   return (
-    <div>
-      <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-      <div className="flex-1 duration-300">
-        <Navbar isExpanded={isExpanded} />
-
-        <div className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-[1rem]`}>
+    <DashPage>
           <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800"
             onSubmit={propertyHandleSubmit} method='POST'>
 
@@ -314,9 +307,7 @@ function PropertyForm({ isExpanded, setIsExpanded }) {
             </>
             }
           </form>
-        </div>
-      </div>
-    </div>
+    </DashPage>
   )
 }
 

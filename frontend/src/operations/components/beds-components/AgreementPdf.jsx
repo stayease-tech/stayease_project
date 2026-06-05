@@ -1,10 +1,9 @@
 /* global html2pdf */
 import React, { useRef } from 'react';
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { DashPage } from "../../../shared/Dashboard";
 
-function AgreementPdf({ isExpanded, setIsExpanded }) {
+function AgreementPdf() {
     let publicUrl = process.env.PUBLIC_URL + '/';
     const navigate = useNavigate();
     const location = useLocation();
@@ -46,15 +45,9 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
 
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
 
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-
-                    <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
+        <DashPage>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">AGREEMENT</h1>
 
                         <div className="sm:flex justify-between">
@@ -990,10 +983,11 @@ function AgreementPdf({ isExpanded, setIsExpanded }) {
                                 </section>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+
+        </DashPage>
+
+
     )
 }
 

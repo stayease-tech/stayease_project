@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import OwnerData from "../owner-form-components/OwnerData";
 import OwnerKyc from "../owner-form-components/OwnerKyc";
 import { useNavigate } from "react-router-dom";
@@ -8,8 +6,9 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { DashPage } from "../../../shared/Dashboard";
 
-function OwnerForm({ isExpanded, setIsExpanded }) {
+function OwnerForm() {
     const navigate = useNavigate();
 
     const [ownerData, setOwnerData] = useState({
@@ -229,13 +228,7 @@ function OwnerForm({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-[1rem]`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800"
                         onSubmit={ownerHandleSubmit} method='POST'>
 
@@ -266,9 +259,7 @@ function OwnerForm({ isExpanded, setIsExpanded }) {
                         </>
                         }
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

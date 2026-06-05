@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-export default function LiabilityForm({ isExpanded, setIsExpanded }) {
+export default function LiabilityForm() {
     const { getOptions } = useDropdowns();
     const location = useLocation();
     const navigate = useNavigate();
@@ -78,13 +77,7 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-5`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={liabilityHandleSubmit} method='POST'>
 
                         <div className="sm:flex justify-start">
@@ -277,8 +270,6 @@ export default function LiabilityForm({ isExpanded, setIsExpanded }) {
 
                         <button className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit"}</button>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }

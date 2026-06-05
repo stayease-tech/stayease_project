@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
+function ExpenseForm({ loggedUserEmail }) {
     const { getOptions, getExpenseCategories } = useDropdowns();
 
     const navigate = useNavigate();
@@ -391,13 +390,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
     }
 
     return (
-        <div className="flex">
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={expenseHandleSubmit} method='POST'>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-[#D4A017]">PROPERTY-WISE EXPENSE FORM</h1>
 
@@ -734,9 +727,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                         </>
                         }
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

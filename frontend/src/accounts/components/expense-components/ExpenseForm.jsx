@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useNavigate, useLocation } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
+function ExpenseForm({ loggedUserEmail }) {
     const { getExpenseCategories, getOptions } = useDropdowns();
 
     const navigate = useNavigate();
@@ -507,13 +506,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-5`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={expenseHandleSubmit} method='POST'>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-[#D4A017]">PROPERTY-WISE EXPENSE FORM</h1>
 
@@ -994,9 +987,7 @@ function ExpenseForm({ isExpanded, setIsExpanded, loggedUserEmail }) {
                             <button className="block mt-4 w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit"}</button>
                         </>}
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

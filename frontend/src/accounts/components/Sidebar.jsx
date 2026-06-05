@@ -1,3 +1,4 @@
+// Copyright Aravind Adari
 import { IoIosPerson } from "react-icons/io";
 import { MdOutlineStickyNote2, MdCheckCircle, MdUploadFile, MdUpdate } from "react-icons/md";
 import { FaRegFileAlt } from "react-icons/fa";
@@ -16,6 +17,6 @@ const menuItems = [
     { name: "Liability", icon: <PiHandDepositBold />, link: "/accounts/accounts-liability-table" },
 ];
 
-export default function Sidebar({ toggleSidebar, isExpanded }) {
-    return <SharedSidebar toggleSidebar={toggleSidebar} isExpanded={isExpanded} menuItems={menuItems} />;
+export default function Sidebar() {
+    return <SharedSidebar menuItems={menuItems} />;
 }

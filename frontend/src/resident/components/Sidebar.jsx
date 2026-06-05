@@ -1,5 +1,4 @@
-// Copyright (c) 2026 Aravind Adari. All rights reserved.
-
+// Copyright Aravind Adari
 import Sidebar from "../../shared/Sidebar";
 import {
     ShieldCheck, CreditCard, FileText,
@@ -12,12 +11,9 @@ import {
  * are visible; fully onboarded residents see rent history, payments, maintenance
  * requests, and lease, while pending residents see only onboarding steps.
  *
- * @param {object} props
- * @param {boolean} props.isExpanded - Whether the sidebar is rendered in expanded state.
- * @param {Function} props.toggleSidebar - Callback to toggle the expanded/collapsed state.
  * @returns {React.ReactElement}
  */
-export default function ResidentSidebar({ isExpanded, toggleSidebar }) {
+export default function ResidentSidebar() {
     const { kycPending, leaseCompleted } = (() => {
         try {
             const data = JSON.parse(localStorage.getItem("residentData") || "{}");
@@ -42,11 +38,5 @@ export default function ResidentSidebar({ isExpanded, toggleSidebar }) {
         { name: "Change Password", icon: <Lock size={18} />, link: "/resident/change-password" },
     ];
 
-    return (
-        <Sidebar
-            isExpanded={isExpanded}
-            toggleSidebar={toggleSidebar}
-            menuItems={menuItems}
-        />
-    );
+    return <Sidebar menuItems={menuItems} />;
 }

@@ -1,15 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import OwnerData from "../owner-details-components/OwnerData";
 import OwnerKyc from "../owner-details-components/OwnerKyc";
+import { DashPage } from "../../../shared/Dashboard";
 
-function OwnerDetails({ isExpanded, setIsExpanded }) {
+function OwnerDetails() {
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -143,7 +142,7 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
         });
 
         if (formData.entries().next().done) {
-            alert('No data is updated!')
+            toast.info('No data is updated!');
             setIsSaving(false);
             return;
         }
@@ -155,13 +154,12 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
             });
 
             if (response.data.success) {
-                alert(response.data.message);
-
+                toast.success(response.data.message);
                 navigate('/supply/supply-owner-table');
             }
         } catch (err) {
             console.error('Error submitting form:', err);
-            alert('There was an error submitting the form. Please try again!');
+            toast.error('There was an error submitting the form. Please try again!');
         } finally {
             setIsSaving(false);
         }
@@ -181,28 +179,22 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
             });
 
             if (response.data.success) {
-                alert(response.data.message);
+                toast.success(response.data.message);
                 navigate('/supply/supply-owner-table');
             } else {
-                alert(response.data.message);
+                toast.error(response.data.message);
             }
         } catch (err) {
             console.error('Error deleting form:', err);
-            alert('There was an error deleting the form. Please try again!');
+            toast.error('There was an error deleting the form. Please try again!');
         } finally {
             setIsDeleting(false);
         }
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
+        <DashPage>
+            <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
                         {/* Header */}
                         <div className="mb-6">
                             <h1 className="text-xl lg:text-2xl font-semibold text-[#D4A017]">
@@ -273,9 +265,7 @@ function OwnerDetails({ isExpanded, setIsExpanded }) {
                             <OwnerKyc dataEditView={dataEditView} ownerData={ownerData} ownerDetails={ownerDetails} triggerFileInput={triggerFileInput} ownerHandleChange={ownerHandleChange} />
                         )}
                     </form>
-                </div>
-            </div>
-        </div >
+        </DashPage>
     )
 }
 

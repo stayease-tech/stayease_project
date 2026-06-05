@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { Link, useNavigate, useLocation, useParams } from "react-router-dom";
 import { FaUpload } from "react-icons/fa";
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function RawdataDetails({ isExpanded, setIsExpanded }) {
+function RawdataDetails() {
     const { getOptions, getExpenseCategories } = useDropdowns();
     const navigate = useNavigate();
 
@@ -157,7 +157,7 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
         const changedData = getChangedData();
 
         if (Object.keys(changedData).length === 0) {
-            alert('No data is updated!');
+            toast.info('No data is updated!');
             return;
         }
 
@@ -185,13 +185,12 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
             setOriginalData(prev => ({ ...prev, ...changedData }));
 
             if (response.data.success) {
-                alert(response.data.message);
-
+                toast.success(response.data.message);
                 navigate(`/accounts/accounts-rawdata-table/${data.rawdata_id}`);
             }
         } catch (err) {
             console.error('Error updating form:', err);
-            alert('There was an error updating the form. Please try again!');
+            toast.error('There was an error updating the form. Please try again!');
         } finally {
             setIsSaving(false);
         }
@@ -210,26 +209,19 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
             });
 
             if (response.data.success) {
-                alert(response.data.message);
-
+                toast.success(response.data.message);
                 navigate(`/accounts/accounts-rawdata-table/${data.rawdata_id}`);
             }
         } catch (error) {
             console.error('Error deleting form:', error);
-            alert('There was an error deleting the form. Please try again!');
+            toast.error('There was an error deleting the form. Please try again!');
         } finally {
             setIsDeleting(false);
         }
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] px-6`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg text-slate-800 lg:bg-white" onSubmit={rawdataHandleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">RAWDATA DETAILS</h1>
 
@@ -493,7 +485,7 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
                                                         onClick={() => triggerFileInput('receipt')}
                                                         className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm bg-white text-left flex gap-3"
                                                     >
-                                                        <span className="mt-1 text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{rawDataForm.receipt?.name || rawDataForm?.receipt.split('/')[8]}</span>
+                                                        <span className="mt-1 text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{rawDataForm.receipt?.name || rawDataForm?.receipt?.split('/').pop()}</span>
                                                     </button>
                                                 </span>
                                             </>}
@@ -503,9 +495,7 @@ function RawdataDetails({ isExpanded, setIsExpanded }) {
                             </table>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

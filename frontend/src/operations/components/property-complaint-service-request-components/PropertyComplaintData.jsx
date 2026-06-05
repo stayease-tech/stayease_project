@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Cookies from 'js-cookie';
 import axios from 'axios';
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function PropertyComplaintData({ isExpanded, setIsExpanded }) {
+function PropertyComplaintData() {
     const { getOptions } = useDropdowns();
     const { id } = useParams();
     const navigate = useNavigate();
@@ -184,13 +183,7 @@ function PropertyComplaintData({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`flex items-center min-h-screen text-slate-800 max-lg:bg-white ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6`}>
+        <DashPage>
                     <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={propertyComplaintHandleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">PROPERTY COMPLAINT DATA</h1>
 
@@ -448,9 +441,7 @@ function PropertyComplaintData({ isExpanded, setIsExpanded }) {
                             </table>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

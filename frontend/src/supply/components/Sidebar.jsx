@@ -1,3 +1,4 @@
+// Copyright Aravind Adari
 import { IoPersonSharp } from "react-icons/io5";
 import { FaRegBuilding } from "react-icons/fa";
 import { MdOutlineStickyNote2, MdMeetingRoom } from "react-icons/md";
@@ -12,6 +13,6 @@ const menuItems = [
     { name: "Track Expense", icon: <TbReportMoney />, link: "/supply/supply-expense-table" },
 ];
 
-export default function Sidebar({ toggleSidebar, isExpanded }) {
-    return <SharedSidebar toggleSidebar={toggleSidebar} isExpanded={isExpanded} menuItems={menuItems} />;
+export default function Sidebar() {
+    return <SharedSidebar menuItems={menuItems} />;
 }

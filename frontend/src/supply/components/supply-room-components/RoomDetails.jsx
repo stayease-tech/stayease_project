@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { toast } from "react-toastify";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function RoomDetails({ isExpanded, setIsExpanded }) {
+function RoomDetails() {
     const { getOptions } = useDropdowns();
     const navigate = useNavigate();
 
@@ -176,7 +176,7 @@ function RoomDetails({ isExpanded, setIsExpanded }) {
         const changedData = getChangedData();
 
         if (Object.keys(changedData).length === 0) {
-            alert('No data is updated!');
+            toast.info('No data is updated!');
             return;
         }
 
@@ -194,29 +194,22 @@ function RoomDetails({ isExpanded, setIsExpanded }) {
             setOriginalData(prev => ({ ...prev, ...changedData }));
 
             if (response.data.success) {
-                alert(response.data.message);
-
+                toast.success(response.data.message);
                 (roomId === 0) ? navigate(`/supply/supply-room-table`, { state: { owner_id, propertyId } }) : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } });
             }
             else {
-                alert(response.data.message);
+                toast.error(response.data.message);
             }
         } catch (err) {
             console.error('Error submitting form:', err);
-            alert('There was an error submitting the form. Please try again!');
+            toast.error('There was an error submitting the form. Please try again!');
         } finally {
             setIsSaving(false);
         }
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 bg-white lg:bg-gray-100 min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 pb-5`}>
+        <DashPage>
                     <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">SUPPLY ROOM DETAILS</h1>
 
@@ -514,9 +507,7 @@ function RoomDetails({ isExpanded, setIsExpanded }) {
                         </>
                         }
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

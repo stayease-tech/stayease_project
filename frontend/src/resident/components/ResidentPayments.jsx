@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
 import {
     CreditCard, CheckCircle, RefreshCw, AlertCircle,
     ShieldCheck, ShieldOff, IndianRupee, Calendar,
@@ -38,7 +36,7 @@ function loadRazorpay() {
  * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
  * @returns {React.ReactElement}
  */
-export default function residentPayments({ isExpanded, setIsExpanded }) {
+export default function residentPayments() {
     const navigate = useNavigate();
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -163,10 +161,7 @@ export default function residentPayments({ isExpanded, setIsExpanded }) {
     };
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
 
                 <div className="page-header">
                     <div><h1>Payments</h1><p>Pay rent and manage auto-pay</p></div>
@@ -364,7 +359,6 @@ export default function residentPayments({ isExpanded, setIsExpanded }) {
                         )}
                     </>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }

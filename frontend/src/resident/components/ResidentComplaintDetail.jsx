@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
+import { DashPage } from "../../shared/Dashboard";
 import {
     ChevronLeft, MapPin, Clock, Tag, Calendar,
     Zap, Droplets, Sofa, CookingPot, Wifi, HelpCircle, MessageSquare,
@@ -74,7 +73,7 @@ function StarRating({ value }) {
  * @param {Function} props.setIsExpanded - Setter to toggle sidebar expanded state.
  * @returns {React.ReactElement}
  */
-export default function residentComplaintDetail({ isExpanded, setIsExpanded }) {
+export default function residentComplaintDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const [complaint, setComplaint] = useState(null);
@@ -96,10 +95,7 @@ export default function residentComplaintDetail({ isExpanded, setIsExpanded }) {
     const CatIcon = CATEGORY_ICON_MAP[complaint?.rawCategory] || MessageSquare;
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
 
                 {/* Page header */}
                 <div className="page-header">
@@ -312,7 +308,6 @@ export default function residentComplaintDetail({ isExpanded, setIsExpanded }) {
                         )}
                     </div>
                 )}
-            </div>
-        </div>
+        </DashPage>
     );
 }

@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from '../Sidebar';
-import Navbar from '../Navbar';
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 import { useDropdowns } from "../../../shared/DropdownContext";
+import { DashPage } from "../../../shared/Dashboard";
 
-function LeadForm({ isExpanded, setIsExpanded }) {
+function LeadForm() {
     const { getOptions } = useDropdowns();
     const navigate = useNavigate();
 
@@ -104,13 +103,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
     }
 
     return (
-        <div>
-            <Sidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-
-            <div className="flex-1 duration-300">
-                <Navbar isExpanded={isExpanded} />
-
-                <div className={`text-slate-800 max-lg:bg-white min-h-screen ${isExpanded ? 'ml-16 md:ml-64' : 'ml-16'} pt-[5rem] lg:pt-[6rem] px-6 lg:pb-[1rem]`}>
+        <DashPage>
                     <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800"
                         onSubmit={leadHandleSubmit} method='POST'>
 
@@ -209,9 +202,7 @@ function LeadForm({ isExpanded, setIsExpanded }) {
                             className="block w-full mt-4 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" disabled={isSubmitting}
                             type="submit">{isSubmitting ? "Submitting..." : "Submit"}</button>
                     </form>
-                </div>
-            </div>
-        </div>
+        </DashPage>
     )
 }
 

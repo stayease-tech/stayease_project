@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import residentApi from "../residentApi";
-import Navbar from "../../shared/Navbar";
-import ResidentSidebar from "./Sidebar";
 import { Lock } from "lucide-react";
 import { toast } from "react-toastify";
+import { DashPage } from "../../shared/Dashboard";
 
-export default function residentChangePassword({ isExpanded, setIsExpanded }) {
+export default function residentChangePassword() {
     const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
     const [submitting, setSubmitting] = useState(false);
     const [showCurrent, setShowCurrent] = useState(false);
@@ -40,10 +39,7 @@ export default function residentChangePassword({ isExpanded, setIsExpanded }) {
     };
 
     return (
-        <div className="bg-[#F5F5F0] min-h-screen">
-            <ResidentSidebar isExpanded={isExpanded} toggleSidebar={() => setIsExpanded(!isExpanded)} />
-            <Navbar isExpanded={isExpanded} />
-            <div className={`pt-20 px-6 md:px-8 pb-8 transition-all duration-300 ${isExpanded ? "ml-64" : "ml-16"}`}>
+        <DashPage>
                 <div className="page-header">
                     <div><h1>Change Password</h1><p>Update your login password</p></div>
                 </div>
@@ -92,7 +88,6 @@ export default function residentChangePassword({ isExpanded, setIsExpanded }) {
                         </form>
                     </div>
                 </div>
-            </div>
-        </div>
+        </DashPage>
     );
 }

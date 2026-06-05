@@ -1180,6 +1180,8 @@ def kyc_approve(request, resident_id):
     if request.method == 'POST':
         try:
             resident = resident_Data.objects.get(id=resident_id)
+            if not resident.leaseAgreement:
+                return JsonResponse({'success': False, 'message': 'Lease agreement must be uploaded before approving KYC.'})
             resident.kycApprovalStatus = 'Approved'
             resident.kycApprovedBy = request.user.get_full_name() or request.user.username
             resident.kycApprovalDate = timezone.now()

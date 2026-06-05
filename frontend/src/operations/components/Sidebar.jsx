@@ -1,3 +1,4 @@
+// Copyright Aravind Adari
 import { LiaBedSolid } from "react-icons/lia";
 import { GoChecklist } from "react-icons/go";
 import { GiTicket } from "react-icons/gi";
@@ -16,6 +17,6 @@ const menuItems = [
     { name: "Move-Out", icon: <MdOutlineExitToApp />, link: "/operations/operations-checklistfeedback-table" },
 ];
 
-export default function Sidebar({ toggleSidebar, isExpanded }) {
-    return <SharedSidebar toggleSidebar={toggleSidebar} isExpanded={isExpanded} menuItems={menuItems} />;
+export default function Sidebar() {
+    return <SharedSidebar menuItems={menuItems} />;
 }
