@@ -1,9 +1,11 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { IoMdAddCircle } from "react-icons/io";
-import { FaEye, FaEdit } from "react-icons/fa";
+import { Eye, Pencil, Plus } from "lucide-react";
 import axios from 'axios';
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
 
 function OwnerTable() {
     const navigate = useNavigate();
@@ -11,7 +13,7 @@ function OwnerTable() {
     const [loadingData, setLoadingData] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12;
 
     const filteredData = ownerData.filter(item =>
         Object.values(item).some(value =>
@@ -26,10 +28,6 @@ function OwnerTable() {
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
         setCurrentPage(1);
-    };
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
     };
 
     const formatter = new Intl.DateTimeFormat('en-US', {
@@ -59,168 +57,101 @@ function OwnerTable() {
         fetchData();
     }, []);
 
-    const propertyViewHandle = (ownerData) => {
-        navigate(`/supply/supply-property-table/${ownerData?.id}`);
+    const propertyViewHandle = (owner) => {
+        navigate(`/supply/supply-property-table/${owner?.id}`);
     };
 
-    const addPropertyHandle = (ownerData) => {
-        navigate(`/supply/supply-property-form/${ownerData?.id}`);
+    const addPropertyHandle = (owner) => {
+        navigate(`/supply/supply-property-form/${owner?.id}`);
     };
 
-    const editOwnerHandle = (ownerData) => {
-        navigate(`/supply/supply-owner-details/${ownerData?.id}`, { state: { ownerData } });
+    const editOwnerHandle = (owner) => {
+        navigate(`/supply/supply-owner-details/${owner?.id}`, { state: { ownerData: owner } });
     };
 
     return (
         <DashPage>
-            <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">STAYEASE OWNER TABLE</h1>
+            <div className="page-header">
+                <h1>StayEase Owner Table</h1>
+                <div className="flex items-center gap-2">
+                    <button
+                        className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                        onClick={() => navigate('/supply/supply-owner-form')}
+                        type="button"
+                    >
+                        Add Owner
+                    </button>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        className="form-input w-48 text-xs"
+                    />
+                </div>
+            </div>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate('/supply/supply-owner-form')}
-                                type="button">Add Owner</button>
-
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                                className="mt-2 mb-3 text-black max-sm:w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs"
-                            />
-                        </div>
-
-                        <div className="w-full overflow-x-auto">
-                            <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                                <thead>
-                                    <tr className="bg-gray-50 text-gray-700">
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Owner Name</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Properties</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Submitted At</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Last Updated</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">View Property Details</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Add Property Details</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Update Owner Details</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {paginatedData.length > 0 ? paginatedData.map((ownerData, i) => (
-                                        <tr className="" key={ownerData.id}>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{ownerData?.ownerName}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{ownerData?.noOfProperties ?? 0}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{formatter.format(new Date(ownerData?.submittedDateAndTime))}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{formatter.format(new Date(ownerData?.updatedDateAndTime))}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">
-                                                <div className="flex justify-evenly">
-                                                    <FaEye className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => propertyViewHandle(ownerData)} />
-                                                </div>
-                                            </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">
-                                                <div className="flex justify-evenly">
-                                                    <IoMdAddCircle className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => addPropertyHandle(ownerData)} />
-                                                </div>
-                                            </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">
-                                                <div className="flex justify-evenly">
-                                                    <FaEdit className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => editOwnerHandle(ownerData)} />
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )) : <tr>
-                                        <td colSpan="8" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                    </tr>}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                                aria-label="Previous page"
-                            >
-                                &lt;
-                            </button>
-
-                            <button
-                                key={1}
-                                onClick={() => handlePageChange(1)}
-                                className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                                    ? "bg-[#D4A017] text-white"
-                                    : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                    }`}
-                            >
-                                1
-                            </button>
-
-                            {currentPage > 3 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
+            <div className="card">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto text-xs border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Owner Name</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Properties</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Submitted At</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Last Updated</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">View</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Add Property</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Edit</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loadingData ? (
+                                <tr>
+                                    <td colSpan="8" className="px-3 py-1.5 text-xs text-gray-800 text-center">Loading...</td>
+                                </tr>
+                            ) : paginatedData.length > 0 ? paginatedData.map((owner, i) => (
+                                <tr key={owner.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{owner?.ownerName}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{owner?.noOfProperties ?? 0}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{formatter.format(new Date(owner?.submittedDateAndTime))}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{formatter.format(new Date(owner?.updatedDateAndTime))}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        <Eye
+                                            size={14}
+                                            className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                            onClick={() => propertyViewHandle(owner)}
+                                        />
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        <Plus
+                                            size={14}
+                                            className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                            onClick={() => addPropertyHandle(owner)}
+                                        />
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        <Pencil
+                                            size={14}
+                                            className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                            onClick={() => editOwnerHandle(owner)}
+                                        />
+                                    </td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="8" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
+                                </tr>
                             )}
-
-                            {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                                let page;
-                                if (currentPage <= 3) {
-                                    page = i + 2;
-                                } else if (currentPage >= totalPages - 2) {
-                                    page = totalPages - 4 + i;
-                                } else {
-                                    page = currentPage - 2 + i;
-                                }
-
-                                if (page > 1 && page < totalPages) {
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                                ? "bg-[#D4A017] text-white"
-                                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return null;
-                            })}
-
-                            {currentPage < totalPages - 2 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
-                            )}
-
-                            {totalPages > 1 && (
-                                <button
-                                    key={totalPages}
-                                    onClick={() => handlePageChange(totalPages)}
-                                    className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                        ? "bg-[#D4A017] text-white"
-                                        : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                        }`}
-                                >
-                                    {totalPages}
-                                </button>
-                            )}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                                aria-label="Next page"
-                            >
-                                &gt;
-                            </button>
-                        </div>
+                        </tbody>
+                    </table>
+                </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
         </DashPage>
-    )
+    );
 }
 
-export default OwnerTable
+export default OwnerTable;

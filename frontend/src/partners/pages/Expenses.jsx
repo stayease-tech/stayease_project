@@ -1,17 +1,14 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import { useState, useEffect } from 'react';
-import { 
-    Receipt, 
-    Eye, 
-    Download, 
-    Filter, 
-    Search, 
-    Plus, 
+import {
+    Eye,
+    Download,
+    Plus,
     Edit3,
     Trash2,
     FileText,
     IndianRupee,
-    Calendar,
-    User,
     Building2,
     AlertCircle,
     CheckCircle,
@@ -20,6 +17,7 @@ import {
     X
 } from "lucide-react";
 import MainLayout from "../components/layout/MainLayout";
+import Pagination from "../../shared/Pagination";
 
 // Mock data based on the CSV structure you provided
 const mockExpenseData = [
@@ -123,7 +121,7 @@ function Expenses() {
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [propertyFilter, setPropertyFilter] = useState("all");
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const itemsPerPage = 12;
     const [selectedExpense, setSelectedExpense] = useState(null);
     const [showFileViewer, setShowFileViewer] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
@@ -136,19 +134,19 @@ function Expenses() {
     // Filter expenses based on search and filters
     useEffect(() => {
         let filtered = expenses.filter(expense => {
-            const matchesSearch = 
+            const matchesSearch =
                 expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (expense.vendor && expense.vendor.toLowerCase().includes(searchTerm.toLowerCase())) ||
                 expense.propertyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (expense.comments && expense.comments.toLowerCase().includes(searchTerm.toLowerCase()));
-            
+
             const matchesStatus = statusFilter === "all" || expense.status === statusFilter;
             const matchesPriority = priorityFilter === "all" || expense.priority === priorityFilter;
             const matchesProperty = propertyFilter === "all" || expense.propertyName === propertyFilter;
-            
+
             return matchesSearch && matchesStatus && matchesPriority && matchesProperty;
         });
-        
+
         setFilteredExpenses(filtered);
         setCurrentPage(1);
     }, [searchTerm, statusFilter, priorityFilter, propertyFilter, expenses]);
@@ -181,33 +179,33 @@ function Expenses() {
     // Get status color and icon
     const getStatusDisplay = (status) => {
         const statusConfig = {
-            'Pending': { 
-                color: 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30', 
-                icon: <Clock size={12} /> 
+            'Pending': {
+                color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
+                icon: <Clock size={12} />
             },
-            'Approved': { 
-                color: 'text-green-400 bg-green-500/20 border-green-500/30', 
-                icon: <CheckCircle size={12} /> 
+            'Approved': {
+                color: 'text-green-600 bg-green-50 border-green-200',
+                icon: <CheckCircle size={12} />
             },
-            'In Progress': { 
-                color: 'text-blue-400 bg-blue-500/20 border-blue-500/30', 
-                icon: <AlertCircle size={12} /> 
+            'In Progress': {
+                color: 'text-blue-600 bg-blue-50 border-blue-200',
+                icon: <AlertCircle size={12} />
             },
-            'Rejected': { 
-                color: 'text-red-400 bg-red-500/20 border-red-500/30', 
-                icon: <X size={12} /> 
+            'Rejected': {
+                color: 'text-red-600 bg-red-50 border-red-200',
+                icon: <X size={12} />
             }
         };
-        
+
         return statusConfig[status] || statusConfig['Pending'];
     };
 
     // Get priority color
     const getPriorityColor = (priority) => {
         const priorityColors = {
-            'P1': 'text-red-400 bg-red-500/20 border-red-500/30',
-            'P2': 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30',
-            'P3': 'text-green-400 bg-green-500/20 border-green-500/30'
+            'P1': 'text-red-600 bg-red-50 border-red-200',
+            'P2': 'text-yellow-600 bg-yellow-50 border-yellow-200',
+            'P3': 'text-green-600 bg-green-50 border-green-200'
         };
         return priorityColors[priority] || priorityColors['P3'];
     };
@@ -227,196 +225,167 @@ function Expenses() {
     const approvedCount = filteredExpenses.filter(exp => exp.status === 'Approved').length;
 
     return (
-        <MainLayout 
+        <MainLayout
             title="Expense Management"
             description="Track and manage property expenses and receipts"
         >
-            {/* Header Actions */}
-            <div className="flex justify-end mb-6">
-                <button className="px-6 py-3 bg-gradient-to-r from-[#D4A017] to-[#D4A017] hover:from-[#B8860B] hover:to-[#D4A017] text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-[#D4A017]/25 flex items-center space-x-2">
-                    <Plus size={18} />
-                    <span>Add Expense</span>
-                </button>
-            </div>
-
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-gradient-to-br from-white to-gray-50  border border-gray-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">Total Amount</p>
-                            <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
-                        </div>
-                        <div className="p-3 bg-[#D4A017]/20 rounded-lg">
-                            <IndianRupee size={20} className="text-[#D4A017]" />
-                        </div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="card flex items-center justify-between">
+                    <div>
+                        <p className="text-xs text-gray-500">Total Amount</p>
+                        <p className="text-base font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
+                    </div>
+                    <div className="p-2 bg-[#D4A017]/10 rounded-lg">
+                        <IndianRupee size={16} className="text-[#D4A017]" />
                     </div>
                 </div>
-
-                <div className="bg-gradient-to-br from-white to-gray-50  border border-gray-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">Pending</p>
-                            <p className="text-2xl font-bold text-gray-900">{pendingCount}</p>
-                        </div>
-                        <div className="p-3 bg-yellow-500/20 rounded-lg">
-                            <Clock size={20} className="text-yellow-400" />
-                        </div>
+                <div className="card flex items-center justify-between">
+                    <div>
+                        <p className="text-xs text-gray-500">Pending</p>
+                        <p className="text-base font-bold text-gray-900">{pendingCount}</p>
+                    </div>
+                    <div className="p-2 bg-yellow-50 rounded-lg">
+                        <Clock size={16} className="text-yellow-500" />
                     </div>
                 </div>
-
-                <div className="bg-gradient-to-br from-white to-gray-50  border border-gray-200 rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-gray-500 text-sm">Approved</p>
-                            <p className="text-2xl font-bold text-gray-900">{approvedCount}</p>
-                        </div>
-                        <div className="p-3 bg-green-500/20 rounded-lg">
-                            <CheckCircle size={20} className="text-green-400" />
-                        </div>
+                <div className="card flex items-center justify-between">
+                    <div>
+                        <p className="text-xs text-gray-500">Approved</p>
+                        <p className="text-base font-bold text-gray-900">{approvedCount}</p>
+                    </div>
+                    <div className="p-2 bg-green-50 rounded-lg">
+                        <CheckCircle size={16} className="text-green-500" />
                     </div>
                 </div>
             </div>
 
-            {/* Filters and Search */}
-            <div className="bg-gradient-to-br from-white to-gray-50  border border-gray-200 rounded-2xl p-6 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    {/* Search */}
-                    <div className="lg:col-span-2">
-                        <div className="relative">
-                            <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                            <input
-                                type="text"
-                                placeholder="Search expenses..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20 focus:outline-none transition-all duration-300"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Property Filter */}
+            {/* Page Header with filters */}
+            <div className="page-header">
+                <h1>Expenses</h1>
+                <div className="flex items-center gap-2 flex-wrap">
                     <select
                         value={propertyFilter}
                         onChange={(e) => setPropertyFilter(e.target.value)}
-                        className="px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20 focus:outline-none transition-all duration-300"
+                        className="form-input w-40 text-xs"
                     >
                         <option value="all">All Properties</option>
                         {uniqueProperties.map(property => (
                             <option key={property} value={property}>{property}</option>
                         ))}
                     </select>
-
-                    {/* Status Filter */}
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20 focus:outline-none transition-all duration-300"
+                        className="form-input w-32 text-xs"
                     >
                         <option value="all">All Status</option>
                         {uniqueStatuses.map(status => (
                             <option key={status} value={status}>{status}</option>
                         ))}
                     </select>
-
-                    {/* Priority Filter */}
                     <select
                         value={priorityFilter}
                         onChange={(e) => setPriorityFilter(e.target.value)}
-                        className="px-3 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-gray-900 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20 focus:outline-none transition-all duration-300"
+                        className="form-input w-32 text-xs"
                     >
                         <option value="all">All Priority</option>
                         {uniquePriorities.map(priority => (
                             <option key={priority} value={priority}>{priority}</option>
                         ))}
                     </select>
+                    <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="form-input w-48 text-xs"
+                    />
+                    <button className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded hover:bg-[#B8860B] flex items-center gap-1">
+                        <Plus size={14} />
+                        Add Expense
+                    </button>
                 </div>
             </div>
 
             {/* Expenses Table */}
-            <div className="bg-gradient-to-br from-white to-gray-50  border border-gray-200 rounded-2xl overflow-hidden">
+            <div className="card">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="min-w-full table-auto text-xs border-collapse">
                         <thead>
-                            <tr className="border-b border-gray-200">
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Property</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Category</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Amount</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Vendor</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Priority</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Status</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Deadline</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Receipt</th>
-                                <th className="text-left p-4 font-semibold text-[#D4A017]">Actions</th>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Property</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Category</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Amount</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Vendor</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Priority</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Deadline</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Receipt</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-gray-100">
                             {paginatedExpenses.map((expense) => {
                                 const statusDisplay = getStatusDisplay(expense.status);
                                 return (
-                                    <tr key={expense.id} className="border-b border-gray-200/30 hover:bg-gray-100/30 transition-colors duration-200">
-                                        <td className="p-4">
-                                            <div className="flex items-center space-x-2">
-                                                <Building2 size={16} className="text-[#D4A017]" />
-                                                <span className="font-medium text-gray-900">{expense.propertyName}</span>
+                                    <tr key={expense.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-1">
+                                                <Building2 size={12} className="text-[#D4A017] shrink-0" />
+                                                <span className="max-w-[180px] truncate">{expense.propertyName}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4">
-                                            <div>
-                                                <div className="font-medium text-gray-900">{expense.category}</div>
-                                                <div className="text-sm text-gray-500">{expense.expenseType}</div>
-                                            </div>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="max-w-[180px] truncate font-medium">{expense.category}</div>
+                                            <div className="text-gray-400">{expense.expenseType}</div>
                                         </td>
-                                        <td className="p-4">
-                                            <span className="font-bold text-[#D4A017]">{formatCurrency(expense.amount)}</span>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 font-semibold text-[#D4A017]">
+                                            {formatCurrency(expense.amount)}
                                         </td>
-                                        <td className="p-4">
-                                            <div>
-                                                <div className="text-gray-900">{expense.vendor || 'N/A'}</div>
-                                                {expense.vendorType && (
-                                                    <div className="text-sm text-gray-500">{expense.vendorType}</div>
-                                                )}
-                                            </div>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="max-w-[180px] truncate">{expense.vendor || 'N/A'}</div>
+                                            {expense.vendorType && (
+                                                <div className="text-gray-400">{expense.vendorType}</div>
+                                            )}
                                         </td>
-                                        <td className="p-4">
-                                            <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(expense.priority)}`}>
-                                                <span>{expense.priority}</span>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(expense.priority)}`}>
+                                                {expense.priority}
                                             </span>
                                         </td>
-                                        <td className="p-4">
-                                            <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${statusDisplay.color}`}>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${statusDisplay.color}`}>
                                                 {statusDisplay.icon}
-                                                <span>{expense.status}</span>
+                                                {expense.status}
                                             </span>
                                         </td>
-                                        <td className="p-4">
-                                            <div className="text-gray-900">{expense.deadline}</div>
-                                        </td>
-                                        <td className="p-4">
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expense.deadline}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
                                             {expense.receipt ? (
                                                 <button
                                                     onClick={() => handleViewFile(expense.receipt, `${expense.category} - ${expense.propertyName}`)}
-                                                    className="flex items-center space-x-1 px-3 py-1.5 bg-[#D4A017]/20 hover:bg-[#D4A017]/30 text-[#D4A017] rounded-lg transition-all duration-300 text-sm border border-[#D4A017]/30"
+                                                    className="flex items-center gap-1 px-2 py-1 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 text-[#D4A017] rounded border border-[#D4A017]/30 transition-colors"
                                                 >
-                                                    <FileText size={14} />
-                                                    <span>View</span>
+                                                    <FileText size={12} />
+                                                    View
                                                 </button>
                                             ) : (
-                                                <span className="text-gray-500 text-sm">No receipt</span>
+                                                <span className="text-gray-400">No receipt</span>
                                             )}
                                         </td>
-                                        <td className="p-4">
-                                            <div className="flex space-x-2">
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-1">
                                                 <button
                                                     onClick={() => setSelectedExpense(expense)}
-                                                    className="p-2 bg-gray-100 hover:bg-[#D4A017]/20 text-gray-500 hover:text-[#D4A017] rounded-lg transition-all duration-300 border border-gray-200 hover:border-[#D4A017]/30"
+                                                    className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
                                                 >
                                                     <Eye size={14} />
                                                 </button>
-                                                <button className="p-2 bg-gray-100 hover:bg-blue-500/20 text-gray-500 hover:text-blue-400 rounded-lg transition-all duration-300 border border-gray-200 hover:border-blue-500/30">
+                                                <button className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors">
                                                     <Edit3 size={14} />
                                                 </button>
-                                                <button className="p-2 bg-gray-100 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded-lg transition-all duration-300 border border-gray-200 hover:border-red-500/30">
+                                                <button className="text-gray-400 hover:text-red-500 cursor-pointer transition-colors">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>
@@ -424,76 +393,44 @@ function Expenses() {
                                     </tr>
                                 );
                             })}
+                            {paginatedExpenses.length === 0 && (
+                                <tr>
+                                    <td colSpan="9" className="px-3 py-4 text-xs text-gray-400 text-center">No expenses found</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex justify-center items-center space-x-2 p-6 border-t border-gray-200">
-                        <button
-                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                            className="px-4 py-2 bg-white/50 border border-gray-200 rounded-lg text-gray-600 hover:text-[#D4A017] hover:border-[#D4A017]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                        >
-                            Previous
-                        </button>
-
-                        {[...Array(totalPages)].map((_, index) => (
-                            <button
-                                key={index + 1}
-                                onClick={() => setCurrentPage(index + 1)}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
-                                    currentPage === index + 1
-                                        ? 'bg-[#D4A017] text-white shadow-lg'
-                                        : 'bg-white/50 border border-gray-200 text-gray-600 hover:text-[#D4A017] hover:border-[#D4A017]/30'
-                                }`}
-                            >
-                                {index + 1}
-                            </button>
-                        ))}
-
-                        <button
-                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                            className="px-4 py-2 bg-white/50 border border-gray-200 rounded-lg text-gray-600 hover:text-[#D4A017] hover:border-[#D4A017]/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                        >
-                            Next
-                        </button>
-                    </div>
-                )}
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
             </div>
 
             {/* File Viewer Modal */}
             {showFileViewer && selectedFile && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                            <div className="flex items-center space-x-3">
-                                <FileText size={20} className="text-[#D4A017]" />
-                                <h3 className="text-lg font-bold text-gray-900">{selectedFile.name}</h3>
+                    <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-4xl h-full max-h-[90vh] flex flex-col">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <div className="flex items-center gap-2">
+                                <FileText size={16} className="text-[#D4A017]" />
+                                <h3 className="text-sm font-bold text-gray-900">{selectedFile.name}</h3>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center gap-2">
                                 <a
                                     href={selectedFile.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex items-center space-x-2 px-4 py-2 bg-[#D4A017]/20 hover:bg-[#D4A017]/30 text-[#D4A017] rounded-lg transition-all duration-300 border border-[#D4A017]/30"
+                                    className="flex items-center gap-1 px-3 py-1.5 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 text-[#D4A017] rounded-lg border border-[#D4A017]/30 text-xs transition-colors"
                                 >
-                                    <ExternalLink size={16} />
-                                    <span>Open in New Tab</span>
+                                    <ExternalLink size={12} />
+                                    Open in New Tab
                                 </a>
                                 <button
                                     onClick={() => setShowFileViewer(false)}
-                                    className="p-2 bg-gray-100 hover:bg-gray-200/50 text-gray-500 hover:text-gray-900 rounded-lg transition-all duration-300"
+                                    className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 rounded-lg transition-colors"
                                 >
-                                    <X size={20} />
+                                    <X size={16} />
                                 </button>
                             </div>
                         </div>
-
-                        {/* File Content */}
                         <div className="flex-1 overflow-hidden">
                             <iframe
                                 src={selectedFile.url}
@@ -508,115 +445,112 @@ function Expenses() {
             {/* Expense Details Modal */}
             {selectedExpense && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                        {/* Modal Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                            <h3 className="text-lg font-bold text-gray-900">Expense Details</h3>
+                    <div className="bg-white border border-gray-200 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                            <h3 className="text-sm font-bold text-gray-900">Expense Details</h3>
                             <button
                                 onClick={() => setSelectedExpense(null)}
-                                className="p-2 bg-gray-100 hover:bg-gray-200/50 text-gray-500 hover:text-gray-900 rounded-lg transition-all duration-300"
+                                className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-900 rounded-lg transition-colors"
                             >
-                                <X size={20} />
+                                <X size={16} />
                             </button>
                         </div>
 
-                        {/* Expense Details */}
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-4 space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Property</label>
-                                    <p className="text-gray-900">{selectedExpense.propertyName}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Property</label>
+                                    <p className="text-xs text-gray-900">{selectedExpense.propertyName}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Category</label>
-                                    <p className="text-gray-900">{selectedExpense.category}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Category</label>
+                                    <p className="text-xs text-gray-900">{selectedExpense.category}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Amount</label>
-                                    <p className="text-gray-900 font-bold">{formatCurrency(selectedExpense.amount)}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Amount</label>
+                                    <p className="text-xs text-gray-900 font-bold">{formatCurrency(selectedExpense.amount)}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Payment Type</label>
-                                    <p className="text-gray-900">{selectedExpense.paymentType}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Payment Type</label>
+                                    <p className="text-xs text-gray-900">{selectedExpense.paymentType}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Vendor</label>
-                                    <p className="text-gray-900">{selectedExpense.vendor || 'N/A'}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Vendor</label>
+                                    <p className="text-xs text-gray-900">{selectedExpense.vendor || 'N/A'}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Priority</label>
-                                    <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(selectedExpense.priority)}`}>
-                                        <span>{selectedExpense.priority}</span>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Priority</label>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getPriorityColor(selectedExpense.priority)}`}>
+                                        {selectedExpense.priority}
                                     </span>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Status</label>
-                                    <span className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getStatusDisplay(selectedExpense.status).color}`}>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Status</label>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getStatusDisplay(selectedExpense.status).color}`}>
                                         {getStatusDisplay(selectedExpense.status).icon}
-                                        <span>{selectedExpense.status}</span>
+                                        {selectedExpense.status}
                                     </span>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Deadline</label>
-                                    <p className="text-gray-900">{selectedExpense.deadline}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Deadline</label>
+                                    <p className="text-xs text-gray-900">{selectedExpense.deadline}</p>
                                 </div>
                             </div>
-                            
+
                             {selectedExpense.comments && (
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Comments</label>
-                                    <p className="text-gray-900 bg-gray-100 rounded-lg p-3 border border-gray-200">
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Comments</label>
+                                    <p className="text-xs text-gray-900 bg-gray-50 rounded-lg p-2 border border-gray-200">
                                         {selectedExpense.comments}
                                     </p>
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Created At</label>
-                                    <p className="text-gray-900">{formatDate(selectedExpense.createdAt)}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Created At</label>
+                                    <p className="text-xs text-gray-900">{formatDate(selectedExpense.createdAt)}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-1">Last Updated</label>
-                                    <p className="text-gray-900">{formatDate(selectedExpense.updatedAt)}</p>
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-0.5">Last Updated</label>
+                                    <p className="text-xs text-gray-900">{formatDate(selectedExpense.updatedAt)}</p>
                                 </div>
                             </div>
 
                             {selectedExpense.receipt && (
                                 <div>
-                                    <label className="text-sm font-medium text-[#D4A017] block mb-2">Receipt</label>
-                                    <div className="flex space-x-2">
+                                    <label className="text-xs font-medium text-[#D4A017] block mb-1">Receipt</label>
+                                    <div className="flex gap-2">
                                         <button
                                             onClick={() => handleViewFile(selectedExpense.receipt, `${selectedExpense.category} - ${selectedExpense.propertyName}`)}
-                                            className="flex items-center space-x-2 px-4 py-2 bg-[#D4A017]/20 hover:bg-[#D4A017]/30 text-[#D4A017] rounded-lg transition-all duration-300 border border-[#D4A017]/30"
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-[#D4A017]/10 hover:bg-[#D4A017]/20 text-[#D4A017] rounded-lg border border-[#D4A017]/30 text-xs transition-colors"
                                         >
-                                            <Eye size={16} />
-                                            <span>View Receipt</span>
+                                            <Eye size={12} />
+                                            View Receipt
                                         </button>
                                         <a
                                             href={selectedExpense.receipt}
                                             download
-                                            className="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200/50 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-300 border border-gray-200"
+                                            className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 text-xs transition-colors"
                                         >
-                                            <Download size={16} />
-                                            <span>Download</span>
+                                            <Download size={12} />
+                                            Download
                                         </a>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Modal Footer */}
-                        <div className="flex justify-end space-x-3 p-6 border-t border-gray-200">
+                        <div className="flex justify-end gap-2 p-4 border-t border-gray-200">
                             <button
                                 onClick={() => setSelectedExpense(null)}
-                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200/50 text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-300 border border-gray-200"
+                                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 rounded-lg border border-gray-200 text-xs transition-colors"
                             >
                                 Close
                             </button>
-                            <button className="px-4 py-2 bg-gradient-to-r from-[#D4A017] to-[#D4A017] hover:from-[#B8860B] hover:to-[#D4A017] text-white font-medium rounded-lg transition-all duration-300 shadow-lg hover:shadow-[#D4A017]/25 flex items-center space-x-2">
-                                <Edit3 size={16} />
-                                <span>Edit Expense</span>
+                            <button className="px-3 py-1.5 bg-[#D4A017] hover:bg-[#B8860B] text-white font-medium rounded-lg text-xs flex items-center gap-1 transition-colors">
+                                <Edit3 size={12} />
+                                Edit Expense
                             </button>
                         </div>
                     </div>

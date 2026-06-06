@@ -1,10 +1,13 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { FaEdit } from "react-icons/fa";
+import { Pencil } from "lucide-react";
 import { UseCSVDownload } from '../UseCSVDownload';
 import axios from 'axios';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
 
 function ExpenseTable() {
     const { getOptions } = useDropdowns();
@@ -23,7 +26,7 @@ function ExpenseTable() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12;
 
     const filteredData = expenseData.filter(item =>
         Object.values(item).some(value =>
@@ -159,248 +162,183 @@ function ExpenseTable() {
     };
 
     return (
-
-
         <DashPage>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">{type === 'vendor' ? 'VENDOR-WISE EXPENSE TABLE' : 'PROPERTY-WISE EXPENSE TABLE'}</h1>
+            <div className="page-header">
+                <h1>{type === 'vendor' ? 'Vendor-wise Expense Table' : 'Property-wise Expense Table'}</h1>
+                <input
+                    type="text"
+                    placeholder="Search…"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="form-input w-48 text-xs"
+                />
+            </div>
 
-                        <div className={`${type === 'vendor' ? 'hidden' : 'flex justify-center items-center p-1 md:mb-5 gap-3'}`}>
-                            <button
-                                className={`px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm transition-colors ${activeOption === 'Expense'
-                                    ? 'bg-[#B8860B] text-white'
-                                    : 'hover:bg-[#B8860B]'
-                                    }`}
-                                onClick={() => setActiveOption('Expense')}
-                            >
-                                Expense
-                            </button>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+                {type !== 'vendor' && (
+                    <>
+                        <button
+                            className={`px-3 py-1.5 text-white text-xs font-medium rounded cursor-pointer transition-colors ${activeOption === 'Expense' ? 'bg-[#B8860B]' : 'bg-[#D4A017] hover:bg-[#B8860B]'}`}
+                            onClick={() => setActiveOption('Expense')}
+                        >
+                            Expense
+                        </button>
+                        <button
+                            className={`px-3 py-1.5 text-white text-xs font-medium rounded cursor-pointer transition-colors ${activeOption === 'Fixed Expense' ? 'bg-[#B8860B]' : 'bg-[#D4A017] hover:bg-[#B8860B]'}`}
+                            onClick={() => setActiveOption('Fixed Expense')}
+                        >
+                            Fixed Expense
+                        </button>
+                        <button
+                            className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B] transition-colors"
+                            onClick={() => navigate('/accounts/accounts-expense-form', { state: { activeOption } })}
+                            type="button"
+                        >
+                            {activeOption === 'Expense' ? 'Add Expense' : 'Add Fixed Expense'}
+                        </button>
+                        <button
+                            className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B] transition-colors"
+                            onClick={() => downloadCSV(outputData, 'expense_data.csv')}
+                            type="button"
+                        >
+                            Export Data
+                        </button>
+                    </>
+                )}
+                {type === 'vendor' && (
+                    <button
+                        className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B] transition-colors"
+                        onClick={() => navigate('/accounts/accounts-vendor-table')}
+                        type="button"
+                    >
+                        Prev
+                    </button>
+                )}
+                <select
+                    id="status"
+                    value={status}
+                    onChange={statusHandleChange}
+                    className="px-2 py-1.5 border border-gray-300 rounded text-xs text-black"
+                    name="status"
+                    required
+                >
+                    <option value="All">{`All (${data.length})`}</option>
+                    {getOptions('expense_statuses').map((s, i) => (
+                        <option key={i} value={s}>{`${s} (${data.filter(expense => expense.status === s).length})`}</option>
+                    ))}
+                </select>
+            </div>
 
-                            <button
-                                className={`px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm transition-colors ${activeOption === 'Fixed Expense'
-                                    ? 'bg-[#B8860B] text-white'
-                                    : 'hover:bg-[#B8860B]'
-                                    }`}
-                                onClick={() => setActiveOption('Fixed Expense')}
-                            >
-                                Fixed Expense
-                            </button>
-                        </div>
+            <div className="card">
+                <div className="overflow-x-auto">
+                    {activeOption === 'Expense' && (
+                        <table className="min-w-full table-auto text-xs border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Property</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Expense Head</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Expense Type</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Category</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Raised By</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Amount</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">GST</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Total w/ GST</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Payment Type</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Submitted At</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Last Updated</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {loadingData ? (
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <td colSpan="13" className="px-3 py-1.5 text-xs text-gray-800 text-center">Loading…</td>
+                                    </tr>
+                                ) : paginatedData.length > 0 ? paginatedData.map((expenseData, i) => (
+                                    <tr className="hover:bg-gray-50 transition-colors" key={expenseData.id}>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{expenseData?.propertyName}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.headOfExpense}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.expenseType}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.category}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{expenseData?.expenseRaisedEmail}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.amount}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.gst || 'NA'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{Number(expenseData?.amount) + (isNaN(Number(expenseData?.gst)) ? 0 : Number(expenseData?.gst))}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.paymentType || 'NA'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{formatter.format(new Date(expenseData?.createdAt))}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{formatter.format(new Date(expenseData?.updatedAt))}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-2">
+                                                <span>{expenseData?.status}</span>
+                                                <Pencil
+                                                    size={14}
+                                                    className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                    onClick={() => updateExpenseStatus(expenseData)}
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <td colSpan="13" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className={`${type === 'vendor' ? 'block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm' : 'hidden'}`} onClick={() => navigate('/accounts/accounts-vendor-table')}
-                                type="button">Prev</button>
-
-                            <div className={`${type === 'vendor' ? 'hidden' : 'flex justify-between sm:space-x-3'}`}>
-                                <button
-                                    className="mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() =>
-                                        navigate('/accounts/accounts-expense-form', { state: { activeOption } })
-                                    }
-                                    type="button">
-                                    {activeOption === 'Expense' ? 'Add Expense' : 'Add Fixed Expense'}</button>
-
-                                <button
-                                    className="mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => downloadCSV(outputData, 'expense_data.csv')}
-                                    type="button">Export Data</button>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <select id="status" value={status} onChange={statusHandleChange} className="block mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="status" required>
-                                    <option value="All">{`All (${data.length})`}</option>
-                                    {getOptions('expense_statuses').map((s, i) => (
-                                        <option key={i} value={s}>{`${s} (${data.filter(expense => expense.status === s).length})`}</option>
-                                    ))}
-                                </select>
-
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                    className="block mt-2 mb-3 text-black max-sm:w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="w-full overflow-x-auto">
-                            {activeOption === 'Expense' &&
-                                <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                                    <thead>
-                                        <tr className="bg-gray-50 text-gray-700">
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Property Name</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Expense Head</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Expense Type</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">Category</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Expense Raised By</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">Amount</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">GST</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">Total Amount after GST</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">Payment Type</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">Submitted At</th>
-                                            <th className="border border-gray-300 py-2 px-4 border-b text-center">Last Updated</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Update Status</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {paginatedData.length > 0 ? paginatedData.map((expenseData, i) => (
-                                            <tr className="" key={expenseData.id}>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.propertyName}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.headOfExpense}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.expenseType}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.category}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.expenseRaisedEmail}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.amount}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.gst || 'NA'}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{Number(expenseData?.amount) + (isNaN(Number(expenseData?.gst)) ? 0 : Number(expenseData?.gst))}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.paymentType || 'NA'}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{formatter.format(new Date(expenseData?.createdAt))}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{formatter.format(new Date(expenseData?.updatedAt))}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                                    <div className="flex justify-evenly">
-                                                        <div>{expenseData?.status}</div>
-                                                        <FaEdit className="hover:text-[#D4A017] text-lg sm:text-xl hover:cursor-pointer" onClick={() => updateExpenseStatus(expenseData)} />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )) : <tr>
-                                            <td colSpan="13" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                        </tr>}
-                                    </tbody>
-                                </table>
-                            }
-
-                            {activeOption === 'Fixed Expense' &&
-                                <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                                    <thead>
-                                        <tr className="bg-gray-50 text-gray-700">
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Expense Raised Email</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Property Name</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Owner Name</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Created At</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Updated At</th>
-                                            <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">View/Update Expense Details</th>
-                                        </tr>
-                                    </thead>
-
-                                    <tbody>
-                                        {paginatedData.length > 0 ? paginatedData.map((expenseData, i) => (
-                                            <tr className="" key={expenseData.id}>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.expenseRaisedEmail}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.propertyName}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.owner}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">{expenseData?.createdAt ? formatter.format(new Date(expenseData.createdAt)) : "-"}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                                    {expenseData?.updatedAt ? formatter.format(new Date(expenseData.updatedAt)) : "-"}</td>
-                                                <td className="border border-gray-300 px-4 py-2 text-center">
-                                                    <div className="flex justify-evenly">
-                                                        <div className="flex justify-evenly">
-                                                            <div>{expenseData?.status}</div>
-                                                            <FaEdit className="hover:text-[#D4A017] text-lg sm:text-xl hover:cursor-pointer" onClick={() => viewFixedExpenseTable(expenseData)} />
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )) : <tr>
-                                            <td colSpan="7" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                        </tr>}
-                                    </tbody>
-                                </table>
-                            }
-                        </div>
-
-                        <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                                aria-label="Previous page"
-                            >
-                                &lt;
-                            </button>
-
-                            <button
-                                key={1}
-                                onClick={() => handlePageChange(1)}
-                                className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                                    ? "bg-[#D4A017] text-white"
-                                    : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                    }`}
-                            >
-                                1
-                            </button>
-
-                            {currentPage > 3 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
-                            )}
-
-                            {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                                let page;
-                                if (currentPage <= 3) {
-                                    page = i + 2;
-                                } else if (currentPage >= totalPages - 2) {
-                                    page = totalPages - 4 + i;
-                                } else {
-                                    page = currentPage - 2 + i;
-                                }
-
-                                if (page > 1 && page < totalPages) {
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                                ? "bg-[#D4A017] text-white"
-                                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return null;
-                            })}
-
-                            {currentPage < totalPages - 2 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
-                            )}
-
-                            {totalPages > 1 && (
-                                <button
-                                    key={totalPages}
-                                    onClick={() => handlePageChange(totalPages)}
-                                    className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                        ? "bg-[#D4A017] text-white"
-                                        : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                        }`}
-                                >
-                                    {totalPages}
-                                </button>
-                            )}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                                aria-label="Next page"
-                            >
-                                &gt;
-                            </button>
-                        </div>
-
-
+                    {activeOption === 'Fixed Expense' && (
+                        <table className="min-w-full table-auto text-xs border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Expense Raised Email</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Property Name</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Owner Name</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Created At</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Updated At</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {loadingData ? (
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <td colSpan="7" className="px-3 py-1.5 text-xs text-gray-800 text-center">Loading…</td>
+                                    </tr>
+                                ) : paginatedData.length > 0 ? paginatedData.map((expenseData, i) => (
+                                    <tr className="hover:bg-gray-50 transition-colors" key={expenseData.id}>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{expenseData?.expenseRaisedEmail}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{expenseData?.propertyName}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.owner}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{expenseData?.createdAt ? formatter.format(new Date(expenseData.createdAt)) : "-"}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{expenseData?.updatedAt ? formatter.format(new Date(expenseData.updatedAt)) : "-"}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-2">
+                                                <span>{expenseData?.status}</span>
+                                                <Pencil
+                                                    size={14}
+                                                    className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                    onClick={() => viewFixedExpenseTable(expenseData)}
+                                                />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <td colSpan="7" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
         </DashPage>
-
-
-    )
+    );
 }
 
-export default ExpenseTable
+export default ExpenseTable;

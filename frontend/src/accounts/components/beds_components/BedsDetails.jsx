@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -121,344 +123,325 @@ function BedsDetails() {
         }
     }
 
+    const thClass = "border-r border-gray-100 px-3 py-1.5 text-xs font-medium text-[#D4A017] text-left whitespace-nowrap w-48";
+    const tdClass = "px-3 py-1.5 text-xs text-gray-800";
+
     return (
         <DashPage>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={bedsHandleUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA</h1>
+            <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={bedsHandleUpdate}>
+                <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA</h1>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/accounts/accounts-beds-table`)}
-                                type="button">Prev</button>
+                <div className="sm:flex justify-between">
+                    <button
+                        className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/accounts/accounts-beds-table`)}
+                        type="button">Prev</button>
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
+                    <div className="flex justify-between sm:justify-end mb-5">
+                        <button
+                            className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
 
-                                {dataEditView === true && <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
-                                    type='submit'
-                                >
-                                    {isSaving ? "Saving Details..." : "Save Details"}
-                                </button>}
-                            </div>
-                        </div>
+                        {dataEditView === true && <button
+                            className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
+                            type='submit'
+                        >
+                            {isSaving ? "Saving Details..." : "Save Details"}
+                        </button>}
+                    </div>
+                </div>
 
-                        <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">{bedData?.propertyName}</h3>
+                <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">{bedData?.propertyName}</h3>
 
-                        <div className="w-full overflow-x-auto">
-                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                <tbody>
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Flat Number</th>
-                                        <td className="py-1 px-2">{bedData?.roomNo || '-'}</td>
-                                    </tr>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto text-xs border-collapse">
+                        <tbody className="divide-y divide-gray-100">
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Flat Number</th>
+                                <td className={tdClass}>{bedData?.roomNo || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Flat Type</th>
-                                        <td className="py-1 px-2">{bedData?.roomType || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Flat Type</th>
+                                <td className={tdClass}>{bedData?.roomType || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Room Number</th>
-                                        <td className="py-1 px-2">{bedData?.bedLabel || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Room Number</th>
+                                <td className={tdClass}>{bedData?.bedLabel || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Manager</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.propertyManager || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Property Manager</th>
+                                <td className={tdClass}>{bedData?.resident_data?.propertyManager || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Sales Manager</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.salesManager || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Sales Manager</th>
+                                <td className={tdClass}>{bedData?.resident_data?.salesManager || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comfort Class</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.comfortClass || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Comfort Class</th>
+                                <td className={tdClass}>{bedData?.resident_data?.comfortClass || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Meal Type</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.mealType || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Meal Type</th>
+                                <td className={tdClass}>{bedData?.resident_data?.mealType || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Name</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.residentsName || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Resident Name</th>
+                                <td className={tdClass}>{bedData?.resident_data?.residentsName || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Phone Number</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.phoneNumber || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Phone Number</th>
+                                <td className={tdClass}>{bedData?.resident_data?.phoneNumber || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Email</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.email || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Email</th>
+                                <td className={tdClass + " max-w-[180px] truncate"}>{bedData?.resident_data?.email || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Permanent Address</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.permanentAddress || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Permanent Address</th>
+                                <td className={tdClass + " max-w-[180px] truncate"}>{bedData?.resident_data?.permanentAddress || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">KYC</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.kycType || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>KYC</th>
+                                <td className={tdClass}>{bedData?.resident_data?.kycType || '-'}</td>
+                            </tr>
 
-                                    {bedData?.resident_data?.kycType === 'Aadhar' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar Number</th>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">{bedData?.resident_data?.aadharNumber || '-'}</span>
-                                            </td>
-                                        </tr>
+                            {bedData?.resident_data?.kycType === 'Aadhar' && <>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Aadhar Number</th>
+                                    <td className={tdClass}>{bedData?.resident_data?.aadharNumber || '-'}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th rowSpan="2" className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar (Front & Back Copy)</th>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <Link to={
-                                                        typeof bedData?.resident_data?.aadharFrontCopy === 'string'
-                                                            ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.aadharFrontCopy}`
-                                                            : bedData?.resident_data?.aadharFrontCopy
-                                                                ? URL.createObjectURL(bedData?.resident_data?.aadharFrontCopy)
-                                                                : '#'
-                                                    } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.resident_data?.aadharFrontCopy || '').split('/')[5]) || '-'}
-                                                    </Link>
-                                                </span>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Aadhar Front Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof bedData?.resident_data?.aadharFrontCopy === 'string'
+                                                ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.aadharFrontCopy}`
+                                                : bedData?.resident_data?.aadharFrontCopy
+                                                    ? URL.createObjectURL(bedData?.resident_data?.aadharFrontCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {((bedData?.resident_data?.aadharFrontCopy || '').split('/')[5]) || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
 
-                                        <tr className='border-b border-white'>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <Link to={
-                                                        typeof bedData?.resident_data?.aadharBackCopy === 'string'
-                                                            ? bedData?.resident_data?.aadharBackCopy
-                                                            : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.aadharBackCopy}`
-                                                                ? URL.createObjectURL(bedData?.resident_data?.aadharBackCopy)
-                                                                : '#'
-                                                    } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.resident_data?.aadharBackCopy || '').split('/')[5]) || '-'}
-                                                    </Link>
-                                                </span>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Aadhar Back Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof bedData?.resident_data?.aadharBackCopy === 'string'
+                                                ? bedData?.resident_data?.aadharBackCopy
+                                                : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.aadharBackCopy}`
+                                                    ? URL.createObjectURL(bedData?.resident_data?.aadharBackCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {((bedData?.resident_data?.aadharBackCopy || '').split('/')[5]) || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Aadhar Status</th>
-                                            <td className="py-1 px-2">{bedData?.resident_data?.aadharStatus || '-'}</td>
-                                        </tr>
-                                    </>}
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Aadhar Status</th>
+                                    <td className={tdClass}>{bedData?.resident_data?.aadharStatus || '-'}</td>
+                                </tr>
+                            </>}
 
-                                    {bedData.kycType === 'PAN' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN Number</th>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">{bedData?.resident_data?.panNumber || '-'}</span>
-                                            </td>
-                                        </tr>
+                            {bedData.kycType === 'PAN' && <>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>PAN Number</th>
+                                    <td className={tdClass}>{bedData?.resident_data?.panNumber || '-'}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th rowSpan="2" className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN (Front & Back Copy)</th>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <Link to={
-                                                        typeof bedData?.resident_data?.panFrontCopy === 'string'
-                                                            ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.panFrontCopy}`
-                                                            : bedData?.resident_data?.panFrontCopy
-                                                                ? URL.createObjectURL(bedData?.resident_data?.panFrontCopy)
-                                                                : '#'
-                                                    } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.resident_data?.panFrontCopy || '').split('/')[5]) || '-'}
-                                                    </Link>
-                                                </span>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>PAN Front Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof bedData?.resident_data?.panFrontCopy === 'string'
+                                                ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.panFrontCopy}`
+                                                : bedData?.resident_data?.panFrontCopy
+                                                    ? URL.createObjectURL(bedData?.resident_data?.panFrontCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {((bedData?.resident_data?.panFrontCopy || '').split('/')[5]) || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
 
-                                        <tr className='border-b border-white'>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <Link to={
-                                                        typeof bedData?.resident_data?.panBackCopy === 'string'
-                                                            ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.panBackCopy}`
-                                                            : bedData?.resident_data?.panBackCopy
-                                                                ? URL.createObjectURL(bedData?.resident_data?.panBackCopy)
-                                                                : '#'
-                                                    } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                        {((bedData?.resident_data?.panBackCopy || '').split('/')[5]) || '-'}
-                                                    </Link>
-                                                </span>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>PAN Back Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof bedData?.resident_data?.panBackCopy === 'string'
+                                                ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${bedData.panBackCopy}`
+                                                : bedData?.resident_data?.panBackCopy
+                                                    ? URL.createObjectURL(bedData?.resident_data?.panBackCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {((bedData?.resident_data?.panBackCopy || '').split('/')[5]) || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">PAN Status</th>
-                                            <td className="py-1 px-2">{bedData?.resident_data?.panStatus || '-'}</td>
-                                        </tr>
-                                    </>}
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>PAN Status</th>
+                                    <td className={tdClass}>{bedData?.resident_data?.panStatus || '-'}</td>
+                                </tr>
+                            </>}
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">check-In</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.checkIn ? new Date(bedData?.resident_data?.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Check-In</th>
+                                <td className={tdClass}>{bedData?.resident_data?.checkIn ? new Date(bedData?.resident_data?.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">check-Out</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.checkOut ? new Date(bedData?.resident_data?.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Check-Out</th>
+                                <td className={tdClass}>{bedData?.resident_data?.checkOut ? new Date(bedData?.resident_data?.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Total Deposit Paid</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.totalDepositPaid || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Total Deposit Paid</th>
+                                <td className={tdClass}>{bedData?.resident_data?.totalDepositPaid || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Per Month</th>
-                                        <td className="py-1 px-2">{bedData?.resident_data?.rentPerMonth || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Rent Per Month</th>
+                                <td className={tdClass}>{bedData?.resident_data?.rentPerMonth || '-'}</td>
+                            </tr>
 
-                                    {bedData?.salesStatus === 'Completed' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Agreement</th>
-                                            <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(bedData)}>{`${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`}</td>
-                                        </tr>
+                            {bedData?.salesStatus === 'Completed' && <>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Agreement</th>
+                                    <td className={tdClass + " hover:text-[#D4A017] hover:cursor-pointer"} onClick={() => viewAgreementHandle(bedData)}>{`${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`}</td>
+                                </tr>
 
-                                        {bedData?.resident_data?.rent_records.length && bedData?.resident_data?.rent_records.length > 0 ?
-                                            <>
-                                                <tr className="border-b border-white">
-                                                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Month</th>
-                                                    {!dataEditView ? <>
-                                                        <td className="py-1 px-2">{rentMonth || '-'}</td>
-                                                    </> : <>
-                                                        <td className="flex">
-                                                            <span className="py-1 px-2 w-full">
-                                                                <select id="rentMonth" value={rentMonth} onChange={(e) => setRentMonth(e.target.value)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="rentMonth" required>
-                                                                    <option value="" disabled>Select the month here</option>
-                                                                    {bedData?.resident_data?.rent_records.map(record => <>
-                                                                        <option key={record.id} value={record.month}>{record.month}</option>
-                                                                    </>)}
-                                                                </select>
-                                                            </span>
-                                                        </td>
-                                                    </>}
-                                                </tr>
-
-                                                <tr className="border-b border-white">
-                                                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Delay Charges</th>
-                                                    <td className="py-1 px-2">{bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges}</td>
-                                                </tr>
-
-                                                <tr className="border-b border-white">
-                                                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent after Delay Charges</th>
-                                                    <td className="py-1 px-2">{Number(((bedsDetails?.resident_data?.rentPerMonth || '').match(/^\d+/))) + Number(bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges)}</td>
-                                                </tr>
-
-                                                <tr className="border-b border-white">
-                                                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Status</th>
-                                                    {!dataEditView ? <>
-                                                        <td className="py-1 px-2">{bedsDetails?.rentStatus || '-'}</td>
-                                                    </> : <>
-                                                        <td className="flex">
-                                                            <span className="py-1 px-2 w-full">
-                                                                <select id="rentStatus" value={bedsDetails.rentStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="rentStatus" required>
-                                                                    <option value="" disabled>Select the status here</option>
-                                                                    {getOptions('deposit_statuses').map((t, i) => (
-                                                                        <option key={i} value={t}>{t}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </span>
-                                                        </td>
-                                                    </>}
-                                                </tr>
-
-                                                {bedsDetails.rentStatus === 'Received' && <>
-                                                    <tr className="border-b border-white">
-                                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Transfer Type</th>
-                                                        {!dataEditView ? <>
-                                                            <td className="py-1 px-2">{bedsDetails?.transferType || '-'}</td>
-                                                        </> : <>
-                                                            <td className="flex">
-                                                                <span className="py-1 px-2 w-full">
-                                                                    <select id="transferType" value={bedsDetails.transferType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="transferType" required>
-                                                                        <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                                        {getOptions('transfer_types').map((t, i) => (
-                                                                            <option key={i} value={t}>{t}</option>
-                                                                        ))}
-                                                                    </select>
-                                                                </span>
-                                                            </td>
-                                                        </>}
-                                                    </tr>
-
-                                                    <tr className="border-b border-white">
-                                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">UTR number</th>
-                                                        {!dataEditView ? <>
-                                                            <td className="py-1 px-2">{bedsDetails?.utrNumber || '-'}</td>
-                                                        </> : <>
-                                                            <td className="flex">
-                                                                <span className="py-1 px-2 w-full">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={bedsDetails.utrNumber}
-                                                                        onChange={(e) => bedsHandleChange(e)}
-                                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                        placeholder="Enter any UTR Number here"
-                                                                        name="utrNumber"
-                                                                    />
-                                                                </span>
-                                                            </td>
-                                                        </>}
-                                                    </tr>
-
-                                                    <tr className="border-b border-white">
-                                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Transferred Date</th>
-                                                        {!dataEditView ? <>
-                                                            <td className="py-1 px-2">{bedsDetails?.transferredDate || '-'}</td>
-                                                        </> : <>
-                                                            <td className="flex">
-                                                                <span className="py-1 px-2 w-full">
-                                                                    <input
-                                                                        type="date"
-                                                                        value={bedsDetails.transferredDate}
-                                                                        onChange={(e) => bedsHandleChange(e)}
-                                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                                        name="transferredDate"
-                                                                    />
-                                                                </span>
-                                                            </td>
-                                                        </>}
-                                                    </tr>
-                                                </>}
-                                            </>
-                                            :
-                                            <>
-                                                <tr className="border-b border-white">
-                                                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Month</th>
-                                                    {!dataEditView ? <>
-                                                        <td className="py-1 px-2">{rentMonth || '-'}</td>
-                                                    </> : <>
-                                                        <td className="flex">
-                                                            <span className="py-1 px-2 w-full">
-                                                                Yet to be generated for this month
-                                                            </span>
-                                                        </td>
-                                                    </>}
-                                                </tr>
+                                {bedData?.resident_data?.rent_records.length && bedData?.resident_data?.rent_records.length > 0 ?
+                                    <>
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Rent Month</th>
+                                            {!dataEditView ? <>
+                                                <td className={tdClass}>{rentMonth || '-'}</td>
+                                            </> : <>
+                                                <td className={tdClass}>
+                                                    <select id="rentMonth" value={rentMonth} onChange={(e) => setRentMonth(e.target.value)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="rentMonth" required>
+                                                        <option value="" disabled>Select the month here</option>
+                                                        {bedData?.resident_data?.rent_records.map(record => (
+                                                            <option key={record.id} value={record.month}>{record.month}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
                                             </>}
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Delay Charges</th>
+                                            <td className={tdClass}>{bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges}</td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Rent after Delay Charges</th>
+                                            <td className={tdClass}>{Number(((bedsDetails?.resident_data?.rentPerMonth || '').match(/^\d+/))) + Number(bedData?.resident_data?.rent_records.find(record => record.month === rentMonth)?.delayCharges)}</td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Rent Status</th>
+                                            {!dataEditView ? <>
+                                                <td className={tdClass}>{bedsDetails?.rentStatus || '-'}</td>
+                                            </> : <>
+                                                <td className={tdClass}>
+                                                    <select id="rentStatus" value={bedsDetails.rentStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="rentStatus" required>
+                                                        <option value="" disabled>Select the status here</option>
+                                                        {getOptions('deposit_statuses').map((t, i) => (
+                                                            <option key={i} value={t}>{t}</option>
+                                                        ))}
+                                                    </select>
+                                                </td>
+                                            </>}
+                                        </tr>
+
+                                        {bedsDetails.rentStatus === 'Received' && <>
+                                            <tr className="hover:bg-gray-50 transition-colors">
+                                                <th className={thClass}>Transfer Type</th>
+                                                {!dataEditView ? <>
+                                                    <td className={tdClass}>{bedsDetails?.transferType || '-'}</td>
+                                                </> : <>
+                                                    <td className={tdClass}>
+                                                        <select id="transferType" value={bedsDetails.transferType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="transferType" required>
+                                                            <option value="" disabled>Select the Transfer Type of the payment here</option>
+                                                            {getOptions('transfer_types').map((t, i) => (
+                                                                <option key={i} value={t}>{t}</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                </>}
+                                            </tr>
+
+                                            <tr className="hover:bg-gray-50 transition-colors">
+                                                <th className={thClass}>UTR Number</th>
+                                                {!dataEditView ? <>
+                                                    <td className={tdClass}>{bedsDetails?.utrNumber || '-'}</td>
+                                                </> : <>
+                                                    <td className={tdClass}>
+                                                        <input
+                                                            type="text"
+                                                            value={bedsDetails.utrNumber}
+                                                            onChange={(e) => bedsHandleChange(e)}
+                                                            className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                            placeholder="Enter any UTR Number here"
+                                                            name="utrNumber"
+                                                        />
+                                                    </td>
+                                                </>}
+                                            </tr>
+
+                                            <tr className="hover:bg-gray-50 transition-colors">
+                                                <th className={thClass}>Transferred Date</th>
+                                                {!dataEditView ? <>
+                                                    <td className={tdClass}>{bedsDetails?.transferredDate || '-'}</td>
+                                                </> : <>
+                                                    <td className={tdClass}>
+                                                        <input
+                                                            type="date"
+                                                            value={bedsDetails.transferredDate}
+                                                            onChange={(e) => bedsHandleChange(e)}
+                                                            className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300"
+                                                            name="transferredDate"
+                                                        />
+                                                    </td>
+                                                </>}
+                                            </tr>
+                                        </>}
                                     </>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </form>
+                                    :
+                                    <>
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Rent Month</th>
+                                            {!dataEditView ? <>
+                                                <td className={tdClass}>{rentMonth || '-'}</td>
+                                            </> : <>
+                                                <td className={tdClass}>
+                                                    Yet to be generated for this month
+                                                </td>
+                                            </>}
+                                        </tr>
+                                    </>}
+                            </>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </DashPage>
-    )
+    );
 }
 
-export default BedsDetails
+export default BedsDetails;

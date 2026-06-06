@@ -1,8 +1,11 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaEye } from "react-icons/fa";
+import { Eye } from "lucide-react";
 import axios from 'axios';
 import Logout from "../Logout";
+import Pagination from "../../../shared/Pagination";
 
 function PropertyTable() {
     let publicUrl = process.env.PUBLIC_URL + '/';
@@ -12,7 +15,7 @@ function PropertyTable() {
     const [lastScrollPosition, setLastScrollPosition] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12;
 
     let predefinedOrder = ["/stayease-harmonia", "/stayease-nestio"];
     const seenPathnames = new Set(predefinedOrder);
@@ -50,34 +53,30 @@ function PropertyTable() {
         setCurrentPage(1);
     };
 
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
-
     const handleScroll = useCallback(() => {
-        const currentScrollPosition = window.pageYOffset
+        const currentScrollPosition = window.pageYOffset;
 
         if (currentScrollPosition > lastScrollPosition && currentScrollPosition > 80) {
-            setIsScrolledUp(false)
+            setIsScrolledUp(false);
         } else if (currentScrollPosition < lastScrollPosition) {
-            setIsScrolledUp(true)
+            setIsScrolledUp(true);
         }
 
-        setLastScrollPosition(currentScrollPosition)
-    }, [lastScrollPosition])
+        setLastScrollPosition(currentScrollPosition);
+    }, [lastScrollPosition]);
 
     useEffect(() => {
-        window.addEventListener('scroll', handleScroll)
+        window.addEventListener('scroll', handleScroll);
         return () => {
-            window.removeEventListener('scroll', handleScroll)
-        }
-    }, [lastScrollPosition, handleScroll])
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [lastScrollPosition, handleScroll]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await axios.get('/supply/get-property-data/');
-                console.log(response.data.property_data)
+                console.log(response.data.property_data);
                 setPropertyData(response.data.property_data);
             } catch (err) {
                 console.log(err.message || 'Error fetching data');
@@ -87,8 +86,8 @@ function PropertyTable() {
         fetchData();
     }, []);
 
-    const viewHandle = (propertyData) => {
-        navigate(`/supply/supply-property-details`, { state: { propertyData } });
+    const viewHandle = (property) => {
+        navigate(`/supply/supply-property-details`, { state: { propertyData: property } });
     };
 
     return (
@@ -97,149 +96,71 @@ function PropertyTable() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
                         <div className="flex items-center">
-                            <img alt="CompanyLogo" src={publicUrl + "static/img/brand_logo/stayEase-Logo.webp"} className="h-18 w-auto object-cover"
-                                loading="lazy" />
+                            <img
+                                alt="CompanyLogo"
+                                src={publicUrl + "static/img/brand_logo/stayEase-Logo.webp"}
+                                className="h-18 w-auto object-cover"
+                                loading="lazy"
+                            />
                         </div>
-
                         <div className="flex gap-3">
                             <Link to='/supply/supply-property-form' className="hover:text-[#D4A017]">Property Form</Link>
                             <Logout />
                         </div>
                     </div>
                 </div>
-            </nav >
+            </nav>
 
-            <h1 className="text-[#D4A017] text-center text-2xl font-semibold mt-[5rem] mb-8 hidden lg:block">STAYEASE PROPERTY TABLE</h1>
-
-            <div className="w-[100%] lg:w-[50%] mx-auto lg:my-8 p-8 lg:p-10 lg:rounded-lg bg-white min-h-screen lg:min-h-[0] text-slate-800" method='POST'>
-
-                <h1 className="text-[#D4A017] text-center text-2xl font-semibold mt-[5rem] mb-8 lg:hidden">STAYEASE PROPERTY TABLE</h1>
-
-                <div className="flex justify-end">
+            <div className="max-w-4xl mx-auto px-4 pt-[5rem]">
+                <div className="page-header">
+                    <h1>StayEase Property Table</h1>
                     <input
                         type="text"
                         placeholder="Search..."
                         value={searchTerm}
                         onChange={handleSearchChange}
-                        className="border border-gray-300 rounded px-4 py-2 mb-4 text-black"
+                        className="form-input w-48 text-xs"
                     />
                 </div>
 
-                <div className="overflow-auto">
-                    <table className="min-w-full table-auto border-collapse shadow-md rounded-lg">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-700">
-                                <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Property Name</th>
-                                <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Status</th>
-                                <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">View Details</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {paginatedData.length > 0 ? paginatedData.map((propertyData, i) => (
-                                <tr className="" key={i}>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">{propertyData?.propertyName}</td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">{propertyData?.status}</td>
-                                    <td className="border border-gray-300 px-4 py-2 text-center">
-                                        <div className="flex justify-evenly">
-                                            <FaEye className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewHandle(propertyData)} />
-                                        </div>
-                                    </td>
+                <div className="card">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full table-auto text-xs border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-200">
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Property Name</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">View</th>
                                 </tr>
-                            )) : <tr>
-                                <td colSpan="7" className="border border-gray-300 px-4 py-2 text-center">No data available</td>
-                            </tr>}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                        aria-label="Previous page"
-                    >
-                        &lt;
-                    </button>
-
-                    <button
-                        key={1}
-                        onClick={() => handlePageChange(1)}
-                        className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                            ? "bg-[#D4A017] text-white"
-                            : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                            }`}
-                    >
-                        1
-                    </button>
-
-                    {currentPage > 3 && (
-                        <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                            ...
-                        </span>
-                    )}
-
-                    {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                        let page;
-                        if (currentPage <= 3) {
-                            page = i + 2;
-                        } else if (currentPage >= totalPages - 2) {
-                            page = totalPages - 4 + i;
-                        } else {
-                            page = currentPage - 2 + i;
-                        }
-
-                        if (page > 1 && page < totalPages) {
-                            return (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                        ? "bg-[#D4A017] text-white"
-                                        : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                        }`}
-                                >
-                                    {page}
-                                </button>
-                            );
-                        }
-                        return null;
-                    })}
-
-                    {currentPage < totalPages - 2 && (
-                        <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                            ...
-                        </span>
-                    )}
-
-                    {totalPages > 1 && (
-                        <button
-                            key={totalPages}
-                            onClick={() => handlePageChange(totalPages)}
-                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                ? "bg-[#D4A017] text-white"
-                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                }`}
-                        >
-                            {totalPages}
-                        </button>
-                    )}
-
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                        aria-label="Next page"
-                    >
-                        &gt;
-                    </button>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {paginatedData.length > 0 ? paginatedData.map((property, i) => (
+                                    <tr key={i} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{property?.propertyName}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{property?.status}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <Eye
+                                                size={14}
+                                                className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                onClick={() => viewHandle(property)}
+                                            />
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr>
+                                        <td colSpan="4" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
                 </div>
             </div>
-        </div >
-    )
+        </div>
+    );
 }
 
-export default PropertyTable
+export default PropertyTable;

@@ -1,9 +1,12 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEdit, FaEye } from "react-icons/fa";
+import { Eye, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import axios from 'axios';
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
 
 function LiabilityTable() {
     const navigate = useNavigate();
@@ -12,7 +15,7 @@ function LiabilityTable() {
     const [loadingData, setLoadingData] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12;
 
     const filteredData = bedsData.filter(item =>
         Object.values(item).some(value =>
@@ -83,203 +86,136 @@ function LiabilityTable() {
 
     return (
         <DashPage>
-                <div className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800">
-                    <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LIABILITY DATA TABLE</h1>
+            <div className="page-header">
+                <h1>Liability Data Table</h1>
+                <input
+                    type="text"
+                    placeholder="Search…"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="form-input w-48 text-xs"
+                />
+            </div>
 
-                    <div className="sm:flex justify-end">
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            className="block mt-2 mb-3 text-black max-sm:w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs"
-                        />
-                    </div>
-
-                    <div className="w-full overflow-x-auto">
-                        <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                            <thead>
-                                <tr className="bg-gray-50 text-gray-700">
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">No.</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Property Name</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Guest Name</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Check‑in Date</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Check‑out Date</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Agreement</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">KYC Type</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Front Copy</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Back Copy</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Deposit</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Deductions</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Net Payout</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Payout Date</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Update Status</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Submitted At</th>
-                                    <th className="border border-gray-300 py-2 px-4 border-b text-center">Last Updated</th>
+            <div className="card">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto text-xs border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Property</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Guest Name</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Check-in</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Check-out</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Agreement</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">KYC Type</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Front Copy</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Back Copy</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Deposit</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Deductions</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Net Payout</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Payout Date</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Submitted At</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Last Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {loadingData ? (
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <td colSpan="16" className="px-3 py-1.5 text-xs text-gray-800 text-center">Loading…</td>
                                 </tr>
-                            </thead>
-
-                            <tbody>
-                                {paginatedData.length > 0 ? paginatedData.map((bedsData, i) => (
-                                    <tr className="" key={bedsData.id}>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.propertyName || '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.residentsName || '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.checkIn ? formatDateToDDMonYYYY(bedsData?.checkIn) : '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.checkOut ? formatDateToDDMonYYYY(bedsData?.checkOut) : '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
-                                            <div className="flex justify-evenly">
-                                                <div>View</div>
-                                                <FaEye className="block hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewAgreementHandle(bedsData)} />
-                                            </div>
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.kycType || '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{(bedsData?.kycType === 'Aadhar' ?
-                                            <Link to={
-                                                typeof bedsData?.aadharFrontCopy === 'string'
-                                                    ? bedsData?.aadharFrontCopy
-                                                    : bedsData?.aadharFrontCopy
-                                                        ? URL.createObjectURL(bedsData?.aadharFrontCopy)
-                                                        : '#'
-                                            } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                            ) : paginatedData.length > 0 ? paginatedData.map((bedsData, i) => (
+                                <tr className="hover:bg-gray-50 transition-colors" key={bedsData.id}>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{bedsData?.propertyName || '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{bedsData?.residentsName || '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.checkIn ? formatDateToDDMonYYYY(bedsData?.checkIn) : '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.checkOut ? formatDateToDDMonYYYY(bedsData?.checkOut) : '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        <div className="flex items-center gap-1">
+                                            <span>View</span>
+                                            <Eye
+                                                size={14}
+                                                className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                onClick={() => viewAgreementHandle(bedsData)}
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{bedsData?.kycType || '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        {bedsData?.kycType === 'Aadhar' ? (
+                                            <Link
+                                                to={typeof bedsData?.aadharFrontCopy === 'string' ? bedsData?.aadharFrontCopy : bedsData?.aadharFrontCopy ? URL.createObjectURL(bedsData?.aadharFrontCopy) : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="hover:text-[#D4A017]"
+                                            >
                                                 {(bedsData?.aadharFrontCopy || '').split('/')[8] || '-'}
                                             </Link>
-                                            :
-                                            <Link to={
-                                                typeof bedsData?.panFrontCopy === 'string'
-                                                    ? bedsData?.panFrontCopy
-                                                    : bedsData?.panFrontCopy
-                                                        ? URL.createObjectURL(bedsData?.panFrontCopy)
-                                                        : '#'
-                                            } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                        ) : (
+                                            <Link
+                                                to={typeof bedsData?.panFrontCopy === 'string' ? bedsData?.panFrontCopy : bedsData?.panFrontCopy ? URL.createObjectURL(bedsData?.panFrontCopy) : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="hover:text-[#D4A017]"
+                                            >
                                                 {(bedsData?.panFrontCopy || '').split('/')[8] || '-'}
-                                            </Link>)}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{(bedsData?.kycType === 'Aadhar' ?
-                                            <Link to={
-                                                typeof bedsData?.aadharBackCopy === 'string'
-                                                    ? bedsData?.aadharBackCopy
-                                                    : bedsData?.aadharBackCopy
-                                                        ? URL.createObjectURL(bedsData?.aadharBackCopy)
-                                                        : '#'
-                                            } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            </Link>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        {bedsData?.kycType === 'Aadhar' ? (
+                                            <Link
+                                                to={typeof bedsData?.aadharBackCopy === 'string' ? bedsData?.aadharBackCopy : bedsData?.aadharBackCopy ? URL.createObjectURL(bedsData?.aadharBackCopy) : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="hover:text-[#D4A017]"
+                                            >
                                                 {(bedsData?.aadharBackCopy || '').split('/')[8] || '-'}
                                             </Link>
-                                            :
-                                            <Link to={
-                                                typeof bedsData?.panBackCopy === 'string'
-                                                    ? bedsData?.panBackCopy
-                                                    : bedsData?.panBackCopy
-                                                        ? URL.createObjectURL(bedsData?.panBackCopy)
-                                                        : '#'
-                                            } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                        ) : (
+                                            <Link
+                                                to={typeof bedsData?.panBackCopy === 'string' ? bedsData?.panBackCopy : bedsData?.panBackCopy ? URL.createObjectURL(bedsData?.panBackCopy) : '#'}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="hover:text-[#D4A017]"
+                                            >
                                                 {(bedsData?.panBackCopy || '').split('/')[8] || '-'}
-                                            </Link>)}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.totalDepositPaid || '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.residentDeductions || '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{(Number(bedsData?.totalDepositPaid) - Number(bedsData?.residentDeductions)) || 0}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.payoutDate ? formatDateToDDMonYYYY(bedsData?.payoutDate) : '-'}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">
-                                            <div className="flex justify-evenly">
-                                                {bedsData?.status && <div>{bedsData?.status}</div>}
-
-                                                <FaEdit className="block hover:text-[#D4A017] text-lg sm:text-xl hover:cursor-pointer" onClick={() => updateLiabilityStatus(bedsData)} />
-                                            </div>
-                                        </td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.createdAt ? formatter.format(new Date(bedsData?.createdAt)) : "-"}</td>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{bedsData?.updatedAt ? formatter.format(new Date(bedsData?.updatedAt)) : "-"}</td>
-                                    </tr>
-                                )) : <tr>
-                                    <td colSpan="16" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                </tr>}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                        <button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                            aria-label="Previous page"
-                        >
-                            &lt;
-                        </button>
-
-                        <button
-                            key={1}
-                            onClick={() => handlePageChange(1)}
-                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                                ? "bg-[#D4A017] text-white"
-                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                }`}
-                        >
-                            1
-                        </button>
-
-                        {currentPage > 3 && (
-                            <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                ...
-                            </span>
-                        )}
-
-                        {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                            let page;
-                            if (currentPage <= 3) {
-                                page = i + 2;
-                            } else if (currentPage >= totalPages - 2) {
-                                page = totalPages - 4 + i;
-                            } else {
-                                page = currentPage - 2 + i;
-                            }
-
-                            if (page > 1 && page < totalPages) {
-                                return (
-                                    <button
-                                        key={page}
-                                        onClick={() => handlePageChange(page)}
-                                        className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                            ? "bg-[#D4A017] text-white"
-                                            : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                            }`}
-                                    >
-                                        {page}
-                                    </button>
-                                );
-                            }
-                            return null;
-                        })}
-
-                        {currentPage < totalPages - 2 && (
-                            <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                ...
-                            </span>
-                        )}
-
-                        {totalPages > 1 && (
-                            <button
-                                key={totalPages}
-                                onClick={() => handlePageChange(totalPages)}
-                                className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                    ? "bg-[#D4A017] text-white"
-                                    : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                    }`}
-                            >
-                                {totalPages}
-                            </button>
-                        )}
-
-                        <button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                            className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                            aria-label="Next page"
-                        >
-                            &gt;
-                        </button>
-                    </div>
+                                            </Link>
+                                        )}
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{bedsData?.totalDepositPaid || '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{bedsData?.residentDeductions || '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{(Number(bedsData?.totalDepositPaid) - Number(bedsData?.residentDeductions)) || 0}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.payoutDate ? formatDateToDDMonYYYY(bedsData?.payoutDate) : '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        <div className="flex items-center gap-2">
+                                            {bedsData?.status && (
+                                                <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">{bedsData?.status}</span>
+                                            )}
+                                            <Pencil
+                                                size={14}
+                                                className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                onClick={() => updateLiabilityStatus(bedsData)}
+                                            />
+                                        </div>
+                                    </td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.createdAt ? formatter.format(new Date(bedsData?.createdAt)) : "-"}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.updatedAt ? formatter.format(new Date(bedsData?.updatedAt)) : "-"}</td>
+                                </tr>
+                            )) : (
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <td colSpan="16" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
         </DashPage>
-    )
+    );
 }
 
-export default LiabilityTable
+export default LiabilityTable;

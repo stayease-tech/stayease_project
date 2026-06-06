@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
@@ -168,421 +170,402 @@ function CategoryData() {
         }
     }
 
+    const thClass = "border-r border-gray-100 px-3 py-1.5 text-xs font-medium text-[#D4A017] text-left whitespace-nowrap w-48";
+    const tdClass = "px-3 py-1.5 text-xs text-gray-800";
+
     return (
         <DashPage>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={categoryHandleUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">EXPENSE CATEGORY DATA</h1>
+            <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={categoryHandleUpdate}>
+                <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">EXPENSE CATEGORY DATA</h1>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => type === 'vendor' ?
-                                    navigate(`/accounts/accounts-expense-table/${id}`, { state: { activeOption, type } })
-                                    :
-                                    navigate(`/accounts/accounts-expense-table`, { state: { activeOption, type } })}
-                                type="button">Prev</button>
+                <div className="sm:flex justify-between">
+                    <button
+                        className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => type === 'vendor' ?
+                            navigate(`/accounts/accounts-expense-table/${id}`, { state: { activeOption, type } })
+                            :
+                            navigate(`/accounts/accounts-expense-table`, { state: { activeOption, type } })}
+                        type="button">Prev</button>
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
+                    <div className="flex justify-between sm:justify-end mb-5">
+                        <button
+                            className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
 
-                                <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving || isDeleting}
-                                    type={dataEditView ? "submit" : "button"}
-                                    onClick={!dataEditView ? categoryHandleDelete : null}
-                                >
-                                    {dataEditView ? (isSaving ? "Saving Details..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
-                                </button>
-                            </div>
-                        </div>
+                        <button
+                            className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving || isDeleting}
+                            type={dataEditView ? "submit" : "button"}
+                            onClick={!dataEditView ? categoryHandleDelete : null}
+                        >
+                            {dataEditView ? (isSaving ? "Saving Details..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
+                        </button>
+                    </div>
+                </div>
 
-                        <div className="w-full overflow-x-auto">
-                            {activeOption === "Expense" &&
-                                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                    <tbody>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Expense Raised By</th>
-                                            <td className="py-1 px-2">{data?.expenseRaisedEmail}</td>
-                                        </tr>
+                <div className="overflow-x-auto">
+                    {activeOption === "Expense" &&
+                        <table className="min-w-full table-auto text-xs border-collapse">
+                            <tbody className="divide-y divide-gray-100">
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Expense Raised By</th>
+                                    <td className={tdClass + " max-w-[180px] truncate"}>{data?.expenseRaisedEmail}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Name</th>
-                                            <td className="py-1 px-2">{data?.propertyName}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Property Name</th>
+                                    <td className={tdClass}>{data?.propertyName}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Head of Expense</th>
-                                            <td className="py-1 px-2">{data?.headOfExpense}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Head of Expense</th>
+                                    <td className={tdClass}>{data?.headOfExpense}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Expense Type</th>
-                                            <td className="py-1 px-2">{data?.expenseType}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Expense Type</th>
+                                    <td className={tdClass}>{data?.expenseType}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Category</th>
-                                            <td className="py-1 px-2">{data?.category}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Category</th>
+                                    <td className={tdClass}>{data?.category}</td>
+                                </tr>
 
-                                        {data?.headOfExpense === 'Owners' &&
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Owner</th>
-                                                <td className="py-1 px-2">{data?.owner}</td>
-                                            </tr>
-                                        }
+                                {data?.headOfExpense === 'Owners' &&
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Owner</th>
+                                        <td className={tdClass}>{data?.owner}</td>
+                                    </tr>
+                                }
 
-                                        {(data?.headOfExpense === 'Owners' || data?.headOfExpense === 'Resident') &&
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Room Number</th>
-                                                <td className="py-1 px-2">{data?.room}</td>
-                                            </tr>
-                                        }
+                                {(data?.headOfExpense === 'Owners' || data?.headOfExpense === 'Resident') &&
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Room Number</th>
+                                        <td className={tdClass}>{data?.room}</td>
+                                    </tr>
+                                }
 
-                                        {data?.headOfExpense === 'Resident' &&
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident</th>
-                                                <td className="py-1 px-2">{data?.resident}</td>
-                                            </tr>
-                                        }
+                                {data?.headOfExpense === 'Resident' &&
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Resident</th>
+                                        <td className={tdClass}>{data?.resident}</td>
+                                    </tr>
+                                }
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Amount</th>
-                                            <td className="py-1 px-2">{data?.amount}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Amount</th>
+                                    <td className={tdClass}>{data?.amount}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">GST (Tax Amount)</th>
-                                            <td className="py-1 px-2">{data?.gst || 'NA'}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>GST (Tax Amount)</th>
+                                    <td className={tdClass}>{data?.gst || 'NA'}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Total Amount after GST</th>
-                                            <td className="py-1 px-2">{Number(data?.amount) + Number(data?.gst)}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Total Amount after GST</th>
+                                    <td className={tdClass}>{Number(data?.amount) + Number(data?.gst)}</td>
+                                </tr>
 
-                                        {data?.headOfExpense === 'Resident' && <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Remarks</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{data?.remarks || '-'}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="text"
-                                                            value={category.remarks}
-                                                            onChange={(e) => categoryHandleChange(e)}
-                                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                            placeholder="Enter any remarks here"
-                                                            name="remarks"
-                                                        />
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>}
-
-                                        {data?.headOfExpense !== 'Resident' && <>
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Payment Type</th>
-                                                <td className="py-1 px-2">{data?.paymentType}</td>
-                                            </tr>
-
-                                            {data?.paymentType === "Vendor" && <>
-                                                <tr className="border-b border-white">
-                                                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Vendor</th>
-                                                    <td className="py-1 px-2">{data?.vendor || 'NA'}</td>
-                                                </tr>
-                                            </>}
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Account Id (Optional)</th>
-                                                <td className="py-1 px-2">{data?.accountId || 'NA'}</td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Amount Transferred Date</th>
-                                                <td className="py-1 px-2">{data?.amountTransferredDate ? formatDateToDDMonYYYY(data?.amountTransferredDate) : ''}</td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Priority</th>
-                                                <td className="py-1 px-2">{data?.priority}</td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deadline</th>
-                                                <td className="py-1 px-2">{data?.deadline}</td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Receipt</th>
-                                                <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => data?.receipt && window.open(data.receipt, '_blank')}>{data?.receipt ? data.receipt.split('/').pop() : '-'}</td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments (Optional)</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.comments || '-'}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <input
-                                                                type="text"
-                                                                value={category.comments}
-                                                                onChange={(e) => categoryHandleChange(e)}
-                                                                className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                placeholder="Enter any additional comments here"
-                                                                name="comments"
-                                                            />
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
+                                {data?.headOfExpense === 'Resident' &&
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Remarks</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.remarks || '-'}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="text"
+                                                    value={category.remarks}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                    placeholder="Enter any remarks here"
+                                                    name="remarks"
+                                                />
+                                            </td>
                                         </>}
+                                    </tr>
+                                }
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Status</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{data?.status}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
-                                                            <option value="" disabled>Select the status of the payment here</option>
-                                                            {getOptions('expense_statuses').map((s, i) => (
-                                                                <option key={i} value={s}>{s}</option>
-                                                            ))}
-                                                        </select>
-                                                    </span>
-                                                </td>
-                                            </>}
+                                {data?.headOfExpense !== 'Resident' && <>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Payment Type</th>
+                                        <td className={tdClass}>{data?.paymentType}</td>
+                                    </tr>
+
+                                    {data?.paymentType === "Vendor" && <>
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Vendor</th>
+                                            <td className={tdClass}>{data?.vendor || 'NA'}</td>
                                         </tr>
+                                    </>}
 
-                                        {category.status === 'Completed' && (<>
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Transfer Type</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.transferType}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="transferType" required>
-                                                                <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                                {getOptions('transfer_types').map((t, i) => (
-                                                                    <option key={i} value={t}>{t}</option>
-                                                                ))}
-                                                            </select>
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Account Id (Optional)</th>
+                                        <td className={tdClass}>{data?.accountId || 'NA'}</td>
+                                    </tr>
 
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">UTR number</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.utrNumber}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <input
-                                                                type="text"
-                                                                value={category.utrNumber}
-                                                                onChange={(e) => categoryHandleChange(e)}
-                                                                className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                placeholder="Enter any UTR Number here"
-                                                                name="utrNumber"
-                                                            />
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
-                                        </>)}
-                                    </tbody>
-                                </table>
-                            }
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Amount Transferred Date</th>
+                                        <td className={tdClass}>{data?.amountTransferredDate ? formatDateToDDMonYYYY(data?.amountTransferredDate) : ''}</td>
+                                    </tr>
 
-                            {activeOption === "Fixed Expense" &&
-                                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                    <tbody>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Expense Raised By</th>
-                                            <td className="py-1 px-2">{data?.expenseRaisedEmail}</td>
-                                        </tr>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Priority</th>
+                                        <td className={tdClass}>{data?.priority}</td>
+                                    </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Name</th>
-                                            <td className="py-1 px-2">{data?.propertyName}</td>
-                                        </tr>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Deadline</th>
+                                        <td className={tdClass}>{data?.deadline}</td>
+                                    </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Owner Name</th>
-                                            <td className="py-1 px-2">{data?.owner}</td>
-                                        </tr>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Receipt</th>
+                                        <td className={tdClass + " hover:text-[#D4A017] hover:cursor-pointer max-w-[180px] truncate"} onClick={() => data?.receipt && window.open(data.receipt, '_blank')}>{data?.receipt ? data.receipt.split('/').pop() : '-'}</td>
+                                    </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rental</th>
-                                            <td className="py-1 px-2">{data?.rental}</td>
-                                        </tr>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Comments (Optional)</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.comments || '-'}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="text"
+                                                    value={category.comments}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                    placeholder="Enter any additional comments here"
+                                                    name="comments"
+                                                />
+                                            </td>
+                                        </>}
+                                    </tr>
+                                </>}
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">TDS</th>
-                                            <td className="py-1 px-2">{data?.tds}</td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Status</th>
+                                    {!dataEditView ? <>
+                                        <td className={tdClass}>{data?.status}</td>
+                                    </> : <>
+                                        <td className={tdClass}>
+                                            <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="status" required>
+                                                <option value="" disabled>Select the status of the payment here</option>
+                                                {getOptions('expense_statuses').map((s, i) => (
+                                                    <option key={i} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                    </>}
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rental after TDS</th>
-                                            <td className="py-1 px-2">{data?.rentalAfterTds}</td>
-                                        </tr>
+                                {category.status === 'Completed' && (<>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Transfer Type</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.transferType}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="transferType" required>
+                                                    <option value="" disabled>Select the Transfer Type of the payment here</option>
+                                                    {getOptions('transfer_types').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                        </>}
+                                    </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deductions</th>
-                                            <td className="py-1 px-2">{data?.deductions}</td>
-                                        </tr>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>UTR Number</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.utrNumber}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="text"
+                                                    value={category.utrNumber}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                    placeholder="Enter any UTR Number here"
+                                                    name="utrNumber"
+                                                />
+                                            </td>
+                                        </>}
+                                    </tr>
+                                </>)}
+                            </tbody>
+                        </table>
+                    }
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments (Optional)</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{data?.comments}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="text"
-                                                            value={category.comments}
-                                                            onChange={(e) => categoryHandleChange(e)}
-                                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                            placeholder="Enter any additional comments here"
-                                                            name="comments"
-                                                        />
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
+                    {activeOption === "Fixed Expense" &&
+                        <table className="min-w-full table-auto text-xs border-collapse">
+                            <tbody className="divide-y divide-gray-100">
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Expense Raised By</th>
+                                    <td className={tdClass + " max-w-[180px] truncate"}>{data?.expenseRaisedEmail}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Status</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{data?.status}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
-                                                            <option value="" disabled>Select the status of the payment here</option>
-                                                            {getOptions('expense_statuses').map((s, i) => (
-                                                                <option key={i} value={s}>{s}</option>
-                                                            ))}
-                                                        </select>
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Property Name</th>
+                                    <td className={tdClass}>{data?.propertyName}</td>
+                                </tr>
 
-                                        {category.status === 'Completed' && (<>
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Transfer Type</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.transferType}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="transferType" required>
-                                                                <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                                {getOptions('transfer_types').map((t, i) => (
-                                                                    <option key={i} value={t}>{t}</option>
-                                                                ))}
-                                                            </select>
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Owner Name</th>
+                                    <td className={tdClass}>{data?.owner}</td>
+                                </tr>
 
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">UTR Number</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.utrNumber}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <input
-                                                                type="text"
-                                                                value={category.utrNumber}
-                                                                onChange={(e) => categoryHandleChange(e)}
-                                                                className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                placeholder="Enter the UTR Number here"
-                                                                name="utrNumber"
-                                                            />
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Rental</th>
+                                    <td className={tdClass}>{data?.rental}</td>
+                                </tr>
 
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Amount Transferred</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.amountTransferred}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <input
-                                                                type="text"
-                                                                value={category.amountTransferred}
-                                                                onChange={(e) => categoryHandleChange(e)}
-                                                                className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                placeholder="Enter the Amount Transferred here"
-                                                                name="amountTransferred"
-                                                            />
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>TDS</th>
+                                    <td className={tdClass}>{data?.tds}</td>
+                                </tr>
 
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Date of Transfer</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.dateOfTransfer}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <input
-                                                                type="date"
-                                                                id="dateOfTransfer"
-                                                                value={category.dateOfTransfer}
-                                                                onChange={(e) => categoryHandleChange(e)}
-                                                                className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                name="dateOfTransfer"
-                                                                required />
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Rental after TDS</th>
+                                    <td className={tdClass}>{data?.rentalAfterTds}</td>
+                                </tr>
 
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Email Body Note</th>
-                                                {!dataEditView ? <>
-                                                    <td className="py-1 px-2">{data?.emailNote}</td>
-                                                </> : <>
-                                                    <td className="flex">
-                                                        <span className="py-1 px-2 w-full">
-                                                            <input
-                                                                type="text"
-                                                                value={category.emailNote}
-                                                                onChange={(e) => categoryHandleChange(e)}
-                                                                className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                                placeholder="Add email body note here"
-                                                                name="emailNote"
-                                                                required
-                                                            />
-                                                        </span>
-                                                    </td>
-                                                </>}
-                                            </tr>
-                                        </>)}
-                                    </tbody>
-                                </table>
-                            }
-                        </div>
-                    </form>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Deductions</th>
+                                    <td className={tdClass}>{data?.deductions}</td>
+                                </tr>
+
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Comments (Optional)</th>
+                                    {!dataEditView ? <>
+                                        <td className={tdClass}>{data?.comments}</td>
+                                    </> : <>
+                                        <td className={tdClass}>
+                                            <input
+                                                type="text"
+                                                value={category.comments}
+                                                onChange={(e) => categoryHandleChange(e)}
+                                                className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                placeholder="Enter any additional comments here"
+                                                name="comments"
+                                            />
+                                        </td>
+                                    </>}
+                                </tr>
+
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Status</th>
+                                    {!dataEditView ? <>
+                                        <td className={tdClass}>{data?.status}</td>
+                                    </> : <>
+                                        <td className={tdClass}>
+                                            <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="status" required>
+                                                <option value="" disabled>Select the status of the payment here</option>
+                                                {getOptions('expense_statuses').map((s, i) => (
+                                                    <option key={i} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                        </td>
+                                    </>}
+                                </tr>
+
+                                {category.status === 'Completed' && (<>
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Transfer Type</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.transferType}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="transferType" required>
+                                                    <option value="" disabled>Select the Transfer Type of the payment here</option>
+                                                    {getOptions('transfer_types').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>UTR Number</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.utrNumber}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="text"
+                                                    value={category.utrNumber}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                    placeholder="Enter the UTR Number here"
+                                                    name="utrNumber"
+                                                />
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Amount Transferred</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.amountTransferred}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="text"
+                                                    value={category.amountTransferred}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                    placeholder="Enter the Amount Transferred here"
+                                                    name="amountTransferred"
+                                                />
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Date of Transfer</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.dateOfTransfer}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="date"
+                                                    id="dateOfTransfer"
+                                                    value={category.dateOfTransfer}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300"
+                                                    name="dateOfTransfer"
+                                                    required />
+                                            </td>
+                                        </>}
+                                    </tr>
+
+                                    <tr className="hover:bg-gray-50 transition-colors">
+                                        <th className={thClass}>Email Body Note</th>
+                                        {!dataEditView ? <>
+                                            <td className={tdClass}>{data?.emailNote}</td>
+                                        </> : <>
+                                            <td className={tdClass}>
+                                                <input
+                                                    type="text"
+                                                    value={category.emailNote}
+                                                    onChange={(e) => categoryHandleChange(e)}
+                                                    className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                    placeholder="Add email body note here"
+                                                    name="emailNote"
+                                                    required
+                                                />
+                                            </td>
+                                        </>}
+                                    </tr>
+                                </>)}
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </form>
         </DashPage>
-    )
+    );
 }
 
-export default CategoryData
+export default CategoryData;

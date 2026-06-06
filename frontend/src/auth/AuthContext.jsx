@@ -278,6 +278,8 @@ export const AuthProvider = ({ children }) => {
                 localStorage.setItem("residentData", JSON.stringify({
                     resident_id: response.data.resident_id,
                     residentsName: response.data.residentsName,
+                    firstName: response.data.firstName || '',
+                    lastName: response.data.lastName || '',
                     kycApprovalStatus: response.data.kycApprovalStatus,
                 }));
 

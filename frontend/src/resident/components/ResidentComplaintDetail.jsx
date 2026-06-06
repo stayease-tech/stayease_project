@@ -108,7 +108,7 @@ export default function residentComplaintDetail() {
                         </button>
                         <div>
                             <h1>Maintenance Request</h1>
-                            <p>Request details and resolution timeline</p>
+                            <p>Request details and status</p>
                         </div>
                     </div>
                 </div>
@@ -135,9 +135,6 @@ export default function residentComplaintDetail() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap mb-1">
-                                            {complaint.ticketNumber && (
-                                                <span className="text-xs font-mono text-gray-400">#{complaint.ticketNumber}</span>
-                                            )}
                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${statusCfg.cls}`}>
                                                 <StatusIcon size={11} />
                                                 {latestStatus}
@@ -194,11 +191,13 @@ export default function residentComplaintDetail() {
                             </div>
                         </div>
 
-                        {/* Resolution timeline */}
-                        {complaint.categories?.length > 0 && (
+                        {/* Update history — only show when there are meaningful updates */}
+                        {complaint.categories?.length > 0 && complaint.categories.some(
+                            (cat) => cat.vendor || cat.comments || cat.status !== "Open" || complaint.categories.length > 1
+                        ) && (
                             <div className="card">
                                 <div className="card-header">
-                                    <h3>Resolution Timeline</h3>
+                                    <h3>Update History</h3>
                                 </div>
                                 <div className="card-body">
                                     <div className="relative">
@@ -230,15 +229,14 @@ export default function residentComplaintDetail() {
                                                                 <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border ${sCfg.cls}`}>
                                                                     {cat.status}
                                                                 </span>
-                                                                <span className="text-sm font-semibold text-gray-800">{cat.category_type}</span>
-                                                                {cat.ticket_number && (
-                                                                    <span className="text-xs font-mono text-gray-400">#{cat.ticket_number}</span>
-                                                                )}
+                                                                <span className="text-sm font-semibold text-gray-800">
+                                                                    {CATEGORY_LABEL_MAP[cat.category_type] || cat.category_type}
+                                                                </span>
                                                             </div>
 
-                                                            <div className="bg-white border border-gray-100 rounded-xl p-4 space-y-3">
+                                                            <div className="space-y-2">
                                                                 {cat.items && (
-                                                                    <div className="flex items-start gap-2">
+                                                                    <div className="flex items-start gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2">
                                                                         <Wrench size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                                                         <div>
                                                                             <p className="text-xs text-gray-400 mb-0.5">Items</p>
@@ -247,20 +245,22 @@ export default function residentComplaintDetail() {
                                                                     </div>
                                                                 )}
                                                                 {cat.vendor && (
-                                                                    <div className="flex items-start gap-2">
+                                                                    <div className="flex items-start gap-2 bg-white border border-gray-100 rounded-xl px-3 py-2">
                                                                         <User size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                                                         <div>
-                                                                            <p className="text-xs text-gray-400 mb-0.5">Vendor / Technician</p>
+                                                                            <p className="text-xs text-gray-400 mb-0.5">Assigned</p>
                                                                             <p className="text-sm text-gray-700">{cat.vendor}</p>
                                                                         </div>
                                                                     </div>
                                                                 )}
                                                                 {cat.comments && (
                                                                     <div className="flex items-start gap-2">
-                                                                        <MessageSquare size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                                                                        <div>
-                                                                            <p className="text-xs text-gray-400 mb-0.5">Comments</p>
-                                                                            <p className="text-sm text-gray-700">{cat.comments}</p>
+                                                                        <div className="w-6 h-6 rounded-full bg-[#D4A017]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                                                            <MessageSquare size={11} className="text-[#D4A017]" />
+                                                                        </div>
+                                                                        <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2 max-w-xs">
+                                                                            <p className="text-xs text-gray-400 mb-0.5 font-medium">Team</p>
+                                                                            <p className="text-sm text-gray-800">{cat.comments}</p>
                                                                         </div>
                                                                     </div>
                                                                 )}

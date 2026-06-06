@@ -1,4 +1,6 @@
 import json
+import math
+import calendar
 from datetime import date, datetime, timedelta
 from django.utils import timezone
 from django.db import transaction
@@ -321,13 +323,27 @@ def calculate_rent_with_delay_charges_new_resident(checkIn, resident_instance):
     if target_date <= current_date:
         current_month_date = target_date.replace(day=1)
         end_month_date = current_date.replace(day=1)
-        
+        full_rent = int(resident_instance.rentPerMonth or 0)
+        checkin_month = target_date.replace(day=1)
+
         while current_month_date <= end_month_date:
+            # Current month: no delay charge — resident just registered and hasn't had a chance to pay
+            is_current_month = (current_month_date == end_month_date)
+            delay = 0 if is_current_month else calculate_daily_value(current_date.day)
+
+            # Prorated rent for the check-in month if resident joins mid-month
+            if current_month_date == checkin_month and target_date.day > 1:
+                days_in_month = calendar.monthrange(target_date.year, target_date.month)[1]
+                remaining_days = days_in_month - (target_date.day - 1)
+                rent_amount = math.floor(full_rent / days_in_month * remaining_days)
+            else:
+                rent_amount = full_rent
+
             resident_rent_instance = resident_Rent_Data(
                 resident_data_instance=resident_instance,
                 month=current_month_date.strftime("%B %Y"),
-                rent=resident_instance.rentPerMonth,
-                delayCharges=calculate_daily_value(current_date.day)
+                rent=rent_amount,
+                delayCharges=delay,
             )
             resident_rent_instance.save()
 
@@ -373,18 +389,29 @@ def calculate_rent_with_delay_charges_update(checkIn, resident_instance):
     months_to_add = expected_months - existing_months
     months_to_remove = existing_months - expected_months
     
+    full_rent = int(resident_instance.rentPerMonth or 0)
+    checkin_month = checkin_date.replace(day=1)
+
     with transaction.atomic():
         if months_to_remove:
             resident_Rent_Data.objects.filter(
                 resident_data_instance=resident_instance,
                 month__in=list(months_to_remove)
             ).delete()
-        
+
         for month_date in months_to_add:
+            # Prorated rent for the check-in month if resident joins mid-month
+            if month_date == checkin_month and checkin_date.day > 1:
+                days_in_month = calendar.monthrange(checkin_date.year, checkin_date.month)[1]
+                remaining_days = days_in_month - (checkin_date.day - 1)
+                rent_amount = math.floor(full_rent / days_in_month * remaining_days)
+            else:
+                rent_amount = full_rent
+
             resident_Rent_Data.objects.create(
                 resident_data_instance=resident_instance,
                 month=month_date.strftime("%B %Y"),
-                rent=resident_instance.rentPerMonth,
+                rent=rent_amount,
                 delayCharges=calculate_daily_value(current_date.day)
             )
         
@@ -780,13 +807,22 @@ def resident_form_submit(request):
 
             total_deposit = str(resident_data.get('totalDepositPaid', '')).strip() or '0'
 
+            first_name = resident_data.get('firstName', '').strip()
+            last_name = resident_data.get('lastName', '').strip()
+            residents_name = resident_data.get('residentsName', '').strip()
+            # Build residentsName from first/last if not explicitly provided
+            if not residents_name and (first_name or last_name):
+                residents_name = f"{first_name} {last_name}".strip()
+
             resident_instance = resident_Data(
                 bed_data_instance = bed_data_instance,
                 propertyManager = resident_data.get('propertyManager', ''),
                 salesManager = resident_data.get('salesManager', ''),
                 comfortClass = resident_data.get('comfortClass', ''),
                 mealType = resident_data.get('mealType', ''),
-                residentsName = resident_data.get('residentsName', ''),
+                firstName = first_name,
+                lastName = last_name,
+                residentsName = residents_name,
                 phoneNumber = phone_digits,
                 email = resident_data.get('email', ''),
                 permanentAddress = resident_data.get('permanentAddress', ''),

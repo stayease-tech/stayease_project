@@ -83,6 +83,8 @@ class residentLoginView(APIView):
             'phone': phone,
             'resident_id': resident.id,
             'residentsName': resident.residentsName,
+            'firstName': resident.firstName or '',
+            'lastName': resident.lastName or '',
             'kycApprovalStatus': resident.kycApprovalStatus,
             'residentStatus': resident.residentStatus,
         })
@@ -238,17 +240,10 @@ def resident_profile_update(request):
         return Response({'success': False, 'message': 'resident not found.'}, status=404)
 
     data = request.data
-    updatable = ['residentsName', 'email', 'permanentAddress']
-    for field in updatable:
-        val = data.get(field)
-        if val is not None:
-            setattr(resident, field, val)
-    resident.save()
-
-    # Sync first_name on auth.User
-    if 'residentsName' in data:
-        request.user.first_name = data['residentsName']
-        request.user.save(update_fields=['first_name'])
+    val = data.get('permanentAddress')
+    if val is not None:
+        resident.permanentAddress = val
+    resident.save(update_fields=['permanentAddress', 'updatedDateAndTime'])
 
     return Response({'success': True, 'message': 'Profile updated successfully.'})
 
@@ -258,28 +253,23 @@ def resident_profile_update(request):
 @api_view(['POST'])
 @permission_classes([IsResident])
 def resident_change_password(request):
-    """Handle POST /resident/change-password/ — change the authenticated resident's password.
+    """Handle POST /resident/change-password/ — set a new password for the authenticated resident.
 
     Args:
-        request: DRF Request with JSON body containing `currentPassword` and `newPassword`.
+        request: DRF Request with JSON body containing `newPassword`.
 
     Returns:
-        Response with `success` flag and a message. Returns 400 if current password is
-        incorrect or new password is fewer than 6 characters.
+        Response with `success` flag and a message. Returns 400 if new password is
+        fewer than 6 characters.
     """
-    current_password = request.data.get('currentPassword', '')
     new_password = request.data.get('newPassword', '')
 
-    if not current_password or not new_password:
-        return Response({'success': False, 'message': 'Both current and new password are required.'},
+    if not new_password:
+        return Response({'success': False, 'message': 'New password is required.'},
                         status=status.HTTP_400_BAD_REQUEST)
 
     if len(new_password) < 6:
-        return Response({'success': False, 'message': 'New password must be at least 6 characters.'},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    if not request.user.check_password(current_password):
-        return Response({'success': False, 'message': 'Current password is incorrect.'},
+        return Response({'success': False, 'message': 'Password must be at least 6 characters.'},
                         status=status.HTTP_400_BAD_REQUEST)
 
     request.user.set_password(new_password)
@@ -1380,7 +1370,6 @@ def resident_complaint_detail(request, pk):
         categories.append({
             'id': cat.id,
             'category_type': cat.category_type,
-            'ticket_number': cat.ticket_number,
             'items': cat.items,
             'vendor': cat.complaint_vendor.vendor if cat.complaint_vendor else None,
             'status': cat.status,

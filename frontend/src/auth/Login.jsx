@@ -149,22 +149,8 @@ function Login() {
                 </svg>
             </div>
 
-            {/* Navbar */}
-            <nav className="bg-[#0A0A0A]/80 backdrop-blur-md shadow-md fixed w-full top-0 z-[100] border-b border-white/5">
-                <div className="w-full px-4 sm:px-6">
-                    <div className="flex justify-center h-14 sm:h-16 items-center">
-                        <img
-                            alt="StayEase"
-                            src="/static/img/brand_logo/stayEase-Logo.webp"
-                            className="h-8 sm:h-10 w-auto object-contain max-w-[180px] sm:max-w-none"
-                            loading="lazy"
-                        />
-                    </div>
-                </div>
-            </nav>
-
             {/* Login Form */}
-            <div className="flex-1 flex items-center justify-center pt-16 sm:pt-20 px-4 relative z-10">
+            <div className="flex-1 flex items-center justify-center px-4 relative z-10">
                 <div className="w-full max-w-md">
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl shadow-black/20 border border-white/20 overflow-hidden">
                         {/* Header */}

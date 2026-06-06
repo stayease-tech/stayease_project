@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
 import {
-    Home, CreditCard, ShieldCheck, MessageSquare,
-    BedDouble, Calendar, IndianRupee, FileText
+    CreditCard, ShieldCheck, MessageSquare,
+    Calendar, IndianRupee, FileText, User
 } from "lucide-react";
 import { DashPage } from "../../shared/Dashboard";
 
@@ -29,6 +29,20 @@ function StatCard({ icon: Icon, label, value, color, onClick }) {
             <div className="stat-value">{value ?? "—"}</div>
             <div className="stat-label">{label}</div>
         </div>
+    );
+}
+
+function ActionTile({ icon: Icon, label, onClick, color = "#D4A017" }) {
+    return (
+        <button
+            onClick={onClick}
+            className="flex flex-col items-center justify-center gap-2.5 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-[#D4A017] hover:shadow-sm transition-all group"
+        >
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: color + "18" }}>
+                <Icon size={19} style={{ color }} />
+            </div>
+            <span className="text-xs font-medium text-gray-700 group-hover:text-gray-900 text-center leading-tight">{label}</span>
+        </button>
     );
 }
 
@@ -112,7 +126,7 @@ export default function residentDashboard() {
                         {!kycPending && !leaseCompleted && (
                             <div
                                 className="mb-6 p-4 rounded-xl border cursor-pointer transition-colors bg-blue-50 border-blue-200"
-                                onClick={() => navigate("/resident/lease")}
+                                onClick={() => navigate("/resident/profile")}
                             >
                                 <div className="flex items-center gap-3">
                                     <FileText size={24} className="text-blue-500" />
@@ -130,38 +144,30 @@ export default function residentDashboard() {
 
                         {fullyOnboarded && (
                             <div className="stats-grid">
-                                <StatCard icon={IndianRupee} label="Total Due" value={`₹${data?.totalDue ?? 0}`} color="#EF4444" onClick={() => navigate("/resident/payments")} />
+                                <StatCard icon={IndianRupee} label="Total Due" value={data?.totalDue > 0 ? `₹${data.totalDue.toLocaleString('en-IN')}` : "₹0"} color="#EF4444" onClick={() => navigate("/resident/payments")} />
                                 <StatCard icon={Calendar} label="Next Due Date" value={data?.nextDueDate || "—"} color="#F59E0B" />
                                 <StatCard icon={CreditCard} label="Pending Invoices" value={data?.pendingRentCount ?? 0} color="#D4A017" onClick={() => navigate("/resident/payments")} />
-                                <StatCard icon={MessageSquare} label="Open Maintenance Requests" value={data?.openComplaints ?? 0} color="#3B82F6" onClick={() => navigate("/resident/complaints")} />
+                                <StatCard icon={MessageSquare} label="Open Requests" value={data?.openComplaints ?? 0} color="#3B82F6" onClick={() => navigate("/resident/complaints")} />
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                            <div className="card">
-                                <div className="card-header"><h3>Property Details</h3></div>
-                                <div className="card-body space-y-2 text-sm">
-                                    <p><span className="text-gray-500">Property:</span> {data?.propertyName || "—"}</p>
-                                    <p><span className="text-gray-500">Room:</span> {data?.roomNo || "—"}</p>
-                                    <p><span className="text-gray-500">Bed:</span> {data?.bedLabel || "—"}</p>
-                                    <p><span className="text-gray-500">Check-in:</span> {data?.checkIn || "—"}</p>
-                                    <p><span className="text-gray-500">Check-out:</span> {data?.checkOut || "—"}</p>
-                                    <p><span className="text-gray-500">Rent/month:</span> ₹{data?.rentPerMonth || "—"}</p>
-                                </div>
-                            </div>
-
-                            <div className="card">
-                                <div className="card-header"><h3>Quick Actions</h3></div>
-                                <div className="card-body" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
-                                    <button className="btn btn-outline" onClick={() => navigate("/resident/profile")}>My Profile</button>
+                        {/* Quick Actions */}
+                        <div className="card mt-6">
+                            <div className="card-header"><h3>Quick Actions</h3></div>
+                            <div className="card-body">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <ActionTile icon={User} label="My Profile" onClick={() => navigate("/resident/profile")} />
                                     {kycPending && (
-                                        <button className="btn btn-outline" onClick={() => navigate("/resident/kyc")}>KYC Status</button>
+                                        <ActionTile icon={ShieldCheck} label="KYC Status" onClick={() => navigate("/resident/kyc")} color="#F59E0B" />
                                     )}
                                     {fullyOnboarded && (
-                                        <button className="btn btn-outline" onClick={() => navigate("/resident/complaints")}>Raise Maintenance Request</button>
+                                        <ActionTile icon={MessageSquare} label="Maintenance" onClick={() => navigate("/resident/complaints")} color="#3B82F6" />
+                                    )}
+                                    {fullyOnboarded && (
+                                        <ActionTile icon={CreditCard} label="Payments" onClick={() => navigate("/resident/payments")} color="#10B981" />
                                     )}
                                     {!leaseCompleted && (
-                                        <button className="btn btn-outline" onClick={() => navigate("/resident/lease")}>Lease Agreement</button>
+                                        <ActionTile icon={FileText} label="Lease" onClick={() => navigate("/resident/profile")} color="#6366F1" />
                                     )}
                                 </div>
                             </div>

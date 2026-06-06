@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { FaUpload } from "react-icons/fa";
+import { Upload } from "lucide-react";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
@@ -214,560 +214,557 @@ function residentDetails() {
 
     return (
         <DashPage>
-                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={bedsHandleUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">BEDS DATA</h1>
+            <form className="max-w-3xl mx-auto py-6" onSubmit={bedsHandleUpdate}>
+                <h1 className="text-center text-xl font-semibold mb-6 text-[#D4A017]">BEDS DATA</h1>
 
-                        <div className="sm:flex justify-between">
+                <div className="flex justify-between mb-4">
+                    <button
+                        className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                        onClick={() => flag ? navigate(`/sales/sales-residents-table/${bedData?.id}`, { state: { bedsData } }) : navigate(`/sales/sales-beds-table`)}
+                        type="button"
+                    >
+                        Prev
+                    </button>
+
+                    <div className="flex gap-2">
+                        <button
+                            className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                            onClick={() => editHandle()}
+                            type="button"
+                        >
+                            {!dataEditView ? 'Update Details' : 'View Details'}
+                        </button>
+
+                        {dataEditView && (
                             <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => flag ? navigate(`/sales/sales-residents-table/${bedData?.id}`, { state: { bedsData } }) : navigate(`/sales/sales-beds-table`)}
-                                type="button">Prev</button>
+                                className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B] disabled:opacity-50"
+                                disabled={isSaving}
+                                type="submit"
+                            >
+                                {isSaving ? "Saving..." : "Save Details"}
+                            </button>
+                        )}
+                    </div>
+                </div>
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
+                <p className="text-xs font-semibold text-stone-400 mb-3">{bedData?.propertyName}</p>
 
-                                {dataEditView === true && <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
-                                    type='submit'
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                    <div className="grid grid-cols-2 gap-3">
+
+                        {/* Static bed info */}
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Flat Number</p>
+                            <p className="text-xs text-gray-800">{bedData?.roomNo}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Flat Type</p>
+                            <p className="text-xs text-gray-800">{bedData?.roomType}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Room Number</p>
+                            <p className="text-xs text-gray-800">{bedData?.bedLabel}</p>
+                        </div>
+
+                        {/* Property Manager */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Property Manager</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.propertyManager || '-'}</p>
+                            ) : (
+                                <select
+                                    id="propertyManager"
+                                    value={residentDetails.propertyManager}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="propertyManager"
+                                    required
                                 >
-                                    {isSaving ? "Saving Details..." : "Save Details"}
-                                </button>}
+                                    <option value="" disabled>Select Property Manager</option>
+                                    {getStaffNamesList().map((name, i) => (
+                                        <option key={i} value={name}>{name}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Sales Manager */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Sales Manager</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.salesManager || '-'}</p>
+                            ) : (
+                                <select
+                                    id="salesManager"
+                                    value={residentDetails.salesManager}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="salesManager"
+                                    required
+                                >
+                                    <option value="" disabled>Select Sales Manager</option>
+                                    {getStaffNamesList().map((name, i) => (
+                                        <option key={i} value={name}>{name}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Comfort Class */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Comfort Class</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.comfortClass || '-'}</p>
+                            ) : (
+                                <select
+                                    id="comfortClass"
+                                    value={residentDetails.comfortClass}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="comfortClass"
+                                    required
+                                >
+                                    <option value="" disabled>Select Comfort Class</option>
+                                    {getOptions('comfort_classes').map((c, i) => (
+                                        <option key={i} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Meal Type */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Meal Type</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.mealType || '-'}</p>
+                            ) : (
+                                <select
+                                    id="mealType"
+                                    value={residentDetails.mealType}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="mealType"
+                                    required
+                                >
+                                    <option value="" disabled>Select Meal Type</option>
+                                    {getOptions('meal_types').map((m, i) => (
+                                        <option key={i} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Resident Name */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Resident Name</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.residentsName || '-'}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={residentDetails.residentsName}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter resident name"
+                                    name="residentsName"
+                                />
+                            )}
+                        </div>
+
+                        {/* Phone Number */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Phone Number</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.phoneNumber || '-'}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={residentDetails.phoneNumber}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="98765 43210"
+                                    inputMode="numeric"
+                                    maxLength={11}
+                                    name="phoneNumber"
+                                />
+                            )}
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Email</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.email || '-'}</p>
+                            ) : (
+                                <input
+                                    type="email"
+                                    value={residentDetails.email}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter email"
+                                    name="email"
+                                />
+                            )}
+                        </div>
+
+                        {/* Permanent Address */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Permanent Address</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.permanentAddress || '-'}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={residentDetails.permanentAddress}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter permanent address"
+                                    name="permanentAddress"
+                                />
+                            )}
+                        </div>
+
+                        {/* KYC */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">KYC</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.kycType || '-'}</p>
+                            ) : (
+                                <select
+                                    id="kycType"
+                                    value={residentDetails.kycType}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="kycType"
+                                    required
+                                >
+                                    <option value="" disabled>Select document type</option>
+                                    {getOptions('kyc_types').map((k, i) => (
+                                        <option key={i} value={k}>{k}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Aadhar fields */}
+                        {residentDetails.kycType === 'Aadhar' && <>
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Aadhar Number</label>
+                                {!dataEditView ? (
+                                    <p className="text-xs text-gray-800 tracking-wider">{residentDetails.aadharNumber ? residentDetails.aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ').trim() : '-'}</p>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        id="aadharNumber"
+                                        value={residentDetails.aadharNumber}
+                                        onChange={bedsHandleChange}
+                                        className="form-input w-full text-xs"
+                                        name="aadharNumber"
+                                        placeholder="Enter Aadhar number"
+                                        required
+                                    />
+                                )}
                             </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Aadhar Front Copy</label>
+                                {!dataEditView ? (
+                                    <Link
+                                        to={typeof residentDetails.aadharFrontCopy === 'string'
+                                            ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.aadharFrontCopy}`
+                                            : residentDetails.aadharFrontCopy
+                                                ? URL.createObjectURL(residentDetails.aadharFrontCopy)
+                                                : '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-gray-800 hover:text-[#D4A017]"
+                                    >
+                                        {(residentDetails.aadharFrontCopy?.name || (residentDetails?.aadharFrontCopy || '').split('/')[5]) || '-'}
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <input type="file" id="aadharFrontCopy" name="aadharFrontCopy" accept="image/*, .pdf" onChange={bedsHandleChange} className="hidden" />
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerFileInput('aadharFrontCopy')}
+                                            className="flex items-center gap-2 w-full px-3 py-1.5 border border-gray-300 rounded text-xs text-left bg-white text-gray-700"
+                                        >
+                                            <Upload size={14} className="text-gray-400 shrink-0" />
+                                            <span className="truncate">{residentDetails.aadharFrontCopy?.name || (residentDetails.aadharFrontCopy || '').split('/')[5] || 'Upload document'}</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Aadhar Back Copy</label>
+                                {!dataEditView ? (
+                                    <Link
+                                        to={typeof residentDetails.aadharBackCopy === 'string'
+                                            ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.aadharBackCopy}`
+                                            : residentDetails.aadharBackCopy
+                                                ? URL.createObjectURL(residentDetails.aadharBackCopy)
+                                                : '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-gray-800 hover:text-[#D4A017]"
+                                    >
+                                        {(residentDetails.aadharBackCopy?.name || (residentDetails?.aadharBackCopy || '').split('/')[5]) || '-'}
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <input type="file" id="aadharBackCopy" name="aadharBackCopy" accept="image/*, .pdf" onChange={bedsHandleChange} className="hidden" />
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerFileInput('aadharBackCopy')}
+                                            className="flex items-center gap-2 w-full px-3 py-1.5 border border-gray-300 rounded text-xs text-left bg-white text-gray-700"
+                                        >
+                                            <Upload size={14} className="text-gray-400 shrink-0" />
+                                            <span className="truncate">{residentDetails.aadharBackCopy?.name || (residentDetails.aadharBackCopy || '').split('/')[5] || 'Upload document'}</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Aadhar Status</label>
+                                {!dataEditView ? (
+                                    <p className="text-xs text-gray-800">{residentDetails?.aadharStatus || '-'}</p>
+                                ) : (
+                                    <select
+                                        id="aadharStatus"
+                                        value={residentDetails.aadharStatus}
+                                        onChange={bedsHandleChange}
+                                        className="form-input w-full text-xs"
+                                        name="aadharStatus"
+                                        required
+                                    >
+                                        <option value="" disabled>Select status</option>
+                                        {getOptions('verification_statuses').map((v, i) => (
+                                            <option key={i} value={v}>{v}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        </>}
+
+                        {/* PAN fields */}
+                        {residentDetails.kycType === 'PAN' && <>
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">PAN Number</label>
+                                {!dataEditView ? (
+                                    <p className="text-xs text-gray-800">{residentDetails.panNumber || '-'}</p>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        id="panNumber"
+                                        value={residentDetails.panNumber}
+                                        onChange={bedsHandleChange}
+                                        className="form-input w-full text-xs"
+                                        name="panNumber"
+                                        placeholder="Enter PAN number"
+                                        required
+                                    />
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">PAN Front Copy</label>
+                                {!dataEditView ? (
+                                    <Link
+                                        to={typeof residentDetails.panFrontCopy === 'string'
+                                            ? residentDetails.panFrontCopy
+                                            : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.panFrontCopy}`
+                                                ? URL.createObjectURL(residentDetails.panFrontCopy)
+                                                : '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-gray-800 hover:text-[#D4A017]"
+                                    >
+                                        {(residentDetails.panFrontCopy?.name || (residentDetails?.panFrontCopy || '').split('/')[5]) || '-'}
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <input type="file" id="panFrontCopy" name="panFrontCopy" accept="image/*, .pdf" onChange={bedsHandleChange} className="hidden" />
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerFileInput('panFrontCopy')}
+                                            className="flex items-center gap-2 w-full px-3 py-1.5 border border-gray-300 rounded text-xs text-left bg-white text-gray-700"
+                                        >
+                                            <Upload size={14} className="text-gray-400 shrink-0" />
+                                            <span className="truncate">{residentDetails.panFrontCopy?.name || (residentDetails.panFrontCopy || '').split('/')[5] || 'Upload document'}</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">PAN Back Copy</label>
+                                {!dataEditView ? (
+                                    <Link
+                                        to={typeof residentDetails.panBackCopy === 'string'
+                                            ? residentDetails.panBackCopy
+                                            : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.panBackCopy}`
+                                                ? URL.createObjectURL(residentDetails.panBackCopy)
+                                                : '#'}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-xs text-gray-800 hover:text-[#D4A017]"
+                                    >
+                                        {(residentDetails.panBackCopy?.name || (residentDetails?.panBackCopy || '').split('/')[5]) || '-'}
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <input type="file" id="panBackCopy" name="panBackCopy" accept="image/*, .pdf" onChange={bedsHandleChange} className="hidden" />
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerFileInput('panBackCopy')}
+                                            className="flex items-center gap-2 w-full px-3 py-1.5 border border-gray-300 rounded text-xs text-left bg-white text-gray-700"
+                                        >
+                                            <Upload size={14} className="text-gray-400 shrink-0" />
+                                            <span className="truncate">{residentDetails.panBackCopy?.name || (residentDetails.panBackCopy || '').split('/')[5] || 'Upload document'}</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">PAN Status</label>
+                                {!dataEditView ? (
+                                    <p className="text-xs text-gray-800">{residentDetails?.panStatus || '-'}</p>
+                                ) : (
+                                    <select
+                                        id="panStatus"
+                                        value={residentDetails.panStatus}
+                                        onChange={bedsHandleChange}
+                                        className="form-input w-full text-xs"
+                                        name="panStatus"
+                                        required
+                                    >
+                                        <option value="" disabled>Select status</option>
+                                        {getOptions('verification_statuses').map((v, i) => (
+                                            <option key={i} value={v}>{v}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        </>}
+
+                        {/* Check-In */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Check-In</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.checkIn ? new Date(residentDetails.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</p>
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={residentDetails.checkIn}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="checkIn"
+                                    min={DATE_INPUT_MIN}
+                                    max={DATE_INPUT_MAX}
+                                />
+                            )}
                         </div>
 
-                        <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">{bedData?.propertyName}</h3>
-
-                        <div className="w-full overflow-x-auto">
-                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                <tbody>
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Flat Number</th>
-                                        <td className="py-1 px-2">{bedData?.roomNo}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Flat Type</th>
-                                        <td className="py-1 px-2">{bedData?.roomType}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Room Number</th>
-                                        <td className="py-1 px-2">{bedData?.bedLabel}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Manager</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.propertyManager || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="propertyManager" value={residentDetails.propertyManager} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="propertyManager" required>
-                                                        <option value="" disabled>Select the Property Manager here</option>
-                                                        {getStaffNamesList().map((name, i) => (
-                                                            <option key={i} value={name}>{name}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Sales Manager</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.salesManager || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="salesManager" value={residentDetails.salesManager} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="salesManager" required>
-                                                        <option value="" disabled>Select the Sales Manager here</option>
-                                                        {getStaffNamesList().map((name, i) => (
-                                                            <option key={i} value={name}>{name}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comfort Class</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.comfortClass || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="comfortClass" value={residentDetails.comfortClass} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="comfortClass" required>
-                                                        <option value="" disabled>Select the Comfort Class here</option>
-                                                        {getOptions('comfort_classes').map((c, i) => (
-                                                            <option key={i} value={c}>{c}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Meal Type</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.mealType || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="mealType" value={residentDetails.mealType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="mealType" required>
-                                                        <option value="" disabled>Select the Meal Type here</option>
-                                                        {getOptions('meal_types').map((m, i) => (
-                                                            <option key={i} value={m}>{m}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Name</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.residentsName || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={residentDetails.residentsName}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Resident Name here"
-                                                        name="residentsName"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Phone Number</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.phoneNumber || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={residentDetails.phoneNumber}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="98765 43210"
-                                                        inputMode="numeric"
-                                                        maxLength={11}
-                                                        name="phoneNumber"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Email</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.email || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="email"
-                                                        value={residentDetails.email}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Email here"
-                                                        name="email"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Permanent Address</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.permanentAddress || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={residentDetails.permanentAddress}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Permanent Address here"
-                                                        name="permanentAddress"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">KYC</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.kycType || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="kycType" value={residentDetails.kycType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="kycType" required>
-                                                        <option value="" disabled>Select the document type here</option>
-                                                        {getOptions('kyc_types').map((k, i) => (
-                                                            <option key={i} value={k}>{k}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    {residentDetails.kycType === 'Aadhar' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar Number</th>
-                                            <td className="flex">
-                                                {!dataEditView ? <>
-                                                    <span className="py-1 px-2 w-full tracking-wider">{residentDetails.aadharNumber ? residentDetails.aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ').trim() : '-'}</span>
-                                                </> : <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="text"
-                                                            id="aadharNumber"
-                                                            value={residentDetails.aadharNumber}
-                                                            onChange={(e) => bedsHandleChange(e)}
-                                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                            name="aadharNumber"
-                                                            placeholder="Enter the Aadhar Number here"
-                                                            required />
-                                                    </span>
-                                                </>}
-                                            </td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th rowSpan="2" className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Aadhar (Front & Back Copy)</th>
-                                            <td className="flex">
-                                                {!dataEditView ? <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <Link to={
-                                                            typeof residentDetails.aadharFrontCopy === 'string'
-                                                                ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.aadharFrontCopy}`
-                                                                : residentDetails.aadharFrontCopy
-                                                                    ? URL.createObjectURL(residentDetails.aadharFrontCopy)
-                                                                    : '#'
-                                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                            {(residentDetails.aadharFrontCopy?.name || (residentDetails?.aadharFrontCopy || '').split('/')[5]) || '-'}
-                                                        </Link>
-                                                    </span>
-                                                </> : <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="file"
-                                                            id="aadharFrontCopy"
-                                                            name="aadharFrontCopy"
-                                                            accept="image/*, .pdf"
-                                                            onChange={(e) => bedsHandleChange(e)}
-                                                            className="hidden"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => triggerFileInput('aadharFrontCopy')}
-                                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                                        >
-                                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{residentDetails.aadharFrontCopy?.name || (residentDetails.aadharFrontCopy || '').split('/')[5] || 'Upload the document here'}</span>
-                                                        </button>
-                                                    </span>
-                                                </>}
-                                            </td>
-                                        </tr>
-                                        <tr className='border-b border-white'>
-                                            <td className="flex">
-                                                {!dataEditView ? <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <Link to={
-                                                            typeof residentDetails.aadharBackCopy === 'string'
-                                                                ? `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.aadharBackCopy}`
-                                                                : residentDetails.aadharBackCopy
-                                                                    ? URL.createObjectURL(residentDetails.aadharBackCopy)
-                                                                    : '#'
-                                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                            {(residentDetails.aadharBackCopy?.name || (residentDetails?.aadharBackCopy || '').split('/')[5]) || '-'}
-                                                        </Link>
-                                                    </span>
-                                                </> : <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="file"
-                                                            id="aadharBackCopy"
-                                                            name="aadharBackCopy"
-                                                            accept="image/*, .pdf"
-                                                            onChange={(e) => bedsHandleChange(e)}
-                                                            className="hidden"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => triggerFileInput('aadharBackCopy')}
-                                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                                        >
-                                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{residentDetails.aadharBackCopy?.name || (residentDetails.aadharBackCopy || '').split('/')[5] || 'Upload the document here'}</span>
-                                                        </button>
-                                                    </span>
-                                                </>}
-                                            </td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Aadhar Status</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{residentDetails?.aadharStatus || '-'}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <select id="aadharStatus" value={residentDetails.aadharStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="aadharStatus" required>
-                                                            <option value="" disabled>Select the status here</option>
-                                                            {getOptions('verification_statuses').map((v, i) => (
-                                                                <option key={i} value={v}>{v}</option>
-                                                            ))}
-                                                        </select>
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
-                                    </>}
-
-                                    {residentDetails.kycType === 'PAN' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN Number</th>
-                                            <td className="flex">
-                                                {!dataEditView ? <>
-                                                    <span className="py-1 px-2 w-full">{residentDetails.panNumber || '-'}</span>
-                                                </> : <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="text"
-                                                            id="panNumber"
-                                                            value={residentDetails.panNumber}
-                                                            onChange={(e) => bedsHandleChange(e)}
-                                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                            name="panNumber"
-                                                            placeholder="Enter the PAN Number here"
-                                                            required />
-                                                    </span>
-                                                </>}
-                                            </td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th rowSpan="2" className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">PAN (Front & Back Copy)</th>
-                                            <td className="flex">
-                                                {!dataEditView ? <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <Link to={
-                                                            typeof residentDetails.panFrontCopy === 'string'
-                                                                ? residentDetails.panFrontCopy
-                                                                : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.panFrontCopy}`
-                                                                    ? URL.createObjectURL(residentDetails.panFrontCopy)
-                                                                    : '#'
-                                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                            {(residentDetails.panFrontCopy?.name || (residentDetails?.panFrontCopy || '').split('/')[5]) || '-'}
-                                                        </Link>
-                                                    </span>
-                                                </> : <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="file"
-                                                            id="panFrontCopy"
-                                                            name="panFrontCopy"
-                                                            accept="image/*, .pdf"
-                                                            onChange={(e) => bedsHandleChange(e)}
-                                                            className="hidden"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => triggerFileInput('panFrontCopy')}
-                                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                                        >
-                                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{residentDetails.panFrontCopy?.name || (residentDetails.panFrontCopy || '').split('/')[5] || 'Upload the document here'}</span>
-                                                        </button>
-                                                    </span>
-                                                </>}
-                                            </td>
-                                        </tr>
-                                        <tr className='border-b border-white'>
-                                            <td className="flex">
-                                                {!dataEditView ? <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <Link to={
-                                                            typeof residentDetails.panBackCopy === 'string'
-                                                                ? residentDetails.panBackCopy
-                                                                : `https://local-machine-bucket.s3.us-east-1.amazonaws.com/${residentDetails.panBackCopy}`
-                                                                    ? URL.createObjectURL(residentDetails.panBackCopy)
-                                                                    : '#'
-                                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                            {(residentDetails.panBackCopy?.name || (residentDetails?.panBackCopy || '').split('/')[5]) || '-'}
-                                                        </Link>
-                                                    </span>
-                                                </> : <>
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="file"
-                                                            id="panBackCopy"
-                                                            name="panBackCopy"
-                                                            accept="image/*, .pdf"
-                                                            onChange={(e) => bedsHandleChange(e)}
-                                                            className="hidden"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => triggerFileInput('panBackCopy')}
-                                                            className="p-2 text-black w-full border border-gray-300 rounded text-xs sm:text-sm text-sm bg-white text-left flex gap-3"
-                                                        >
-                                                            <span className="mt-1 text-sm sm:text-lg"><FaUpload /></span> <span className="mt-1 text-xs sm:text-sm truncate w-64">{residentDetails.panBackCopy?.name || (residentDetails.panBackCopy || '').split('/')[5] || 'Upload the document here'}</span>
-                                                        </button>
-                                                    </span>
-                                                </>}
-                                            </td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">PAN Status</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{residentDetails?.panStatus || '-'}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <select id="panStatus" value={residentDetails.panStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="panStatus" required>
-                                                            <option value="" disabled>Select the status here</option>
-                                                            {getOptions('verification_statuses').map((v, i) => (
-                                                                <option key={i} value={v}>{v}</option>
-                                                            ))}
-                                                        </select>
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
-                                    </>}
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">check-In</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.checkIn ? new Date(residentDetails.checkIn).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="date"
-                                                        value={residentDetails.checkIn}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                        name="checkIn"
-                                                        min={DATE_INPUT_MIN}
-                                                        max={DATE_INPUT_MAX}
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">check-Out</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.checkOut ? new Date(residentDetails.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="date"
-                                                        value={residentDetails.checkOut}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                        name="checkOut"
-                                                        min={residentDetails.checkIn || DATE_INPUT_MIN}
-                                                        max={DATE_INPUT_MAX}
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Total Deposit Paid</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.totalDepositPaid || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={residentDetails.totalDepositPaid}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Total Deposit Paid here"
-                                                        name="totalDepositPaid"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Per Month</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{residentDetails?.rentPerMonth || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={residentDetails.rentPerMonth}
-                                                        onChange={(e) => bedsHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Rent Per Month here"
-                                                        name="rentPerMonth"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    {bedData?.resident_data?.residentStatus === 'Active' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Delay Charges</th>
-                                            <td className="py-1 px-2">{bedData?.resident_data?.residentStatus === 'Active' && bedData?.resident_data?.rent_records?.length > 0
-                                                ? bedData.resident_data.rent_records.slice(-1)[0].delayCharges
-                                                : 0}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent after Delay Charges</th>
-                                            <td className="py-1 px-2">{Number((residentDetails?.rentPerMonth || '').match(/^\d+/)) + Number(bedData?.resident_data?.residentStatus === 'Active' && bedData?.resident_data?.rent_records?.length > 0
-                                                ? bedData.resident_data.rent_records.slice(-1)[0].delayCharges
-                                                : 0)}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Agreement</th>
-                                            <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(bedData)}>{`${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Rent Status</th>
-                                            <td className="py-1 px-2">{bedData?.resident_data?.residentStatus === 'Active' && bedData?.resident_data?.rent_records?.length > 0
-                                                ? bedData.resident_data.rent_records.slice(-1)[0].rentStatus
-                                                : 'Not Received'}</td>
-                                        </tr>
-                                    </>}
-                                </tbody>
-                            </table>
+                        {/* Check-Out */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Check-Out</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.checkOut ? new Date(residentDetails.checkOut).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/(\w+) (\d+), (\d+)/, '$2-$1-$3') : '-'}</p>
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={residentDetails.checkOut}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="checkOut"
+                                    min={residentDetails.checkIn || DATE_INPUT_MIN}
+                                    max={DATE_INPUT_MAX}
+                                />
+                            )}
                         </div>
-                    </form>
+
+                        {/* Total Deposit Paid */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Total Deposit Paid</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.totalDepositPaid || '-'}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={residentDetails.totalDepositPaid}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter total deposit paid"
+                                    name="totalDepositPaid"
+                                />
+                            )}
+                        </div>
+
+                        {/* Rent Per Month */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Rent Per Month</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{residentDetails?.rentPerMonth || '-'}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={residentDetails.rentPerMonth}
+                                    onChange={bedsHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter rent per month"
+                                    name="rentPerMonth"
+                                />
+                            )}
+                        </div>
+
+                        {/* Active resident additional fields */}
+                        {bedData?.resident_data?.residentStatus === 'Active' && <>
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Delay Charges</p>
+                                <p className="text-xs text-gray-800">
+                                    {bedData?.resident_data?.residentStatus === 'Active' && bedData?.resident_data?.rent_records?.length > 0
+                                        ? bedData.resident_data.rent_records.slice(-1)[0].delayCharges
+                                        : 0}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Rent after Delay Charges</p>
+                                <p className="text-xs text-gray-800">
+                                    {Number((residentDetails?.rentPerMonth || '').match(/^\d+/)) + Number(bedData?.resident_data?.residentStatus === 'Active' && bedData?.resident_data?.rent_records?.length > 0
+                                        ? bedData.resident_data.rent_records.slice(-1)[0].delayCharges
+                                        : 0)}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Agreement</p>
+                                <p
+                                    className="text-xs text-gray-800 hover:text-[#D4A017] cursor-pointer"
+                                    onClick={() => viewAgreementHandle(bedData)}
+                                >
+                                    {`${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`}
+                                </p>
+                            </div>
+
+                            <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Rent Status</p>
+                                <p className="text-xs text-gray-800">
+                                    {bedData?.resident_data?.residentStatus === 'Active' && bedData?.resident_data?.rent_records?.length > 0
+                                        ? bedData.resident_data.rent_records.slice(-1)[0].rentStatus
+                                        : 'Not Received'}
+                                </p>
+                            </div>
+                        </>}
+
+                    </div>
+                </div>
+            </form>
         </DashPage>
-    )
+    );
 }
 
-export default residentDetails
+export default residentDetails;

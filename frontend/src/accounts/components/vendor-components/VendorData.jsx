@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
@@ -104,259 +106,240 @@ function VendorData() {
     }
   }
 
+  const thClass = "border-r border-gray-100 px-3 py-1.5 text-xs font-medium text-[#D4A017] text-left whitespace-nowrap w-48";
+  const tdClass = "px-3 py-1.5 text-xs text-gray-800";
+
   return (
     <DashPage>
-          <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={vendorHandleUpdate}>
-            <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">VENDOR DATA</h1>
+      <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={vendorHandleUpdate}>
+        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">VENDOR DATA</h1>
 
-            <div className="sm:flex justify-between">
-              <button
-                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/accounts/accounts-vendor-table`)}
-                type="button">Prev</button>
+        <div className="sm:flex justify-between">
+          <button
+            className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/accounts/accounts-vendor-table`)}
+            type="button">Prev</button>
 
-              <div className="flex justify-between sm:justify-end mb-5">
-                <button
-                  className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
+          <div className="flex justify-between sm:justify-end mb-5">
+            <button
+              className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
 
-                {dataEditView === true && <button
-                  className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
-                  type='submit'
-                >
-                  {isSaving ? "Saving Details..." : "Save Details"}
-                </button>}
-              </div>
-            </div>
+            {dataEditView === true && <button
+              className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
+              type='submit'
+            >
+              {isSaving ? "Saving Details..." : "Save Details"}
+            </button>}
+          </div>
+        </div>
 
-            <div className="w-full overflow-x-auto">
-              <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                <tbody>
-                  <tr className="border-b border-white">
-                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Vendor</th>
-                    {!dataEditView ? <>
-                      <td className="py-1 px-2">{vendorData?.vendor}</td>
-                    </> : <>
-                      <td className="flex">
-                        <span className="py-1 px-2 w-full">
-                          <input
-                            type="text"
-                            value={vendorData.vendor}
-                            onChange={(e) => vendorHandleChange(e)}
-                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                            placeholder="Enter the Vendor Name here"
-                            name="vendor"
-                          />
-                        </span>
-                      </td>
-                    </>}
-                  </tr>
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto text-xs border-collapse">
+            <tbody className="divide-y divide-gray-100">
+              <tr className="hover:bg-gray-50 transition-colors">
+                <th className={thClass}>Vendor</th>
+                {!dataEditView ? <>
+                  <td className={tdClass}>{vendorData?.vendor}</td>
+                </> : <>
+                  <td className={tdClass}>
+                    <input
+                      type="text"
+                      value={vendorData.vendor}
+                      onChange={(e) => vendorHandleChange(e)}
+                      className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                      placeholder="Enter the Vendor Name here"
+                      name="vendor"
+                    />
+                  </td>
+                </>}
+              </tr>
 
-                  <tr className="border-b border-white">
-                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Contact</th>
-                    {!dataEditView ? <>
-                      <td className="py-1 px-2">{vendorData?.contact}</td>
-                    </> : <>
-                      <td className="flex">
-                        <span className="py-1 px-2 w-full">
-                          <input
-                            type="text"
-                            value={vendorData.contact}
-                            onChange={(e) => vendorHandleChange(e)}
-                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                            placeholder="Enter the Contact Number here"
-                            name="contact"
-                          />
-                        </span>
-                      </td>
-                    </>}
-                  </tr>
+              <tr className="hover:bg-gray-50 transition-colors">
+                <th className={thClass}>Contact</th>
+                {!dataEditView ? <>
+                  <td className={tdClass}>{vendorData?.contact}</td>
+                </> : <>
+                  <td className={tdClass}>
+                    <input
+                      type="text"
+                      value={vendorData.contact}
+                      onChange={(e) => vendorHandleChange(e)}
+                      className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                      placeholder="Enter the Contact Number here"
+                      name="contact"
+                    />
+                  </td>
+                </>}
+              </tr>
 
-                  <tr className="border-b border-white">
-                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Category</th>
-                    {!dataEditView ? <>
-                      <td className="py-1 px-2">{vendorData?.category}</td>
-                    </> : <>
-                      <td className="flex">
-                        <span className="py-1 px-2 w-full">
-                          <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="category" required>
-                            <option value="" disabled>Select the Category here</option>
-                            {getOptions('vendor_categories').map((cat, i) => (
-                              <option key={i} value={cat}>{cat}</option>
-                            ))}
-                          </select>
-                        </span>
-                      </td>
-                    </>}
-                  </tr>
+              <tr className="hover:bg-gray-50 transition-colors">
+                <th className={thClass}>Category</th>
+                {!dataEditView ? <>
+                  <td className={tdClass}>{vendorData?.category}</td>
+                </> : <>
+                  <td className={tdClass}>
+                    <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="text-black w-full p-1.5 text-xs rounded border border-gray-300" name="category" required>
+                      <option value="" disabled>Select the Category here</option>
+                      {getOptions('vendor_categories').map((cat, i) => (
+                        <option key={i} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </td>
+                </>}
+              </tr>
 
-                  <tr className="border-b border-white">
-                    <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Billing Type</th>
-                    {!dataEditView ? <>
-                      <td className="py-1 px-2">{vendorData?.billingType}</td>
-                    </> : <>
-                      <td className="flex">
-                        <span className="py-1 px-2 w-full">
-                          <select id="billingType" value={vendorData.billingType} onChange={vendorHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="billingType" required>
-                            <option value="" disabled>Select the Billing Type here</option>
-                            {getOptions('billing_types').map((b, i) => (
-                              <option key={i} value={b}>{b}</option>
-                            ))}
-                          </select>
-                        </span>
-                      </td>
-                    </>}
-                  </tr>
+              <tr className="hover:bg-gray-50 transition-colors">
+                <th className={thClass}>Billing Type</th>
+                {!dataEditView ? <>
+                  <td className={tdClass}>{vendorData?.billingType}</td>
+                </> : <>
+                  <td className={tdClass}>
+                    <select id="billingType" value={vendorData.billingType} onChange={vendorHandleChange} className="text-black w-full p-1.5 text-xs rounded border border-gray-300" name="billingType" required>
+                      <option value="" disabled>Select the Billing Type here</option>
+                      {getOptions('billing_types').map((b, i) => (
+                        <option key={i} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </td>
+                </>}
+              </tr>
 
-                  {vendorData.billingType === 'Bank Transfer' && <>
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Account Holder Name</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.accountHolderName}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.accountHolderName}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Enter the Account Holder Name here"
-                              name="accountHolderName"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
-
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Account Number</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.accountNumber}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.accountNumber}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Enter the Account Number here"
-                              name="accountNumber"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
-
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Bank Name</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.bankName}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.bankName}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Enter the Bank Name here"
-                              name="bankName"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
-
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Bank Branch</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.bankBranch}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.bankBranch}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Enter the Bank Branch here"
-                              name="bankBranch"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
-
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">IFSC Code</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.ifscCode}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.ifscCode}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Enter the IFSC Code here"
-                              name="ifscCode"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
+              {vendorData.billingType === 'Bank Transfer' && <>
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>Account Holder Name</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.accountHolderName}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.accountHolderName}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Enter the Account Holder Name here"
+                        name="accountHolderName"
+                      />
+                    </td>
                   </>}
+                </tr>
 
-                  {vendorData.billingType === 'UPI' && <>
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">UPI Number</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.upiNumber}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.upiNumber}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Enter the UPI Number here"
-                              name="upiNumber"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>Account Number</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.accountNumber}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.accountNumber}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Enter the Account Number here"
+                        name="accountNumber"
+                      />
+                    </td>
                   </>}
+                </tr>
 
-                  {vendorData.billingType === 'Others' && <>
-                    <tr className="border-b border-white">
-                      <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Other Banking Details</th>
-                      {!dataEditView ? <>
-                        <td className="py-1 px-2">{vendorData?.otherBankingDetails}</td>
-                      </> : <>
-                        <td className="flex">
-                          <span className="py-1 px-2 w-full">
-                            <input
-                              type="text"
-                              value={vendorData.otherBankingDetails}
-                              onChange={(e) => vendorHandleChange(e)}
-                              className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                              placeholder="Mention the Banking Details here"
-                              name="otherBankingDetails"
-                            />
-                          </span>
-                        </td>
-                      </>}
-                    </tr>
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>Bank Name</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.bankName}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.bankName}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Enter the Bank Name here"
+                        name="bankName"
+                      />
+                    </td>
                   </>}
-                </tbody>
-              </table>
-            </div>
-          </form>
+                </tr>
+
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>Bank Branch</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.bankBranch}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.bankBranch}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Enter the Bank Branch here"
+                        name="bankBranch"
+                      />
+                    </td>
+                  </>}
+                </tr>
+
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>IFSC Code</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.ifscCode}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.ifscCode}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Enter the IFSC Code here"
+                        name="ifscCode"
+                      />
+                    </td>
+                  </>}
+                </tr>
+              </>}
+
+              {vendorData.billingType === 'UPI' && <>
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>UPI Number</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.upiNumber}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.upiNumber}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Enter the UPI Number here"
+                        name="upiNumber"
+                      />
+                    </td>
+                  </>}
+                </tr>
+              </>}
+
+              {vendorData.billingType === 'Others' && <>
+                <tr className="hover:bg-gray-50 transition-colors">
+                  <th className={thClass}>Other Banking Details</th>
+                  {!dataEditView ? <>
+                    <td className={tdClass}>{vendorData?.otherBankingDetails}</td>
+                  </> : <>
+                    <td className={tdClass}>
+                      <input
+                        type="text"
+                        value={vendorData.otherBankingDetails}
+                        onChange={(e) => vendorHandleChange(e)}
+                        className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                        placeholder="Mention the Banking Details here"
+                        name="otherBankingDetails"
+                      />
+                    </td>
+                  </>}
+                </tr>
+              </>}
+            </tbody>
+          </table>
+        </div>
+      </form>
     </DashPage>
-  )
+  );
 }
 
-export default VendorData
+export default VendorData;

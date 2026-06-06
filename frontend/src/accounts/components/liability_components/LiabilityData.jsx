@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -114,266 +116,261 @@ function LiabilityData() {
         }
     }
 
+    const thClass = "border-r border-gray-100 px-3 py-1.5 text-xs font-medium text-[#D4A017] text-left whitespace-nowrap w-48";
+    const tdClass = "px-3 py-1.5 text-xs text-gray-800";
+
     return (
         <DashPage>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={liabilityHandleSubmit}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LIABILITY STATUS DATA</h1>
+            <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={liabilityHandleSubmit}>
+                <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LIABILITY STATUS DATA</h1>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/accounts/accounts-liability-table`)}
-                                type="button">Prev</button>
+                <div className="sm:flex justify-between">
+                    <button
+                        className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/accounts/accounts-liability-table`)}
+                        type="button">Prev</button>
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
+                    <div className="flex justify-between sm:justify-end mb-5">
+                        <button
+                            className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
 
-                                {dataEditView === true && <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
-                                    type='submit'
-                                >
-                                    {isSaving ? "Saving Details..." : "Save Details"}
-                                </button>}
-                            </div>
-                        </div>
+                        {dataEditView === true && <button
+                            className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
+                            type='submit'
+                        >
+                            {isSaving ? "Saving Details..." : "Save Details"}
+                        </button>}
+                    </div>
+                </div>
 
-                        <div className="w-full overflow-x-auto">
-                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                <tbody>
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Name</th>
-                                        <td className="py-1 px-2">{residentData?.propertyName || '-'}</td>
-                                    </tr>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto text-xs border-collapse">
+                        <tbody className="divide-y divide-gray-100">
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Property Name</th>
+                                <td className={tdClass}>{residentData?.propertyName || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Guest Name</th>
-                                        <td className="py-1 px-2">{residentData?.residentsName || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Guest Name</th>
+                                <td className={tdClass}>{residentData?.residentsName || '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Check‑in Date</th>
-                                        <td className="py-1 px-2">{residentData?.checkIn ? formatDateToDDMonYYYY(residentData?.checkIn) : '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Check-in Date</th>
+                                <td className={tdClass}>{residentData?.checkIn ? formatDateToDDMonYYYY(residentData?.checkIn) : '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Check‑out Date</th>
-                                        <td className="py-1 px-2">{residentData?.checkOut ? formatDateToDDMonYYYY(residentData?.checkOut) : '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Check-out Date</th>
+                                <td className={tdClass}>{residentData?.checkOut ? formatDateToDDMonYYYY(residentData?.checkOut) : '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">View Agreement</th>
-                                        <td className="py-1 px-2 hover:text-[#D4A017] hover:cursor-pointer" onClick={() => viewAgreementHandle(residentData)}>{residentData?.residentsName ? `${residentData?.residentsName.replace(/\s+/g, '')}_Contract.pdf` : '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>View Agreement</th>
+                                <td className={tdClass + " hover:text-[#D4A017] hover:cursor-pointer"} onClick={() => viewAgreementHandle(residentData)}>{residentData?.residentsName ? `${residentData?.residentsName.replace(/\s+/g, '')}_Contract.pdf` : '-'}</td>
+                            </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">KYC Type</th>
-                                        <td className="py-1 px-2">{residentData?.kycType || '-'}</td>
-                                    </tr>
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>KYC Type</th>
+                                <td className={tdClass}>{residentData?.kycType || '-'}</td>
+                            </tr>
 
-                                    {residentData?.kycType === 'Aadhar' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Aadhar Number</th>
-                                            <td className="py-1 px-2">{residentData?.aadharNumber || '-'}</td>
-                                        </tr>
+                            {residentData?.kycType === 'Aadhar' && <>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Aadhar Number</th>
+                                    <td className={tdClass}>{residentData?.aadharNumber || '-'}</td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Front Copy</th>
-                                            <td className="py-1 px-2">
-                                                <Link to={
-                                                    typeof residentData?.aadharFrontCopy === 'string'
-                                                        ? residentData?.aadharFrontCopy
-                                                        : residentData?.aadharFrontCopy
-                                                            ? URL.createObjectURL(residentData?.aadharFrontCopy)
-                                                            : '#'
-                                                } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(residentData?.aadharFrontCopy || '').split('/')[8] || '-'}
-                                                </Link>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Front Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof residentData?.aadharFrontCopy === 'string'
+                                                ? residentData?.aadharFrontCopy
+                                                : residentData?.aadharFrontCopy
+                                                    ? URL.createObjectURL(residentData?.aadharFrontCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {(residentData?.aadharFrontCopy || '').split('/')[8] || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
 
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Back Copy</th>
-                                            <td className="py-1 px-2">
-                                                <Link to={
-                                                    typeof residentData?.aadharBackCopy === 'string'
-                                                        ? residentData?.aadharBackCopy
-                                                        : residentData?.aadharBackCopy
-                                                            ? URL.createObjectURL(residentData?.aadharBackCopy)
-                                                            : '#'
-                                                } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(residentData?.aadharBackCopy || '').split('/')[8] || '-'}
-                                                </Link>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Back Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof residentData?.aadharBackCopy === 'string'
+                                                ? residentData?.aadharBackCopy
+                                                : residentData?.aadharBackCopy
+                                                    ? URL.createObjectURL(residentData?.aadharBackCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {(residentData?.aadharBackCopy || '').split('/')[8] || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
+                            </>}
+
+                            {residentData?.kycType === 'PAN' && <>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>PAN Number</th>
+                                    <td className={tdClass}>{residentData?.panNumber || '-'}</td>
+                                </tr>
+
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Front Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof residentData?.panFrontCopy === 'string'
+                                                ? residentData?.panFrontCopy
+                                                : residentData?.panFrontCopy
+                                                    ? URL.createObjectURL(residentData?.panFrontCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {(residentData?.panFrontCopy || '').split('/')[8] || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
+
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Back Copy</th>
+                                    <td className={tdClass}>
+                                        <Link to={
+                                            typeof residentData?.panBackCopy === 'string'
+                                                ? residentData?.panBackCopy
+                                                : residentData?.panBackCopy
+                                                    ? URL.createObjectURL(residentData?.panBackCopy)
+                                                    : '#'
+                                        } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
+                                            {(residentData?.panBackCopy || '').split('/')[8] || '-'}
+                                        </Link>
+                                    </td>
+                                </tr>
+                            </>}
+
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Deposit</th>
+                                <td className={tdClass}>{residentData?.totalDepositPaid || '-'}</td>
+                            </tr>
+
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Deductions</th>
+                                <td className={tdClass}>{residentData?.residentDeductions || '-'}</td>
+                            </tr>
+
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Net Payout</th>
+                                <td className={tdClass}>{(Number(residentData?.totalDepositPaid) - Number(residentData?.residentDeductions)) || 0}</td>
+                            </tr>
+
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Payout Date</th>
+                                <td className={tdClass}>{residentData?.payoutDate ? formatDateToDDMonYYYY(residentData?.payoutDate) : '-'}</td>
+                            </tr>
+
+                            <tr className="hover:bg-gray-50 transition-colors">
+                                <th className={thClass}>Update Status</th>
+                                {!dataEditView ? <>
+                                    <td className={tdClass}>{liabiltyData?.status}</td>
+                                </> : <>
+                                    <td className={tdClass}>
+                                        <select id="status" value={liabiltyData.status} onChange={liabilityHandleChange} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="status" required>
+                                            <option value="" disabled>Select the status here</option>
+                                            {getOptions('liability_statuses').map((s, i) => (
+                                                <option key={i} value={s}>{s}</option>
+                                            ))}
+                                        </select>
+                                    </td>
+                                </>}
+                            </tr>
+
+                            {(dataEditView && liabiltyData?.status === 'Pending') &&
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Send email requesting guest's bank details</th>
+
+                                    <td className={tdClass}>
+                                        <label className="relative inline-flex items-center space-x-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="hidden peer"
+                                                name="checkSendEmail"
+                                                checked={liabiltyData.checkSendEmail}
+                                                onChange={liabilityHandleChange}
+                                            />
+
+                                            <span className="w-5 h-5 min-w-[20px] min-h-[20px] border-2 border-gray-500 rounded-md flex items-center justify-center peer-checked:bg-[#eba312] peer-checked:border-black">
+                                                {liabiltyData.checkSendEmail && "✔"}
+                                            </span>
+
+                                            <span className="text-xs">
+                                                {residentData?.checkSendEmail === true ? 'Send email again' : 'Send email'}
+                                            </span>
+                                        </label>
+                                    </td>
+                                </tr>
+                            }
+
+                            {liabiltyData?.status === 'Settled' && <>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Amount</th>
+                                    {!dataEditView ? <>
+                                        <td className={tdClass}>{liabiltyData?.amount}</td>
+                                    </> : <>
+                                        <td className={tdClass}>
+                                            <input
+                                                type="text"
+                                                value={liabiltyData.amount}
+                                                onChange={liabilityHandleChange}
+                                                className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                placeholder="Enter the amount here"
+                                                name="amount"
+                                            />
+                                        </td>
                                     </>}
+                                </tr>
 
-                                    {residentData?.kycType === 'PAN' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">PAN Number</th>
-                                            <td className="py-1 px-2">{residentData?.panNumber || '-'}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Front Copy</th>
-                                            <td className="py-1 px-2">
-                                                <Link to={
-                                                    typeof residentData?.panFrontCopy === 'string'
-                                                        ? residentData?.panFrontCopy
-                                                        : residentData?.panFrontCopy
-                                                            ? URL.createObjectURL(residentData?.panFrontCopy)
-                                                            : '#'
-                                                } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(residentData?.panFrontCopy || '').split('/')[8] || '-'}
-                                                </Link>
-                                            </td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Back Copy</th>
-                                            <td className="py-1 px-2">
-                                                <Link to={
-                                                    typeof residentData?.panBackCopy === 'string'
-                                                        ? residentData?.panBackCopy
-                                                        : residentData?.panBackCopy
-                                                            ? URL.createObjectURL(residentData?.panBackCopy)
-                                                            : '#'
-                                                } target="_blank" rel="noopener noreferrer" className="hover:text-[#D4A017]">
-                                                    {(residentData?.panBackCopy || '').split('/')[8] || '-'}
-                                                </Link>
-                                            </td>
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>UTR Number</th>
+                                    {!dataEditView ? <>
+                                        <td className={tdClass}>{liabiltyData?.utrNumber}</td>
+                                    </> : <>
+                                        <td className={tdClass}>
+                                            <input
+                                                type="text"
+                                                value={liabiltyData.utrNumber}
+                                                onChange={liabilityHandleChange}
+                                                className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                placeholder="Enter the UTR number here"
+                                                name="utrNumber"
+                                            />
+                                        </td>
                                     </>}
+                                </tr>
 
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deposit</th>
-                                        <td className="py-1 px-2">{residentData?.totalDepositPaid || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deductions</th>
-                                        <td className="py-1 px-2">{residentData?.residentDeductions || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Net Payout</th>
-                                        <td className="py-1 px-2">{(Number(residentData?.totalDepositPaid) - Number(residentData?.residentDeductions)) || 0}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Payout Date</th>
-                                        <td className="py-1 px-2">{residentData?.payoutDate ? formatDateToDDMonYYYY(residentData?.payoutDate) : '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Update Status</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{liabiltyData?.status}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="status" value={liabiltyData.status} onChange={liabilityHandleChange} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
-                                                        <option value="" disabled>Select the status here</option>
-                                                        {getOptions('liability_statuses').map((s, i) => (
-                                                            <option key={i} value={s}>{s}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    {(dataEditView && liabiltyData?.status === 'Pending') &&
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Send email requesting guest's bank details</th>
-
-                                            <td className="py-1 px-2">
-                                                <label className="relative inline-flex items-center space-x-2 cursor-pointer">
-                                                    <input
-                                                        type="checkbox"
-                                                        className="hidden peer"
-                                                        name="checkSendEmail"
-                                                        checked={liabiltyData.checkSendEmail}
-                                                        onChange={liabilityHandleChange}
-                                                    />
-
-                                                    <span className="w-5 h-5 min-w-[20px] min-h-[20px] border-2 border-gray-500 rounded-md flex items-center justify-center peer-checked:bg-[#eba312] peer-checked:border-black">
-                                                        {liabiltyData.checkSendEmail && "✔"}
-                                                    </span>
-
-                                                    <span className="text-xs sm:text-sm">
-                                                        {residentData?.checkSendEmail === true ? 'Send email again' : 'Send email'}
-                                                    </span>
-                                                </label>
-                                            </td>
-                                        </tr>
-                                    }
-
-                                    {liabiltyData?.status === 'Settled' && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Amount</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{liabiltyData?.amount}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="text"
-                                                            value={liabiltyData.amount}
-                                                            onChange={liabilityHandleChange}
-                                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                            placeholder="Enter the amount here"
-                                                            name="amount"
-                                                        />
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">UTR number</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{liabiltyData?.utrNumber}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="text"
-                                                            value={liabiltyData.utrNumber}
-                                                            onChange={liabilityHandleChange}
-                                                            className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                            placeholder="Enter the UTR number here"
-                                                            name="utrNumber"
-                                                        />
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Transferred Date</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{liabiltyData?.transferredDate}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <input
-                                                            type="date"
-                                                            value={liabiltyData.transferredDate}
-                                                            onChange={liabilityHandleChange}
-                                                            className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                            name="transferredDate"
-                                                        />
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Transferred Date</th>
+                                    {!dataEditView ? <>
+                                        <td className={tdClass}>{liabiltyData?.transferredDate}</td>
+                                    </> : <>
+                                        <td className={tdClass}>
+                                            <input
+                                                type="date"
+                                                value={liabiltyData.transferredDate}
+                                                onChange={liabilityHandleChange}
+                                                className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300"
+                                                name="transferredDate"
+                                            />
+                                        </td>
                                     </>}
-                                </tbody>
-                            </table>
-                        </div>
-                    </form>
+                                </tr>
+                            </>}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </DashPage>
-    )
+    );
 }
 
-export default LiabilityData
+export default LiabilityData;

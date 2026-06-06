@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import residentApi from "../residentApi";
+import { DashPage } from "../../shared/Dashboard";
 import {
     CreditCard, CheckCircle, RefreshCw, AlertCircle,
     ShieldCheck, ShieldOff, IndianRupee, Calendar,
@@ -275,12 +276,12 @@ export default function residentPayments() {
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-semibold text-gray-900">{r.month}</p>
-                                                        <div className="flex items-center gap-2 mt-0.5">
-                                                            <span className="text-xs text-gray-500">Rent ₹{r.rent}</span>
-                                                            {r.delayCharges && parseFloat(r.delayCharges) > 0 && (
+                                                        {r.delayCharges && parseFloat(r.delayCharges) > 0 && (
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className="text-xs text-gray-500">Rent ₹{r.rent}</span>
                                                                 <span className="text-xs text-red-500">+ ₹{r.delayCharges} delay</span>
-                                                            )}
-                                                        </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">

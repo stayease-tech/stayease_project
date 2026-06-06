@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import { useNavigate, useLocation } from "react-router-dom";
 import { DashPage } from "../../../shared/Dashboard";
 
@@ -17,108 +19,94 @@ function MoveInChecklistData() {
 
     return (
         <DashPage>
-                    <div className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800">
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">MOVE-IN CHECKLIST DATA</h1>
+            <div className="max-w-2xl mx-auto py-6">
+                <h1 className="text-center text-xl font-semibold mb-6 text-[#D4A017]">MOVE-IN CHECKLIST DATA</h1>
 
-                        <div className="sm:flex justify-left">
-                            <button
-                                className="mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/operations/operations-checklistfeedback-table`)}
-                                type="button">Prev</button>
+                <div className="mb-4">
+                    <button
+                        className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                        onClick={() => navigate(`/operations/operations-checklistfeedback-table`)}
+                        type="button"
+                    >
+                        Prev
+                    </button>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="grid grid-cols-2 gap-3 p-4">
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Resident Name</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.residentsName || '-'}</p>
                         </div>
-
-                        <div className="w-full overflow-x-auto">
-                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                <tbody>
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Name</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.residentsName || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Flat Number</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.roomNo || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Flat Type</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.roomType || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Room No.</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.bedLabel || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Move-In Date</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.checkIn ? formatDateToDDMonYYYY(moveInChecklistData?.checkIn) : '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Audit Done By</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.propertyManager || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Property Condition</th>
-                                        <td className="py-1 px-2">{(moveInChecklistData?.moveInPropertyCondition || '').replace("[", "").replace("]", "") || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.moveInPropertyConditionComments || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Electrical Lighting</th>
-                                        <td className="py-1 px-2">{(moveInChecklistData?.moveInElectricalLighting || '').replace("[", "").replace("]", "") || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.moveInElectricalLightingComments || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Furniture Fixtures</th>
-                                        <td className="py-1 px-2">{(moveInChecklistData?.moveInFurnitureFixtures || '').replace("[", "").replace("]", "") || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.moveInFurnitureFixturesComments || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Kitchen Plumbing</th>
-                                        <td className="py-1 px-2">{(moveInChecklistData?.moveInKitchenPlumbing || '').replace("[", "").replace("]", "") || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.moveInKitchenPlumbingComments || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Housekeeping Cleanliness</th>
-                                        <td className="py-1 px-2">{(moveInChecklistData?.moveInHousekeepingCleanliness || '').replace("[", "").replace("]", "") || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.moveInHousekeepingCleanlinessComments || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Remarks</th>
-                                        <td className="py-1 px-2">{moveInChecklistData?.moveInRemarks || '-'}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Flat Number</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.roomNo || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Flat Type</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.roomType || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Room No.</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.bedLabel || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Move-In Date</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.checkIn ? formatDateToDDMonYYYY(moveInChecklistData?.checkIn) : '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Audit Done By</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.propertyManager || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Property Condition</p>
+                            <p className="text-xs text-gray-800">{(moveInChecklistData?.moveInPropertyCondition || '').replace("[", "").replace("]", "") || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Property Condition Comments</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.moveInPropertyConditionComments || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Electrical Lighting</p>
+                            <p className="text-xs text-gray-800">{(moveInChecklistData?.moveInElectricalLighting || '').replace("[", "").replace("]", "") || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Electrical Lighting Comments</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.moveInElectricalLightingComments || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Furniture Fixtures</p>
+                            <p className="text-xs text-gray-800">{(moveInChecklistData?.moveInFurnitureFixtures || '').replace("[", "").replace("]", "") || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Furniture Fixtures Comments</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.moveInFurnitureFixturesComments || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Kitchen Plumbing</p>
+                            <p className="text-xs text-gray-800">{(moveInChecklistData?.moveInKitchenPlumbing || '').replace("[", "").replace("]", "") || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Kitchen Plumbing Comments</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.moveInKitchenPlumbingComments || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Housekeeping Cleanliness</p>
+                            <p className="text-xs text-gray-800">{(moveInChecklistData?.moveInHousekeepingCleanliness || '').replace("[", "").replace("]", "") || '-'}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Housekeeping Cleanliness Comments</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.moveInHousekeepingCleanlinessComments || '-'}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">Remarks</p>
+                            <p className="text-xs text-gray-800">{moveInChecklistData?.moveInRemarks || '-'}</p>
                         </div>
                     </div>
+                </div>
+            </div>
         </DashPage>
-    )
+    );
 }
 
-export default MoveInChecklistData
+export default MoveInChecklistData;

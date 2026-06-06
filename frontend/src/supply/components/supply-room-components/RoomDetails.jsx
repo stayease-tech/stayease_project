@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
@@ -208,307 +210,312 @@ function RoomDetails() {
         }
     }
 
+    const thClass = "border-r border-gray-100 px-3 py-1.5 text-xs font-medium text-[#D4A017] text-left whitespace-nowrap w-48";
+    const tdClass = "px-3 py-1.5 text-xs text-gray-800";
+
     return (
         <DashPage>
-                    <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">SUPPLY ROOM DETAILS</h1>
+            <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
+                <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">SUPPLY ROOM DETAILS</h1>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => (roomId === 0) ? navigate(`/supply/supply-room-table`, { state: { owner_id, propertyId } }) : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } })}
-                                type="button">Prev</button>
+                <div className="sm:flex justify-between">
+                    <button
+                        className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => (roomId === 0) ? navigate(`/supply/supply-room-table`, { state: { owner_id, propertyId } }) : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } })}
+                        type="button">Prev</button>
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()}
-                                    type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
+                    <div className="flex justify-between sm:justify-end mb-5">
+                        <button
+                            className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()}
+                            type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
 
-                                {dataEditView && <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm"
-                                    type='submit' disabled={isSaving}
-                                >
-                                    {isSaving ? "Saving Details..." : "Save Details"}
-                                </button>}
-                            </div>
-                        </div>
+                        {dataEditView && <button
+                            className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm"
+                            type='submit' disabled={isSaving}
+                        >
+                            {isSaving ? "Saving Details..." : "Save Details"}
+                        </button>}
+                    </div>
+                </div>
 
-                        {isBedDataVisible ? <>
-                            <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">Room Details</h3>
+                {isBedDataVisible ? <>
+                    <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">Room Details</h3>
 
-                            <div className="w-full overflow-x-auto">
-                                <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded text-xs sm:text-sm-lg max-sm:text-xs">
-                                    <tbody className='text-xs sm:text-sm'>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Room No</th>
-                                            <td className="flex py-1 px-2">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full table-auto text-xs border-collapse">
+                            <tbody className="divide-y divide-gray-100">
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Room No</th>
+                                    <td className={tdClass}>
+                                        {!dataEditView ? <>
+                                            {roomDetails.roomNo}
+                                        </> :
+                                            <input
+                                                type="text"
+                                                id="roomNo"
+                                                value={roomDetails.roomNo}
+                                                onChange={roomHandleChange}
+                                                className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
+                                                name="roomNo"
+                                                placeholder="Enter the Room Number here"
+                                                required />
+                                        }
+                                    </td>
+                                </tr>
+
+                                <tr className="hover:bg-gray-50 transition-colors">
+                                    <th className={thClass}>Room Type</th>
+                                    <td className={tdClass}>
+                                        {!dataEditView ? <>
+                                            {roomDetails.roomType}
+                                        </> : <select
+                                            id="roomType"
+                                            value={roomDetails.roomType}
+                                            onChange={roomHandleChange}
+                                            className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300"
+                                            name="roomType"
+                                            required
+                                        >
+                                            <option value="" disabled>Select the Room type here</option>
+                                            {getOptions('room_types').map((t, i) => (
+                                                <option key={i} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                        }
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <button
+                            className="block w-full px-4 py-2 mt-5 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle()}
+                            type="button">Next</button>
+                    </div>
+                </> : <>
+                    {roomDetails.beds.map((data, index) => (
+                        <div key={`${data.id}-${data.beds}`} className="my-5">
+
+                            <label htmlFor={`bed${data}`} className="text-stone-400 max-sm:text-sm block mb-5"><strong>{(numberOfBedData.length === 1) ? numberOfBedData[index] : `Bed ${numberOfBedData[index]}`}</strong></label>
+
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full table-auto text-xs border-collapse">
+                                    <tbody className="divide-y divide-gray-100">
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Balcony Access</th>
+                                            <td className={tdClass}>
                                                 {!dataEditView ? <>
-                                                    {roomDetails.roomNo}
-                                                </> :
-                                                    <input
-                                                        type="text"
-                                                        id="roomNo"
-                                                        value={roomDetails.roomNo}
-                                                        onChange={roomHandleChange}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        name="roomNo"
-                                                        placeholder="Enter the Room Number here"
-                                                        required />
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Room Type</th>
-                                            <td className="flex py-1 px-2">
-                                                {!dataEditView ? <>
-                                                    {roomDetails.roomType}
+                                                    {data.balconyAccess}
                                                 </> : <select
-                                                    id="roomType"
-                                                    value={roomDetails.roomType}
-                                                    onChange={roomHandleChange}
-                                                    className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                    name="roomType"
+                                                    id={`balconyAccess_${data.id}`}
+                                                    value={data.balconyAccess}
+                                                    onChange={(e) => handleBedChange(data.id, "balconyAccess", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
+                                                    name={`balconyAccess_${data.id}`}
                                                     required
                                                 >
-                                                    <option value="" disabled>Select the Room type here</option>
-                                                    {getOptions('room_types').map((t, i) => (
+                                                    <option value="" disabled>Select the Balcony Access here</option>
+                                                    {getOptions('balcony_options').map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
                                                 }
                                             </td>
                                         </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Bath Access</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.bathAccess}
+                                                </> : <select
+                                                    id={`bathAccess_${data.id}`}
+                                                    value={data.bathAccess}
+                                                    onChange={(e) => handleBedChange(data.id, "bathAccess", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
+                                                    name={`bathAccess_${data.id}`}
+                                                    required
+                                                >
+                                                    <option value="" disabled>Select the Bath Access here</option>
+                                                    {getOptions('bathroom_options').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Room Type</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.roomType}
+                                                </> : <select
+                                                    id={`roomType_${data.id}`}
+                                                    value={data.roomType}
+                                                    onChange={(e) => handleBedChange(data.id, "roomType", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
+                                                    name={`roomType_${data.id}`}
+                                                    required
+                                                >
+                                                    <option value="" disabled>Select the Room Type here</option>
+                                                    {getOptions('sharing_types').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Energy Plan</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.energyPlan}
+                                                </> : <select
+                                                    id={`energyPlan_${data.id}`}
+                                                    value={data.energyPlan}
+                                                    onChange={(e) => handleBedChange(data.id, "energyPlan", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
+                                                    name={`energyPlan_${data.id}`}
+                                                    required
+                                                >
+                                                    <option value="" disabled>Select the Energy Plan here</option>
+                                                    {getOptions('electricity_options').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Hall Access</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.hallAccess}
+                                                </> : <select
+                                                    id={`hallAccess_${data.id}`}
+                                                    value={data.hallAccess}
+                                                    onChange={(e) => handleBedChange(data.id, "hallAccess", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
+                                                    name={`hallAccess_${data.id}`}
+                                                    required
+                                                >
+                                                    <option value="" disabled>Select the Hall Access here</option>
+                                                    {getOptions('yes_no_na_options').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Kitchen Access</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.kitchenAccess}
+                                                </> : <select
+                                                    id={`kitchenAccess_${data.id}`}
+                                                    value={data.kitchenAccess}
+                                                    onChange={(e) => handleBedChange(data.id, "kitchenAccess", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
+                                                    name={`kitchenAccess_${data.id}`}
+                                                    required
+                                                >
+                                                    <option value="" disabled>Select the Kitchen Access here</option>
+                                                    {getOptions('yes_no_na_options').map((t, i) => (
+                                                        <option key={i} value={t}>{t}</option>
+                                                    ))}
+                                                </select>
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Room Sqft</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.roomSqft}
+                                                </> : <input
+                                                    type="text"
+                                                    id={`roomSqft_${data.id}`}
+                                                    value={data.roomSqft}
+                                                    onChange={(e) => handleBedChange(data.id, "roomSqft", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
+                                                    name={`roomSqft_${data.id}`}
+                                                    placeholder="Enter the Room Sqft here"
+                                                    required />
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>DTH Number</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.tataSkyNo}
+                                                </> : <input
+                                                    type="text"
+                                                    id={`tataSkyNo_${data.id}`}
+                                                    value={data.tataSkyNo}
+                                                    onChange={(e) => handleBedChange(data.id, "tataSkyNo", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
+                                                    name={`tataSkyNo_${data.id}`}
+                                                    placeholder="Enter the Tata Sky Number here"
+                                                    required />
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Wifi Number</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.wifiNo}
+                                                </> : <input
+                                                    type="text"
+                                                    id={`wifiNo_${data.id}`}
+                                                    value={data.wifiNo}
+                                                    onChange={(e) => handleBedChange(data.id, "wifiNo", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
+                                                    name={`wifiNo_${data.id}`}
+                                                    placeholder="Enter the Wifi Number here"
+                                                    required />
+                                                }
+                                            </td>
+                                        </tr>
+
+                                        <tr className="hover:bg-gray-50 transition-colors">
+                                            <th className={thClass}>Bescom Meter Number</th>
+                                            <td className={tdClass}>
+                                                {!dataEditView ? <>
+                                                    {data.bescomMeterNo}
+                                                </> : <input
+                                                    type="text"
+                                                    id={`bescomMeterNo_${data.id}`}
+                                                    value={data.bescomMeterNo}
+                                                    onChange={(e) => handleBedChange(data.id, "bescomMeterNo", e.target.value)}
+                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
+                                                    name={`bescomMeterNo_${data.id}`}
+                                                    placeholder="Enter the Bescom Meter Number here"
+                                                    required />
+                                                }
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
-
-                                <button
-                                    className="block w-full px-4 py-2 mt-5 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle()}
-                                    type="button">Next</button>
                             </div>
-                        </> : <>
-                            {roomDetails.beds.map((data, index) => (
-                                <div key={`${data.id}-${data.beds}`} className="my-5">
+                        </div>
+                    ))}
 
-                                    <label htmlFor={`bed${data}`} className="text-stone-400 max-sm:text-sm block mb-5"><strong>{(numberOfBedData.length === 1) ? numberOfBedData[index] : `Bed ${numberOfBedData[index]}`}</strong></label>
-
-                                    <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded text-xs sm:text-sm-lg max-sm:text-xs">
-                                        <tbody className='text-xs sm:text-sm'>
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Balcony Access</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.balconyAccess}
-                                                    </> : <select
-                                                        id={`balconyAccess_${data.id}`}
-                                                        value={data.balconyAccess}
-                                                        onChange={(e) => handleBedChange(data.id, "balconyAccess", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                                                        name={`balconyAccess_${data.id}`}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Select the Balcony Access here</option>
-                                                        {getOptions('balcony_options').map((t, i) => (
-                                                            <option key={i} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Bath Access</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.bathAccess}
-                                                    </> : <select
-                                                        id={`bathAccess_${data.id}`}
-                                                        value={data.bathAccess}
-                                                        onChange={(e) => handleBedChange(data.id, "bathAccess", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                                                        name={`bathAccess_${data.id}`}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Select the Bath Access here</option>
-                                                        {getOptions('bathroom_options').map((t, i) => (
-                                                            <option key={i} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Room Type</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.roomType}
-                                                    </> : <select
-                                                        id={`roomType_${data.id}`}
-                                                        value={data.roomType}
-                                                        onChange={(e) => handleBedChange(data.id, "roomType", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                                                        name={`roomType_${data.id}`}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Select the Room Type here</option>
-                                                        {getOptions('sharing_types').map((t, i) => (
-                                                            <option key={i} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Energy Plan</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.energyPlan}
-                                                    </> : <select
-                                                        id={`energyPlan_${data.id}`}
-                                                        value={data.energyPlan}
-                                                        onChange={(e) => handleBedChange(data.id, "energyPlan", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                                                        name={`energyPlan_${data.id}`}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Select the Energy Plan here</option>
-                                                        {getOptions('electricity_options').map((t, i) => (
-                                                            <option key={i} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Hall Access</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.hallAccess}
-                                                    </> : <select
-                                                        id={`hallAccess_${data.id}`}
-                                                        value={data.hallAccess}
-                                                        onChange={(e) => handleBedChange(data.id, "hallAccess", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                                                        name={`hallAccess_${data.id}`}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Select the Hall Access here</option>
-                                                        {getOptions('yes_no_na_options').map((t, i) => (
-                                                            <option key={i} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Kitchen Access</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.kitchenAccess}
-                                                    </> : <select
-                                                        id={`kitchenAccess_${data.id}`}
-                                                        value={data.kitchenAccess}
-                                                        onChange={(e) => handleBedChange(data.id, "kitchenAccess", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm"
-                                                        name={`kitchenAccess_${data.id}`}
-                                                        required
-                                                    >
-                                                        <option value="" disabled>Select the Kitchen Access here</option>
-                                                        {getOptions('yes_no_na_options').map((t, i) => (
-                                                            <option key={i} value={t}>{t}</option>
-                                                        ))}
-                                                    </select>
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Room Sqft</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.roomSqft}
-                                                    </> : <input
-                                                        type="text"
-                                                        id={`roomSqft_${data.id}`}
-                                                        value={data.roomSqft}
-                                                        onChange={(e) => handleBedChange(data.id, "roomSqft", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs"
-                                                        name={`roomSqft_${data.id}`}
-                                                        placeholder="Enter the Room Sqft here"
-                                                        required />
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">DTH Number</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.tataSkyNo}
-                                                    </> : <input
-                                                        type="text"
-                                                        id={`tataSkyNo_${data.id}`}
-                                                        value={data.tataSkyNo}
-                                                        onChange={(e) => handleBedChange(data.id, "tataSkyNo", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs"
-                                                        name={`tataSkyNo_${data.id}`}
-                                                        placeholder="Enter the Tata Sky Number here"
-                                                        required />
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Wifi Number</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.wifiNo}
-                                                    </> : <input
-                                                        type="text"
-                                                        id={`wifiNo_${data.id}`}
-                                                        value={data.wifiNo}
-                                                        onChange={(e) => handleBedChange(data.id, "wifiNo", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs"
-                                                        name={`wifiNo_${data.id}`}
-                                                        placeholder="Enter the Wifi Number here"
-                                                        required />
-                                                    }
-                                                </td>
-                                            </tr>
-
-                                            <tr className="border-b border-white">
-                                                <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left max-sm:text-sm">Bescom Meter Number</th>
-                                                <td className="flex py-1 px-2">
-                                                    {!dataEditView ? <>
-                                                        {data.bescomMeterNo}
-                                                    </> : <input
-                                                        type="text"
-                                                        id={`bescomMeterNo_${data.id}`}
-                                                        value={data.bescomMeterNo}
-                                                        onChange={(e) => handleBedChange(data.id, "bescomMeterNo", e.target.value)}
-                                                        className="text-black w-full p-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs"
-                                                        name={`bescomMeterNo_${data.id}`}
-                                                        placeholder="Enter the Bescom Meter Number here"
-                                                        required />
-                                                    }
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ))}
-
-                            <button
-                                className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle()}
-                                type="button">Prev</button>
-                        </>
-                        }
-                    </form>
+                    <button
+                        className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle()}
+                        type="button">Prev</button>
+                </>
+                }
+            </form>
         </DashPage>
-    )
+    );
 }
 
-export default RoomDetails
+export default RoomDetails;

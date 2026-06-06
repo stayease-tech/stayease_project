@@ -11,10 +11,10 @@ const menuItems = [
     { name: "View Beds", icon: <LiaBedSolid />, link: "/operations/operations-beds-table" },
     { name: "Agreements", icon: <FaFileContract />, link: "/operations/operations-agreement-pdf", disabled: true },
     { name: "Complaints", icon: <GiTicket />, link: "/operations/operations-propertycomplaint-table" },
+    { name: "KYC Management", icon: <GoChecklist />, link: "/operations/operations-kyc-management" },
     { name: "Vendor Mgmt", icon: <IoPersonSharp />, link: "/operations/operations-vendor-form" },
-    { name: "Move-In", icon: <MdMoveToInbox />, link: "/operations/operations-checklistfeedback-table" },
-    { name: "Checklist", icon: <GoChecklist />, link: "/operations/operations-checklistfeedback-table" },
-    { name: "Move-Out", icon: <MdOutlineExitToApp />, link: "/operations/operations-checklistfeedback-table" },
+    { name: "Move-In", icon: <MdMoveToInbox />, link: "/operations/operations-checklistfeedback-table?type=movein" },
+    { name: "Move-Out", icon: <MdOutlineExitToApp />, link: "/operations/operations-checklistfeedback-table?type=moveout" },
 ];
 
 export default function Sidebar() {

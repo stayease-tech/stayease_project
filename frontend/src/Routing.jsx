@@ -101,6 +101,7 @@ const SalesExpenseForm = lazy(() => import("./sales/components/expense-component
 const SalesExpenseTable = lazy(() => import("./sales/components/expense-components/ExpenseTable"));
 const SalesVendorForm = lazy(() => import("./sales/components/expense-components/VendorForm"));
 const SalesKycManagement = lazy(() => import("./sales/components/kyc-components/KycManagement"));
+const SalesKycDetail = lazy(() => import("./sales/components/kyc-components/KycDetail"));
 
 // === SUPPLY - lazy loaded ===
 const SupActivityStats = lazy(() => import("./supply/components/activity-components/ActivityStats"));
@@ -142,6 +143,7 @@ const ResidentChangePassword = lazy(() => import("./resident/components/Resident
 
 // === OPERATIONS KYC - lazy loaded ===
 const OpsKycManagement = lazy(() => import("./operations/components/kyc-components/KycManagement"));
+const OpsKycDetail = lazy(() => import("./operations/components/kyc-components/KycDetail"));
 
 /**
  * Protected — thin wrapper around ProtectedRoute for cleaner JSX in the route table.
@@ -249,6 +251,7 @@ function Routing() {
                     <Route path="/operations/operations-expense-table" element={<Protected type="operations"><OpsExpenseTable /></Protected>} />
                     <Route path="/operations/operations-vendor-form" element={<Protected type="operations"><OpsVendorForm /></Protected>} />
                     <Route path="/operations/operations-kyc-management" element={<Protected type="operations"><OpsKycManagement /></Protected>} />
+                    <Route path="/operations/operations-kyc-management/:id" element={<Protected type="operations"><OpsKycDetail /></Protected>} />
 
                     {/* ========== SALES (PROTECTED) ========== */}
                     <Route path="/sales/sales-user-activity-data" element={<Protected type="sales"><SalesActivityStats /></Protected>} />
@@ -265,6 +268,7 @@ function Routing() {
                     <Route path="/sales/sales-expense-table" element={<Protected type="sales"><SalesExpenseTable /></Protected>} />
                     <Route path="/sales/sales-vendor-form" element={<Protected type="sales"><SalesVendorForm /></Protected>} />
                     <Route path="/sales/sales-kyc-management" element={<Protected type="sales"><SalesKycManagement /></Protected>} />
+                    <Route path="/sales/sales-kyc-management/:id" element={<Protected type="sales"><SalesKycDetail /></Protected>} />
 
                     {/* ========== SUPPLY (PROTECTED) ========== */}
                     <Route path="/supply/supply-user-activity-data" element={<Protected type="supply"><SupActivityStats /></Protected>} />

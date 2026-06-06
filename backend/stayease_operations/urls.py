@@ -14,7 +14,7 @@ urlpatterns = [
     path('moveoutfeedback-form-submit/', views.moveoutfeedback_form_submit, name='moveoutfeedback_form_submit'),
     path('get-propertycomplaint-data/', views.get_propertycomplaint_data, name='get_propertycomplaint_data'),
     path('propertycomplaint-form-submit/', views.propertycomplaint_form_submit, name='propertycomplaint_form_submit'),
-    path('operations-form-update/<str:id>/', views.operations_form_update, name='operations_form_update'),
+    path('complaint-update/<str:id>/', views.operations_form_update, name='operations_form_update'),
     path('feedback-form-submit/', views.feedback_form_submit, name='feedback_form_submit'),
     path('get-room-data/', views.get_room_data, name='get_room_data'),
     # KYC management

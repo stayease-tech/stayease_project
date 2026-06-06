@@ -1,448 +1,251 @@
-import React, { useState, useEffect } from "react";
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import Cookies from 'js-cookie';
-import axios from 'axios';
-import { useDropdowns } from "../../../shared/DropdownContext";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { ArrowLeft, Save, Star } from "lucide-react";
 import { DashPage } from "../../../shared/Dashboard";
 
-function PropertyComplaintData() {
-    const { getOptions } = useDropdowns();
+const COMPLAINT_STATUSES = ["Open", "Follow Up", "Closed"];
+
+function InfoRow({ label, value }) {
+    return (
+        <div>
+            <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+            <p className="text-sm font-medium text-gray-900">{value || "—"}</p>
+        </div>
+    );
+}
+
+function StarRating({ value }) {
+    return (
+        <div className="flex items-center gap-0.5">
+            {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} size={13}
+                    className={i <= parseInt(value || 0) ? "text-amber-400 fill-amber-400" : "text-gray-200 fill-gray-200"} />
+            ))}
+        </div>
+    );
+}
+
+export default function PropertyComplaintData() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-    const propertyComplaintData = location.state?.data;
-    const realData = location.state?.realData;
+    const { state } = useLocation();
+    const raw = state?.data;
 
-    const [originalData, setOriginalData] = useState(
-        realData ? { ...realData } : { ...propertyComplaintData }
-    );
-    const [propertyComplaintDetails, setPropertyComplaintDetails] = useState({
-        status: propertyComplaintData?.status,
-        vendor: propertyComplaintData?.vendor,
-        date: propertyComplaintData?.date,
-        fromTime: propertyComplaintData?.fromTime,
-        toTime: propertyComplaintData?.toTime,
-        comments: propertyComplaintData?.comments
-    });
-    const [registeredVendor, setRegisteredVendor] = useState(propertyComplaintDetails.vendor ? 'Yes' : '');
-    const [dataEditView, setDataEditView] = useState(realData ? true : false);
-    const [isSaving, setIsSaving] = useState(false);
-    const [loadingData, setLoadingData] = useState(false);
     const [vendorData, setVendorData] = useState([]);
-
-    const editHandle = () => {
-        setDataEditView(!dataEditView)
-    }
-
-    const formatDateForDisplay = (dateStr) => {
-        if (!dateStr) return '';
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            }).replace(/ /g, '-');
-        } catch {
-            return dateStr;
-        }
-    };
-
-    const formatTimeForDisplay = (timeStr) => {
-        if (!timeStr) return '';
-
-        try {
-            if (timeStr.includes('AM') || timeStr.includes('PM')) {
-                return timeStr;
-            }
-
-            const [hours, minutes] = timeStr.split(':');
-            const hourInt = parseInt(hours);
-            const minuteInt = parseInt(minutes || '00');
-
-            const period = hourInt >= 12 ? 'PM' : 'AM';
-            const displayHour = hourInt % 12 || 12;
-
-            return `${displayHour}:${minuteInt.toString().padStart(2, '0')} ${period}`;
-        } catch (error) {
-            console.error('Error formatting time for display:', error);
-            return 'TBC';
-        }
-    };
-
-    const formatter = new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZoneName: 'short'
+    const [form, setForm] = useState({
+        status:    raw?.status      || "Open",
+        vendor:    raw?.vendor      || "",
+        date:      raw?.date        || "",
+        fromTime:  raw?.fromTime    || "",
+        toTime:    raw?.toTime      || "",
+        comments:  raw?.comments    || "",
     });
-
-    const propertyComplaintHandleChange = (e) => {
-        const { name, value } = e.target;
-
-        setPropertyComplaintDetails(prevDetails => ({
-            ...prevDetails,
-            [name]: value
-        }));
-    };
+    const [original] = useState({ ...form });
+    const [saving, setSaving] = useState(false);
+    const [msg, setMsg] = useState({ text: "", type: "" });
+    const statusChanged = form.status !== original.status;
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoadingData(true);
-            try {
-                const response = await axios.get('/accounts/get-vendor-data/');
-
-                setVendorData(response.data.vendor_table);
-            } catch (error) {
-                console.log(error.message || 'Error fetching data');
-            } finally {
-                setLoadingData(false);
-            }
-        };
-
-        fetchData();
+        axios.defaults.headers.common["X-CSRFToken"] = Cookies.get("csrftoken");
+        axios.get("/accounts/get-vendor-data/")
+            .then((res) => setVendorData(res.data.vendor_table || []))
+            .catch(console.error);
     }, []);
 
-    const vendorDataFetcher = () => {
-        propertyComplaintData.status = propertyComplaintDetails.status;
-        propertyComplaintData.vendor = propertyComplaintDetails.vendor;
-        propertyComplaintData.date = propertyComplaintDetails.date;
-        propertyComplaintData.fromTime = propertyComplaintDetails.fromTime;
-        propertyComplaintData.toTime = propertyComplaintDetails.toTime;
-        propertyComplaintData.comments = propertyComplaintDetails.comments;
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({
+            ...prev,
+            [name]: value,
+            // Clear comments when status changes so operator writes a fresh note
+            ...(name === "status" ? { comments: "" } : {}),
+        }));
+        setMsg({ text: "", type: "" });
+    };
 
-        navigate('/operations/operations-vendor-form', { state: { id, propertyComplaintData, originalData } })
-    }
-
-    const getChangedData = () => {
-        const changedData = {};
-
-        Object.keys(propertyComplaintDetails).forEach(key => {
-            const originalValue = originalData[key] || '';
-            const currentValue = propertyComplaintDetails[key] || '';
-
-            if (currentValue !== originalValue) {
-                changedData[key] = currentValue;
-            }
-        });
-
-        return changedData;
-    }
-
-    const getCSRFToken = () => {
-        return Cookies.get('csrftoken');
-    }
-
-    axios.defaults.headers.common['X-CSRFToken'] = getCSRFToken();
-
-    const propertyComplaintHandleUpdate = async (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-
-        const changedData = getChangedData();
-
-        if (Object.keys(changedData).length === 0) {
-            alert('No data is updated!');
+        if (statusChanged && !form.comments.trim()) {
+            setMsg({ text: "A comment is required when changing the status.", type: "error" });
             return;
         }
-
-        setIsSaving(true);
-
-        if (changedData?.vendor) {
-            const vendorId = vendorData.find(vendor => vendor.vendor === changedData.vendor).id;
-            changedData.vendorId = vendorId;
+        const changed = {};
+        Object.keys(form).forEach((k) => {
+            if ((form[k] || "") !== (original[k] || "")) changed[k] = form[k];
+        });
+        if (Object.keys(changed).length === 0) {
+            setMsg({ text: "No changes to save.", type: "error" });
+            return;
         }
-
+        setSaving(true);
+        if (changed.vendor) {
+            const v = vendorData.find((vd) => vd.vendor === changed.vendor);
+            if (v) changed.vendorId = v.id;
+        }
         try {
-            const response = await axios.put(
-                `/operations/operations-form-update/${id}/`,
-                changedData,
-                {
-                    withCredentials: true,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            )
-
-            setOriginalData(prev => ({ ...prev, ...changedData }));
-
-            if (response.data.success) {
-                alert(response.data.message);
-
-                navigate(`/operations/operations-propertycomplaint-table`)
+            const res = await axios.put(`/operations/complaint-update/${id}/`, changed, {
+                withCredentials: true,
+                headers: { "Content-Type": "application/json" },
+            });
+            if (res.data.success) {
+                setMsg({ text: res.data.message || "Saved successfully.", type: "success" });
+                setTimeout(() => navigate("/operations/operations-propertycomplaint-table"), 1000);
+            } else {
+                setMsg({ text: "Failed to save.", type: "error" });
             }
-        } catch (err) {
-            console.error('Error updating form:', err);
-            alert('There was an error updating the form. Please try again!');
-        } finally {
-            setIsSaving(false);
+        } catch {
+            setMsg({ text: "Error saving. Please try again.", type: "error" });
         }
+        setSaving(false);
+    };
+
+    if (!raw) {
+        navigate("/operations/operations-propertycomplaint-table", { replace: true });
+        return null;
     }
 
     return (
         <DashPage>
-                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={propertyComplaintHandleUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">PROPERTY COMPLAINT DATA</h1>
+            <div className="page-header">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate("/operations/operations-propertycomplaint-table")}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                    >
+                        <ArrowLeft size={16} className="text-gray-600" />
+                    </button>
+                    <div>
+                        <h1>{raw.residentsName}</h1>
+                        <p className="font-mono text-xs text-gray-400">{raw.ticket_number}</p>
+                    </div>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                    form.status === "Closed"      ? "bg-green-50 text-green-700 border-green-200" :
+                    form.status === "Follow Up"   ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                                    "bg-blue-50 text-blue-700 border-blue-200"
+                }`}>
+                    {form.status}
+                </span>
+            </div>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/operations/operations-propertycomplaint-table`)}
-                                type="button">Prev</button>
+            {msg.text && (
+                <div className={`mb-4 p-3 rounded-lg text-sm border ${
+                    msg.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"
+                }`}>
+                    {msg.text}
+                </div>
+            )}
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
+            <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Left: Complaint info (read-only) */}
+                <div className="space-y-4">
+                    <div className="card">
+                        <div className="card-header"><h3>Complaint Details</h3></div>
+                        <div className="card-body grid grid-cols-2 gap-3">
+                            <InfoRow label="Room"     value={raw.roomNo} />
+                            <InfoRow label="Phone"    value={raw.phoneNumber} />
+                            <InfoRow label="Category" value={raw.category_type} />
+                            <InfoRow label="Time"     value={raw.preferredTime} />
+                            {raw.resident_urgency && <InfoRow label="Urgency"  value={raw.resident_urgency} />}
+                            {raw.resident_location && <InfoRow label="Location" value={raw.resident_location} />}
+                        </div>
+                        {raw.issue_desc && (
+                            <div className="px-4 pb-4">
+                                <p className="text-xs text-gray-400 mb-1">Issue Description</p>
+                                <p className="text-sm text-gray-800 bg-gray-50 rounded-lg p-2.5">{raw.issue_desc}</p>
+                            </div>
+                        )}
+                    </div>
 
-                                {dataEditView === true && <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving}
-                                    type='submit'
-                                >
-                                    {isSaving ? "Saving Details..." : "Save Details"}
-                                </button>}
+                    {/* Resident feedback (if any) */}
+                    {raw.has_feedback && (
+                        <div className="card">
+                            <div className="card-header"><h3>Resident Feedback</h3></div>
+                            <div className="card-body grid grid-cols-2 gap-3">
+                                <InfoRow label="Issue Resolved" value={raw.feedback?.issueResolved} />
+                                <div>
+                                    <p className="text-xs text-gray-400 mb-1">Rating</p>
+                                    <StarRating value={raw.feedback?.ratings} />
+                                </div>
+                                {raw.feedback?.suggestions && (
+                                    <div className="col-span-2">
+                                        <p className="text-xs text-gray-400 mb-0.5">Suggestions</p>
+                                        <p className="text-sm text-gray-700 italic">"{raw.feedback.suggestions}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right: Editable fields */}
+                <div className="card">
+                    <div className="card-header"><h3>Update Complaint</h3></div>
+                    <div className="card-body space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                            {/* Status */}
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                                <select name="status" value={form.status} onChange={handleChange} className="form-input">
+                                    {COMPLAINT_STATUSES.map((s) => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Vendor */}
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Assign Vendor</label>
+                                <select name="vendor" value={form.vendor} onChange={handleChange} className="form-input">
+                                    <option value="">No vendor assigned</option>
+                                    {vendorData.map((v) => (
+                                        <option key={v.id} value={v.vendor}>{v.vendor}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Deadline */}
+                            <div>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Deadline</label>
+                                <input type="date" name="date" value={form.date} onChange={handleChange} className="form-input" />
+                            </div>
+
+                            {/* From / To Time */}
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">From</label>
+                                    <input type="time" name="fromTime" value={form.fromTime} onChange={handleChange} className="form-input" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">To</label>
+                                    <input type="time" name="toTime" value={form.toTime} onChange={handleChange} className="form-input" />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="w-full overflow-x-auto">
-                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                <tbody>
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Ticket Number</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.ticket_number || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Name</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.residentsName || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Room No.</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.roomNo || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Phone Number</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.phoneNumber || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Category</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.category_type || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Items</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.items || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Preferred Time</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.preferredTime || '-'}</td>
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Issue Description</th>
-                                        <td className="py-1 px-2">{propertyComplaintData?.issue_desc || ''}</td>
-                                    </tr>
-
-                                    {propertyComplaintData?.resident_category && <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Category</th>
-                                        <td className="py-1 px-2">{propertyComplaintData.resident_category}</td>
-                                    </tr>}
-
-                                    {propertyComplaintData?.resident_location && <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Location</th>
-                                        <td className="py-1 px-2">{propertyComplaintData.resident_location}</td>
-                                    </tr>}
-
-                                    {propertyComplaintData?.resident_urgency && <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Resident Urgency</th>
-                                        <td className="py-1 px-2">{propertyComplaintData.resident_urgency}</td>
-                                    </tr>}
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Status</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{propertyComplaintDetails?.status || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="status" value={propertyComplaintDetails.status} onChange={(e) => propertyComplaintHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="status" required>
-                                                        <option value="" disabled>Select the status here</option>
-                                                        {getOptions('complaint_statuses').map((s, i) => (
-                                                            <option key={i} value={s}>{s}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Registered Vendor</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{registeredVendor || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="registeredVendor" value={registeredVendor} onChange={(e) => setRegisteredVendor(e.target.value)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="registeredVendor" required>
-                                                        <option value="" disabled>Select the option here</option>
-                                                        {getOptions('yes_no_options').map((o, i) => (
-                                                            <option key={i} value={o}>{o}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    {registeredVendor === 'Yes' && <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Vendor</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{propertyComplaintDetails?.vendor || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="vendor" value={propertyComplaintDetails.vendor} onChange={(e) => propertyComplaintHandleChange(e)} className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm" name="vendor" required>
-                                                        <option value="" disabled>Select the Vendor here</option>{loadingData ? <option value="">
-                                                            Loading vendor data...
-                                                        </option> : <>
-                                                            {vendorData.map((vendor, index) => (
-                                                                <option key={index} value={vendor.vendor}>
-                                                                    {vendor.vendor}
-                                                                </option>
-                                                            ))}
-                                                        </>}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>}
-
-                                    {registeredVendor === 'No' && <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Add Vendor</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{registeredVendor === 'No' && '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <button className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={vendorDataFetcher} type="button">Click here to add the vendor details</button>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>}
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Deadline</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{formatDateForDisplay(propertyComplaintDetails?.date) || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="date"
-                                                        name='date'
-                                                        value={propertyComplaintDetails.date}
-                                                        onChange={(e) => propertyComplaintHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">From Time</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{formatTimeForDisplay(propertyComplaintDetails?.fromTime) || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="time"
-                                                        name='fromTime'
-                                                        value={propertyComplaintDetails.fromTime}
-                                                        onChange={(e) => propertyComplaintHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">To Time</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{formatTimeForDisplay(propertyComplaintDetails?.toTime) || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="time"
-                                                        name='toTime'
-                                                        value={propertyComplaintDetails.toTime}
-                                                        onChange={(e) => propertyComplaintHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Comments</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{propertyComplaintDetails?.comments || '-'}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        name='comments'
-                                                        value={propertyComplaintDetails.comments}
-                                                        onChange={(e) => propertyComplaintHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the comments here"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    {propertyComplaintData?.has_feedback && <>
-                                        <tr className="border-b border-white">
-                                            <th colSpan={2} className="border-r border-white py-1 px-2 text-stone-400 text-center">Resident Feedback</th>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Issue Resolved</th>
-                                            <td className="py-1 px-2">{propertyComplaintData?.feedback?.issueResolved || '-'}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Ratings</th>
-                                            <td className="py-1 px-2">{propertyComplaintData?.feedback?.ratings || '-'}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Sugestions</th>
-                                            <td className="py-1 px-2">{propertyComplaintData?.feedback?.suggestions || '-'}</td>
-                                        </tr>
-
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Submitted At</th>
-                                            <td className="py-1 px-2">{propertyComplaintData?.feedback?.submittedDateAndTime ? formatter.format(new Date(propertyComplaintData?.feedback?.submittedDateAndTime)) : '-'}</td>
-                                        </tr>
-                                    </>}
-                                </tbody>
-                            </table>
+                        {/* Comments */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">
+                                Comments {statusChanged && <span className="text-red-500">*</span>}
+                                {statusChanged && <span className="ml-1 text-xs text-red-500 font-normal">(required when changing status)</span>}
+                            </label>
+                            <textarea name="comments" value={form.comments} onChange={handleChange}
+                                className={`form-input ${statusChanged && !form.comments.trim() ? "border-red-400" : ""}`}
+                                rows={3} placeholder={statusChanged ? "Explain the status change…" : "Add internal comments..."} />
                         </div>
-                    </form>
-        </DashPage>
-    )
-}
 
-export default PropertyComplaintData
+                        <div className="flex justify-end">
+                            <button type="submit" disabled={saving} className="btn btn-primary flex items-center gap-2">
+                                <Save size={15} /> {saving ? "Saving…" : "Save Changes"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </DashPage>
+    );
+}

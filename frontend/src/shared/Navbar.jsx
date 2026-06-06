@@ -1,7 +1,7 @@
 // Copyright Aravind Adari
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiUser, FiLogOut } from "react-icons/fi";
+import { FiLogOut } from "react-icons/fi";
 import { useAuth } from "../auth/AuthContext";
 import { useSidebar } from "./SidebarContext";
 
@@ -59,8 +59,25 @@ export default function Navbar() {
         finally { setIsLoggingOut(false); navigate(wasResident ? "/resident-login" : "/login"); }
     };
 
-    const activityRoute = auth.userType ? `/${auth.userType}/${auth.userType}-user-activity-data` : "#";
     const dashboardRoute = auth.DEFAULT_ROUTES?.[auth.userType] || "/login";
+
+    const getResidentName = () => {
+        try {
+            const d = JSON.parse(localStorage.getItem("residentData") || "{}");
+            return d.residentsName || null;
+        } catch { return null; }
+    };
+
+    const displayName = auth.userType === 'resident' ? (getResidentName() || auth.user || 'Resident') : (auth.user || '');
+
+    const getAvatarInitials = () => {
+        const parts = displayName.trim().split(/\s+/).filter(Boolean);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        if (parts.length === 1) return parts[0][0]?.toUpperCase() || 'U';
+        return 'U';
+    };
+
+    const profileRoute = auth.userType === 'resident' ? '/resident/profile' : null;
 
     return (
         <nav className={`bg-[#0A0A0A] shadow-md fixed top-0 right-0 z-50 transition-all duration-300 ${isExpanded ? 'left-64' : 'left-16'}`}>
@@ -76,7 +93,7 @@ export default function Navbar() {
                             onClick={() => setOpen(!open)}
                         >
                             <div className="w-8 h-8 rounded-full bg-[#D4A017] text-black flex items-center justify-center text-sm font-semibold">
-                                {(auth.user || 'U')[0]?.toUpperCase()}
+                                {getAvatarInitials()}
                             </div>
                             {auth.userType && (
                                 <span className="hidden sm:block text-sm font-medium text-neutral-300 capitalize">{auth.userType}</span>
@@ -85,17 +102,14 @@ export default function Navbar() {
 
                         {open && (
                             <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
-                                <div className="px-4 py-2 border-b border-gray-100">
-                                    <p className="text-sm font-medium text-gray-900 truncate">{auth.user}</p>
-                                    <p className="text-xs text-gray-500 capitalize">{auth.userType}</p>
-                                </div>
-                                <button
-                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                    onClick={() => { navigate(activityRoute); setOpen(false); }}
+                                <div
+                                    className={`px-4 py-3 border-b border-gray-100 ${profileRoute ? "cursor-pointer hover:bg-gray-50" : ""}`}
+                                    onClick={() => { if (profileRoute) { navigate(profileRoute); setOpen(false); } }}
                                 >
-                                    <FiUser size={14} /> Activity Stats
-                                </button>
-                                <hr className="my-1 border-gray-100" />
+                                    <p className="text-sm font-semibold text-gray-900 truncate">{displayName}</p>
+                                    <p className="text-xs text-gray-400 capitalize">{auth.userType}</p>
+                                    {profileRoute && <p className="text-xs text-[#D4A017] mt-0.5">View profile →</p>}
+                                </div>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"

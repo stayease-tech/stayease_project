@@ -1,12 +1,19 @@
 export const DATE_INPUT_MIN = "1900-01-01";
-export const DATE_INPUT_MAX = "2099-12-31";
+export const DATE_INPUT_MAX = `${new Date().getFullYear()}-12-31`;
 
 function isIsoDate(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(value || "");
 }
 
+function isCalendarValidDate(value) {
+  const [year, month, day] = value.split("-").map(Number);
+  const d = new Date(year, month - 1, day);
+  return d.getFullYear() === year && d.getMonth() + 1 === month && d.getDate() === day;
+}
+
 export function isValidIsoDateInRange(value, min = DATE_INPUT_MIN, max = DATE_INPUT_MAX) {
   if (!isIsoDate(value)) return false;
+  if (!isCalendarValidDate(value)) return false;
   return value >= min && value <= max;
 }
 
@@ -25,6 +32,11 @@ function normalizeDateInputElement(input) {
 
   if (!isIsoDate(value)) {
     input.setCustomValidity("Please enter a valid date.");
+    return;
+  }
+
+  if (!isCalendarValidDate(value)) {
+    input.setCustomValidity("Please enter a real calendar date (e.g. June only has 30 days).");
     return;
   }
 

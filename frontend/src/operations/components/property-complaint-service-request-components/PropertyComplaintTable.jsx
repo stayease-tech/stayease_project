@@ -1,234 +1,160 @@
-import React, { useState, useEffect } from "react";
-import { FaEdit } from "react-icons/fa";
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
-import { useDropdowns } from "../../../shared/DropdownContext";
+import axios from "axios";
+import { Wrench, ChevronRight, Search } from "lucide-react";
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
 
-function PropertyComplaintTable() {
-    const { getOptions } = useDropdowns();
+const PAGE_SIZE = 10;
+
+const STATUS_BADGE = {
+    Open:        "bg-blue-50 text-blue-700 border-blue-200",
+    "Follow Up": "bg-amber-50 text-amber-700 border-amber-200",
+    Closed:      "bg-green-50 text-green-700 border-green-200",
+};
+
+const URGENCY_BADGE = {
+    low:       "bg-green-50 text-green-700",
+    medium:    "bg-amber-50 text-amber-700",
+    high:      "bg-orange-50 text-orange-700",
+    emergency: "bg-red-50 text-red-700",
+};
+
+const STATUS_TABS = ["All", "Open", "Follow Up", "Closed"];
+
+export default function PropertyComplaintTable() {
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
+    const [complaints, setComplaints] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [statusFilter, setStatusFilter] = useState("All");
+    const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-
-    const [propertyComplaintData, setPropertyComplaintData] = useState([]);
-    const [loadingData, setLoadingData] = useState(false);
-    const [status, setStatus] = useState('All');
-
-    const statusFilteredData = propertyComplaintData.filter(item =>
-        status === 'All' ? true : item.status === status
-    );
-
-    const filteredData = (statusFilteredData || []).filter(item =>
-        Object.values(item).some(value =>
-            String(value).toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
-
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        setCurrentPage(1);
-    };
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
-
-    const formatter = new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        timeZoneName: 'short'
-    });
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoadingData(true);
-            try {
-                const response = await axios.get('/operations/get-propertycomplaint-data/');
-
-                setPropertyComplaintData(response?.data?.complaints_array)
-            } catch (error) {
-                console.log(error.message || 'Error fetching data');
-            } finally {
-                setLoadingData(false);
-            }
-        };
-
-        fetchData();
+        axios.get("/operations/get-propertycomplaint-data/")
+            .then((res) => { if (res.data.complaints_array) setComplaints(res.data.complaints_array); })
+            .catch(console.error)
+            .finally(() => setLoading(false));
     }, []);
 
-    const viewPropertyComplaintData = (data) => {
-        navigate(`/operations/operations-propertycomplaint-data/${data?.id}`, { state: { data } })
-    };
+    const filtered = complaints.filter((c) => {
+        const matchStatus = statusFilter === "All" || c.status === statusFilter;
+        const q = search.toLowerCase();
+        const matchSearch = !q || [c.residentsName, c.ticket_number, c.category_type, c.roomNo, c.phoneNumber]
+            .some((v) => String(v || "").toLowerCase().includes(q));
+        return matchStatus && matchSearch;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const paged = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    const handleFilterChange = (s) => { setStatusFilter(s); setCurrentPage(1); };
+    const handleSearch = (e) => { setSearch(e.target.value); setCurrentPage(1); };
 
     return (
-
-
         <DashPage>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">PROPERTY COMPLAINT & SERVICE REQUEST TABLE</h1>
+            <div className="page-header">
+                <div>
+                    <h1>Complaints</h1>
+                    <p>Property complaints and service requests</p>
+                </div>
+            </div>
 
-                        <div className="sm:flex justify-end">
-                            <div className="flex gap-2">
-                                <select id="status" value={status} onChange={(e) => setStatus(e.target.value)} className="block mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="status" required>
-                                    <option value="All">{`All (${propertyComplaintData.length})`}</option>
-                                    {getOptions('complaint_statuses').map((s, i) => (
-                                        <option key={i} value={s}>{`${s} (${propertyComplaintData.filter(complaint => complaint.status === s).length})`}</option>
-                                    ))}
-                                </select>
+            {/* Filters */}
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <div className="flex gap-2">
+                    {STATUS_TABS.map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => handleFilterChange(tab)}
+                            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                                statusFilter === tab
+                                    ? "bg-[#D4A017] text-white border-[#D4A017]"
+                                    : "bg-white text-gray-600 border-gray-300 hover:border-[#D4A017] hover:text-[#D4A017]"
+                            }`}
+                        >
+                            {tab}
+                            {tab !== "All" && (
+                                <span className="ml-1.5 text-xs opacity-70">
+                                    ({complaints.filter((c) => c.status === tab).length})
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+                <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search by name, ticket, category..."
+                        value={search}
+                        onChange={handleSearch}
+                        className="form-input pl-8 py-2 text-sm w-64"
+                    />
+                </div>
+            </div>
 
-                                <input
-                                    type="text"
-                                    placeholder="Search..."
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                    className="block mt-2 mb-3 text-black max-sm:w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs"
-                                />
+            {loading ? (
+                <div className="loading-center"><div className="spinner"></div></div>
+            ) : filtered.length === 0 ? (
+                <div className="card">
+                    <div className="card-body text-center py-12 text-gray-500">
+                        <Wrench size={40} className="mx-auto mb-3 text-gray-300" />
+                        <p>No complaints found.</p>
+                    </div>
+                </div>
+            ) : (
+                <div className="card">
+                    <div className="divide-y divide-gray-100">
+                        {paged.map((c) => (
+                            <div
+                                key={c.id}
+                                className="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 cursor-pointer transition-colors"
+                                onClick={() => navigate(`/operations/operations-propertycomplaint-data/${c.id}`, { state: { data: c } })}
+                            >
+                                <div className="flex-1 min-w-0 grid grid-cols-12 gap-2 items-center">
+                                    {/* Ticket + name */}
+                                    <div className="col-span-4">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="text-sm font-semibold text-gray-900 truncate">{c.residentsName || "—"}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 font-mono">{c.ticket_number || "No ticket"}</p>
+                                    </div>
+
+                                    {/* Room + phone */}
+                                    <div className="col-span-3">
+                                        <p className="text-sm text-gray-700">Room {c.roomNo || "—"}</p>
+                                        <p className="text-xs text-gray-400">{c.phoneNumber || "—"}</p>
+                                    </div>
+
+                                    {/* Category */}
+                                    <div className="col-span-3">
+                                        <p className="text-sm text-gray-700 truncate">{c.category_type || "—"}</p>
+                                        {c.resident_urgency && (
+                                            <span className={`text-xs px-1.5 py-0.5 rounded ${URGENCY_BADGE[c.resident_urgency?.toLowerCase()] || "bg-gray-50 text-gray-500"}`}>
+                                                {c.resident_urgency}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Status */}
+                                    <div className="col-span-2 flex justify-end">
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_BADGE[c.status] || "bg-gray-50 text-gray-500 border-gray-200"}`}>
+                                            {c.status || "Open"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
                             </div>
-                        </div>
-
-                        <div className="w-full overflow-x-auto">
-                            <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                                <thead>
-                                    <tr className="bg-gray-50 text-gray-700">
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Ticket Number</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Resident Name</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Room No.</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Phone Number</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Category</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Items</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Preferred Time</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Issue Description</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Submitted At</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Status</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Assign Vendor</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {paginatedData.length > 0 ? paginatedData.map((propertyComplaintData, i) => (
-                                        <tr className="" key={propertyComplaintData.id}>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.ticket_number || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.residentsName || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.roomNo || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.phoneNumber || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.category_type || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.items || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.preferredTime || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.issue_desc || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.submittedDateAndTime ? formatter.format(new Date(propertyComplaintData?.submittedDateAndTime)) : '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{propertyComplaintData?.status || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center mx-auto">
-                                                <div className="flex justify-center">
-                                                    <FaEdit className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewPropertyComplaintData(propertyComplaintData)} />
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    )) : <tr>
-                                        <td colSpan="12" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                    </tr>}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                                aria-label="Previous page"
-                            >
-                                &lt;
-                            </button>
-
-                            <button
-                                key={1}
-                                onClick={() => handlePageChange(1)}
-                                className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                                    ? "bg-[#D4A017] text-white"
-                                    : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                    }`}
-                            >
-                                1
-                            </button>
-
-                            {currentPage > 3 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
-                            )}
-
-                            {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                                let page;
-                                if (currentPage <= 3) {
-                                    page = i + 2;
-                                } else if (currentPage >= totalPages - 2) {
-                                    page = totalPages - 4 + i;
-                                } else {
-                                    page = currentPage - 2 + i;
-                                }
-
-                                if (page > 1 && page < totalPages) {
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                                ? "bg-[#D4A017] text-white"
-                                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return null;
-                            })}
-
-                            {currentPage < totalPages - 2 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
-                            )}
-
-                            {totalPages > 1 && (
-                                <button
-                                    key={totalPages}
-                                    onClick={() => handlePageChange(totalPages)}
-                                    className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                        ? "bg-[#D4A017] text-white"
-                                        : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                        }`}
-                                >
-                                    {totalPages}
-                                </button>
-                            )}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                                aria-label="Next page"
-                            >
-                                &gt;
-                            </button>
-                        </div>
-
-
+                        ))}
+                    </div>
+                    <div className="px-5 py-3 border-t border-gray-100">
+                        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                    </div>
+                </div>
+            )}
         </DashPage>
-
-
-    )
+    );
 }
-
-export default PropertyComplaintTable

@@ -149,9 +149,11 @@ export default function residentComplaints() {
         <DashPage>
                 <div className="page-header">
                     <div><h1>Maintenance Requests</h1><p>Raise and track your maintenance requests</p></div>
-                    <button className="btn btn-primary flex items-center gap-2" onClick={() => { setShowForm(!showForm); setErrors({}); }}>
-                        <Plus size={16} /> {showForm ? "Cancel" : "New Request"}
-                    </button>
+                    {!showForm && (
+                        <button className="btn btn-primary flex items-center gap-2" onClick={() => { setShowForm(true); setErrors({}); }}>
+                            <Plus size={16} /> New Request
+                        </button>
+                    )}
                 </div>
 
                 {showForm && (

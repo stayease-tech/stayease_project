@@ -25,6 +25,8 @@ class resident_Data(models.Model):
     salesManager = models.CharField(max_length=255, blank=True, null=True)
     comfortClass = models.CharField(max_length=255, blank=True, null=True)
     mealType = models.CharField(max_length=255, blank=True, null=True)
+    firstName = models.CharField(max_length=150, blank=True, null=True)
+    lastName = models.CharField(max_length=150, blank=True, null=True)
     residentsName = models.CharField(max_length=255, blank=True, null=True)
     phoneNumber = models.CharField(max_length=255, blank=True, null=True)
     email = models.CharField(max_length=255, blank=True, null=True)

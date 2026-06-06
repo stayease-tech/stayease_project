@@ -1,10 +1,11 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { IoMdAddCircle } from "react-icons/io";
-import { FaEye } from "react-icons/fa";
-import { FaCopy } from "react-icons/fa";
+import { Eye, Copy, PlusCircle } from "lucide-react";
 import axios from 'axios';
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
 
 function ChecklistFeedbackTable() {
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ function ChecklistFeedbackTable() {
 
     const [searchTerm, setSearchTerm] = useState(bedsData?.residentsName || "");
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12;
 
     const mergedMap = new Map();
 
@@ -50,10 +51,6 @@ function ChecklistFeedbackTable() {
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
         setCurrentPage(1);
-    };
-
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
     };
 
     function formatDateToDDMonYYYY(dateStr) {
@@ -104,7 +101,7 @@ function ChecklistFeedbackTable() {
                     response.data.moveInFeedback_data,
                     response.data.moveOutChecklist_data,
                     response.data.moveOutFeedback_data
-                )
+                );
             } catch (error) {
                 console.log(error.message || 'Error fetching data');
             } finally {
@@ -124,7 +121,9 @@ function ChecklistFeedbackTable() {
             residentId: data?.residentId,
         }).toString();
 
-        return type === 'moveInFeedback' ? (`${window.location.origin}/operations/operations-moveinfeedback-form/${data?.residentId}?${params}`) : (`${window.location.origin}/operations/operations-moveoutfeedback-form/${data?.residentId}?${params}`)
+        return type === 'moveInFeedback'
+            ? (`${window.location.origin}/operations/operations-moveinfeedback-form/${data?.residentId}?${params}`)
+            : (`${window.location.origin}/operations/operations-moveoutfeedback-form/${data?.residentId}?${params}`);
     };
 
     const viewMoveInFeedbackData = async (data) => {
@@ -133,17 +132,14 @@ function ChecklistFeedbackTable() {
         } else {
             const link = generateLink(data, 'moveInFeedback');
             await navigator.clipboard.writeText(link);
-
             alert('Link copied successfully!');
         }
     };
 
     const viewMoveOutChecklistData = (data) => {
-        (data?.moveOutChecklistStatus) ?
-            navigate(`/operations/operations-moveoutchecklist-data/${data?.residentId}`, { state: { data } })
-            :
-            navigate(`/operations/operations-moveoutchecklist-form/${data?.residentId}`, { state: { data } });
-
+        (data?.moveOutChecklistStatus)
+            ? navigate(`/operations/operations-moveoutchecklist-data/${data?.residentId}`, { state: { data } })
+            : navigate(`/operations/operations-moveoutchecklist-form/${data?.residentId}`, { state: { data } });
     };
 
     const viewMoveOutFeedbackData = async (data) => {
@@ -152,193 +148,154 @@ function ChecklistFeedbackTable() {
         } else {
             const link = generateLink(data, 'moveOutFeedback');
             await navigator.clipboard.writeText(link);
-
             alert('Link copied successfully!');
         }
     };
 
+    const statusBadge = (status) => {
+        const base = "px-2 py-0.5 rounded-full text-xs font-medium";
+        if (!status || status === 'Pending') return `${base} bg-yellow-100 text-yellow-700`;
+        return `${base} bg-green-100 text-green-700`;
+    };
+
     return (
-
-
         <DashPage>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">RESIDENT CHECKLIST & FEEDBACK TABLE</h1>
+            <div className="page-header">
+                <h1>Checklist &amp; Feedback</h1>
+                <input
+                    type="text"
+                    placeholder="Search…"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="form-input w-48 text-xs"
+                />
+            </div>
 
-                        <div className="sm:flex justify-end">
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                                className="block mt-2 mb-3 text-black max-sm:w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs"
-                            />
-                        </div>
+            <div className="card">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto text-xs border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">#</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Resident Name</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Room No.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Type</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Bed</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Move-In Date</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Move-In Checklist</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Move-In Feedback</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Move-Out Date</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Move-Out Checklist</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Move-Out Feedback</th>
+                            </tr>
+                        </thead>
 
-                        <div className="w-full overflow-x-auto">
-                            <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                                <thead>
-                                    <tr className="bg-gray-50 text-gray-700">
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Resident Name</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Flat Number</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Flat Type</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Room No.</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Move-In Date</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Move-In Checklist Data</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Move-In Feedback Data</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Move-Out Date</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Move-Out Checklist Data</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Move-Out Feedback Data</th>
+                        <tbody className="divide-y divide-gray-100">
+                            {loadingData ? (
+                                <tr>
+                                    <td colSpan={11}>
+                                        <div className="flex justify-center py-6">
+                                            <div className="spinner" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : paginatedData.length > 0 ? (
+                                paginatedData.map((row, i) => (
+                                    <tr className="hover:bg-gray-50 transition-colors" key={row.residentId || i}>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[200px] truncate">{row?.residentsName || '-'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{row?.roomNo || '-'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{row?.roomType || '-'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">{row?.bedLabel || '-'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{row?.checkIn ? formatDateToDDMonYYYY(row.checkIn) : '-'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={statusBadge(row?.moveInChecklistStatus)}>
+                                                    {row?.moveInChecklistStatus || 'Pending'}
+                                                </span>
+                                                <Eye
+                                                    size={14}
+                                                    className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                    onClick={() => viewMoveInChecklistData(row)}
+                                                />
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={statusBadge(row?.moveInFeedbackStatus)}>
+                                                    {row?.moveInFeedbackStatus || 'Pending'}
+                                                </span>
+                                                {row?.moveInFeedbackStatus ? (
+                                                    <Eye
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => viewMoveInFeedbackData(row)}
+                                                    />
+                                                ) : (
+                                                    <Copy
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => viewMoveInFeedbackData(row)}
+                                                    />
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{row?.checkOut ? formatDateToDDMonYYYY(row.checkOut) : '-'}</td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={statusBadge(row?.moveOutChecklistStatus)}>
+                                                    {row?.moveOutChecklistStatus || 'Pending'}
+                                                </span>
+                                                {row?.moveOutChecklistStatus ? (
+                                                    <Eye
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => viewMoveOutChecklistData(row)}
+                                                    />
+                                                ) : (
+                                                    <PlusCircle
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => viewMoveOutChecklistData(row)}
+                                                    />
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-3 py-1.5 text-xs text-gray-800">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={statusBadge(row?.moveOutFeedbackStatus)}>
+                                                    {row?.moveOutFeedbackStatus || 'Pending'}
+                                                </span>
+                                                {row?.moveOutFeedbackStatus ? (
+                                                    <Eye
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => viewMoveOutFeedbackData(row)}
+                                                    />
+                                                ) : (
+                                                    <Copy
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => viewMoveOutFeedbackData(row)}
+                                                    />
+                                                )}
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-
-                                <tbody>
-                                    {paginatedData.length > 0 ? paginatedData.map((checklistFeedbackData, i) => (
-                                        <tr className="" key={checklistFeedbackData.id}>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{checklistFeedbackData?.residentsName || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{checklistFeedbackData?.roomNo || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{checklistFeedbackData?.roomType || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{checklistFeedbackData?.bedLabel || '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{checklistFeedbackData?.checkIn ? formatDateToDDMonYYYY(checklistFeedbackData?.checkIn) : '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center mx-auto">
-                                                <div className="flex justify-between">
-                                                    <div>{checklistFeedbackData?.moveInChecklistStatus}</div>
-                                                    <FaEye className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveInChecklistData(checklistFeedbackData)} />
-                                                </div>
-                                            </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center mx-auto">
-                                                {(checklistFeedbackData?.moveInFeedbackStatus) ?
-                                                    <div className="flex justify-between">
-                                                        <div>{checklistFeedbackData?.moveInFeedbackStatus}</div>
-                                                        <FaEye className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveInFeedbackData(checklistFeedbackData)} />
-                                                    </div>
-                                                    :
-                                                    <div className="flex justify-between">
-                                                        <div>Pending</div>
-                                                        <FaCopy className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveInFeedbackData(checklistFeedbackData)} />
-                                                    </div>}
-                                            </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{checklistFeedbackData?.checkOut ? formatDateToDDMonYYYY(checklistFeedbackData?.checkOut) : '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center mx-auto">
-                                                {(checklistFeedbackData?.moveOutChecklistStatus) ?
-                                                    <div className="flex justify-between">
-                                                        <div>{checklistFeedbackData?.moveOutChecklistStatus}</div>
-                                                        <FaEye className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveOutChecklistData(checklistFeedbackData)} />
-                                                    </div>
-                                                    :
-                                                    <div className="flex justify-between">
-                                                        <div>Pending</div>
-                                                        <IoMdAddCircle className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveOutChecklistData(checklistFeedbackData)} />
-                                                    </div>}
-                                            </td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center mx-auto">
-                                                {(checklistFeedbackData?.moveOutFeedbackStatus) ?
-                                                    <div className="flex justify-between">
-                                                        <div>{checklistFeedbackData?.moveOutFeedbackStatus}</div>
-                                                        <FaEye className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveOutFeedbackData(checklistFeedbackData)} />
-                                                    </div>
-                                                    :
-                                                    <div className="flex justify-between">
-                                                        <div>Pending</div>
-                                                        <FaCopy className="hover:text-[#D4A017] text-xl hover:cursor-pointer" onClick={() => viewMoveOutFeedbackData(checklistFeedbackData)} />
-                                                    </div>}
-                                            </td>
-                                        </tr>
-                                    )) : <tr>
-                                        <td colSpan="11" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                    </tr>}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                                aria-label="Previous page"
-                            >
-                                &lt;
-                            </button>
-
-                            <button
-                                key={1}
-                                onClick={() => handlePageChange(1)}
-                                className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                                    ? "bg-[#D4A017] text-white"
-                                    : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                    }`}
-                            >
-                                1
-                            </button>
-
-                            {currentPage > 3 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={11} className="px-3 py-10 text-center text-gray-400">No data available</td>
+                                </tr>
                             )}
+                        </tbody>
+                    </table>
+                </div>
 
-                            {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                                let page;
-                                if (currentPage <= 3) {
-                                    page = i + 2;
-                                } else if (currentPage >= totalPages - 2) {
-                                    page = totalPages - 4 + i;
-                                } else {
-                                    page = currentPage - 2 + i;
-                                }
-
-                                if (page > 1 && page < totalPages) {
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                                ? "bg-[#D4A017] text-white"
-                                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return null;
-                            })}
-
-                            {currentPage < totalPages - 2 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
-                            )}
-
-                            {totalPages > 1 && (
-                                <button
-                                    key={totalPages}
-                                    onClick={() => handlePageChange(totalPages)}
-                                    className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                        ? "bg-[#D4A017] text-white"
-                                        : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                        }`}
-                                >
-                                    {totalPages}
-                                </button>
-                            )}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                                aria-label="Next page"
-                            >
-                                &gt;
-                            </button>
-                        </div>
-
-
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            </div>
         </DashPage>
-
-
-    )
+    );
 }
 
-export default ChecklistFeedbackTable
+export default ChecklistFeedbackTable;

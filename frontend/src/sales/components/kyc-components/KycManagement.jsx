@@ -1,25 +1,31 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ShieldCheck, Check, X, Eye, ChevronDown, Upload } from "lucide-react";
+import { ShieldCheck, ChevronRight } from "lucide-react";
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
+
+const PAGE_SIZE = 10;
+
+const STATUS_BADGE = {
+    Pending:  "bg-amber-50 text-amber-700 border-amber-200",
+    Approved: "bg-green-50 text-green-700 border-green-200",
+    Rejected: "bg-red-50 text-red-700 border-red-200",
+};
 
 export default function KycManagement() {
+    const navigate = useNavigate();
     const { getOptions } = useDropdowns();
     const TABS = getOptions('kyc_approval_statuses');
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Pending");
-    const [selectedResident, setSelectedResident] = useState(null);
-    const [rejectReason, setRejectReason] = useState("");
-    const [processing, setProcessing] = useState(false);
-    const [msg, setMsg] = useState({ text: "", type: "" });
-    const [uploadingLease, setUploadingLease] = useState(null);
-    const leaseInputRef = useRef(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchResidents = (status) => {
         setLoading(true);
-        setSelectedResident(null);
+        setCurrentPage(1);
         axios.get(`/operations/kyc-pending/?status=${status}`)
             .then((res) => { if (res.data.success) setResidents(res.data.residents); })
             .catch(console.error)
@@ -28,274 +34,77 @@ export default function KycManagement() {
 
     useEffect(() => { fetchResidents(filter); }, [filter]);
 
-    const handleApprove = async (residentId) => {
-        const resident = residents.find(r => r.id === residentId);
-        if (!resident?.leaseAgreement) {
-            setMsg({ text: "Please upload the lease agreement before approving KYC.", type: "error" });
-            return;
-        }
-        setProcessing(true);
-        try {
-            const res = await axios.post(`/operations/kyc-approve/${residentId}/`);
-            if (res.data.success) {
-                setMsg({ text: res.data.message, type: "success" });
-                fetchResidents(filter);
-            } else {
-                setMsg({ text: res.data.message || "Failed to approve.", type: "error" });
-            }
-        } catch {
-            setMsg({ text: "Failed to approve.", type: "error" });
-        }
-        setProcessing(false);
-    };
-
-    const handleReject = async (residentId) => {
-        if (!rejectReason.trim()) {
-            setMsg({ text: "Please provide a rejection reason.", type: "error" });
-            return;
-        }
-        setProcessing(true);
-        try {
-            const res = await axios.post(`/operations/kyc-reject/${residentId}/`, { reason: rejectReason });
-            if (res.data.success) {
-                setMsg({ text: res.data.message, type: "success" });
-                fetchResidents(filter);
-                setRejectReason("");
-            }
-        } catch {
-            setMsg({ text: "Failed to reject.", type: "error" });
-        }
-        setProcessing(false);
-    };
-
-    const handleLeaseUpload = async (residentId, file) => {
-        if (!file) return;
-        if (!file.name.toLowerCase().endsWith('.pdf')) {
-            setMsg({ text: "Only PDF files are allowed.", type: "error" });
-            return;
-        }
-        setUploadingLease(residentId);
-        const formData = new FormData();
-        formData.append('leaseAgreement', file);
-        try {
-            const res = await axios.post(`/sales/upload-lease/${residentId}/`, formData);
-            if (res.data.success) {
-                setMsg({ text: res.data.message, type: "success" });
-                fetchResidents(filter);
-            }
-        } catch {
-            setMsg({ text: "Failed to upload lease agreement.", type: "error" });
-        }
-        setUploadingLease(null);
-        if (leaseInputRef.current) leaseInputRef.current.value = "";
-    };
-
-    const statusBadge = (status) => {
-        const colors = {
-            Pending: "bg-amber-50 text-amber-700 border-amber-200",
-            Approved: "bg-green-50 text-green-700 border-green-200",
-            Rejected: "bg-red-50 text-red-700 border-red-200",
-        };
-        return `px-2 py-0.5 rounded-full text-xs border ${colors[status] || ""}`;
-    };
+    const totalPages = Math.max(1, Math.ceil(residents.length / PAGE_SIZE));
+    const paged = residents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     return (
         <DashPage>
-                <div className="page-header">
-                    <div>
-                        <h1>KYC Management</h1>
-                        <p>Review and approve resident KYC documents</p>
+            <div className="page-header">
+                <div>
+                    <h1>KYC Management</h1>
+                    <p>Review and approve resident KYC documents</p>
+                </div>
+            </div>
+
+            {/* Tab bar */}
+            <div className="flex gap-2 mb-6">
+                {TABS.map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => setFilter(tab)}
+                        className={`px-5 py-2 rounded-full text-sm font-medium border transition-colors ${
+                            filter === tab
+                                ? "bg-[#D4A017] text-white border-[#D4A017]"
+                                : "bg-white text-gray-600 border-gray-300 hover:border-[#D4A017] hover:text-[#D4A017]"
+                        }`}
+                    >
+                        {tab}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="loading-center"><div className="spinner"></div></div>
+            ) : residents.length === 0 ? (
+                <div className="card">
+                    <div className="card-body text-center py-12 text-gray-500">
+                        <ShieldCheck size={48} className="mx-auto mb-3 text-gray-300" />
+                        <p>No {filter.toLowerCase()} KYC requests.</p>
                     </div>
                 </div>
-
-                {/* Tab bar */}
-                <div className="flex gap-2 mb-6">
-                    {TABS.map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setFilter(tab)}
-                            className={`px-5 py-2 rounded-full text-sm font-medium border transition-colors ${
-                                filter === tab
-                                    ? "bg-[#D4A017] text-white border-[#D4A017]"
-                                    : "bg-white text-gray-600 border-gray-300 hover:border-[#D4A017] hover:text-[#D4A017]"
-                            }`}
-                        >
-                            {tab}
-                        </button>
-                    ))}
-                </div>
-
-                {msg.text && (
-                    <div className={`mb-4 p-3 rounded-lg text-sm border ${msg.type === "success" ? "bg-green-50 border-green-200 text-green-700" : "bg-red-50 border-red-200 text-red-700"}`}>
-                        {msg.text}
-                    </div>
-                )}
-
-                {loading ? (
-                    <div className="loading-center"><div className="spinner"></div></div>
-                ) : residents.length === 0 ? (
-                    <div className="card">
-                        <div className="card-body text-center py-12 text-gray-500">
-                            <ShieldCheck size={48} className="mx-auto mb-3 text-gray-300" />
-                            <p>No {filter.toLowerCase()} KYC requests.</p>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {residents.map((t) => (
-                            <div key={t.id} className="card">
-                                <div
-                                    className="card-body cursor-pointer"
-                                    onClick={() => setSelectedResident(selectedResident?.id === t.id ? null : t)}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-3 mb-1">
-                                                <span className="text-sm font-semibold text-gray-900">{t.residentsName}</span>
-                                                <span className={statusBadge(t.kycApprovalStatus)}>{t.kycApprovalStatus}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-500">{t.phoneNumber} &bull; {t.email}</p>
-                                            <p className="text-xs text-gray-500">{t.propertyName} — Room {t.roomNo}</p>
+            ) : (
+                <div className="card">
+                    <div className="divide-y divide-gray-100">
+                        {paged.map((t) => (
+                            <div
+                                key={t.id}
+                                className="flex items-center justify-between px-5 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                                onClick={() => navigate(`/sales/sales-kyc-management/${t.id}`, { state: { resident: t, filter } })}
+                            >
+                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-900">{t.residentsName}</span>
+                                            <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_BADGE[t.kycApprovalStatus] || ""}`}>
+                                                {t.kycApprovalStatus}
+                                            </span>
                                         </div>
-                                        <ChevronDown size={18} className={`text-gray-400 transition-transform ${selectedResident?.id === t.id ? "rotate-180" : ""}`} />
+                                        <p className="text-xs text-gray-500 mt-0.5">{t.phoneNumber} &bull; {t.email} &bull; Room {t.roomNo}</p>
                                     </div>
                                 </div>
-
-                                {selectedResident?.id === t.id && (
-                                    <div className="border-t border-gray-100 p-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                            <DocSection label="Aadhaar" number={t.aadharNumber} frontUrl={t.aadharFrontCopy} backUrl={t.aadharBackCopy} />
-                                            <DocSection label="PAN" number={t.panNumber} frontUrl={t.panFrontCopy} backUrl={t.panBackCopy} />
-                                            <DocSection label={t.studentEmployeeIdType || "Student/Employee ID"} number={t.studentEmployeeIdNumber} frontUrl={t.studentEmployeeIdCopy} />
-                                        </div>
-
-                                        {/* Lease Agreement */}
-                                        <div className="mb-4 border border-gray-200 rounded-lg p-4">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="font-semibold text-sm text-gray-800 mb-1">Lease Agreement</p>
-                                                    {t.leaseAgreement ? (
-                                                        <div className="flex items-center gap-3 text-xs">
-                                                            <a href={t.leaseAgreement} target="_blank" rel="noreferrer" className="text-[#D4A017] hover:underline flex items-center gap-1">
-                                                                <Eye size={12} /> View PDF
-                                                            </a>
-                                                            <span className="text-gray-400">
-                                                                Uploaded {t.leaseUploadedAt?.split("T")[0]} by {t.leaseUploadedBy}
-                                                            </span>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-xs text-gray-400">Not uploaded yet</p>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <input
-                                                        ref={leaseInputRef}
-                                                        type="file"
-                                                        accept=".pdf"
-                                                        className="hidden"
-                                                        onChange={(e) => handleLeaseUpload(t.id, e.target.files[0])}
-                                                    />
-                                                    <button
-                                                        className="btn btn-outline text-xs flex items-center gap-1"
-                                                        onClick={() => leaseInputRef.current?.click()}
-                                                        disabled={uploadingLease === t.id}
-                                                    >
-                                                        {uploadingLease === t.id ? (
-                                                            "Uploading..."
-                                                        ) : t.leaseAgreement ? (
-                                                            <><Upload size={14} /> Replace</>
-                                                        ) : (
-                                                            <><Upload size={14} /> Upload</>
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Portal Status */}
-                                        {t.hasPortalAccount && (
-                                            <div className="mb-4 border border-gray-200 rounded-lg p-4">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <p className="font-semibold text-sm text-gray-800 mb-1">Resident Portal</p>
-                                                        {t.portalEnabled ? (
-                                                            <p className="text-xs text-green-600 flex items-center gap-1"><Check size={12} /> Portal is active</p>
-                                                        ) : (
-                                                            <p className="text-xs text-gray-400">Upload lease agreement to enable portal</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {t.kycRejectionReason && (
-                                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                                                <span className="font-medium">Rejection reason:</span> {t.kycRejectionReason}
-                                            </div>
-                                        )}
-
-                                        {filter === "Approved" && (
-                                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
-                                                <Check size={16} /> KYC verified and approved.
-                                            </div>
-                                        )}
-
-                                        {filter === "Pending" && (
-                                            <div className="flex flex-col sm:flex-row gap-3">
-                                                <button
-                                                    className="btn btn-primary flex items-center gap-2"
-                                                    onClick={() => handleApprove(t.id)}
-                                                    disabled={processing}
-                                                >
-                                                    <Check size={16} /> Approve
-                                                </button>
-                                                <div className="flex gap-2 flex-1">
-                                                    <input
-                                                        className="form-input flex-1 text-sm"
-                                                        placeholder="Rejection reason..."
-                                                        value={rejectReason}
-                                                        onChange={(e) => setRejectReason(e.target.value)}
-                                                    />
-                                                    <button
-                                                        className="btn bg-red-500 text-white hover:bg-red-600 flex items-center gap-2"
-                                                        onClick={() => handleReject(t.id)}
-                                                        disabled={processing}
-                                                    >
-                                                        <X size={16} /> Reject
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {filter === "Rejected" && (
-                                            <button
-                                                className="btn btn-primary flex items-center gap-2"
-                                                onClick={() => handleApprove(t.id)}
-                                                disabled={processing}
-                                            >
-                                                <Check size={16} /> Re-approve
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                                <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />
                             </div>
                         ))}
                     </div>
-                )}
+                    <div className="px-5 py-3 border-t border-gray-100">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={setCurrentPage}
+                        />
+                    </div>
+                </div>
+            )}
         </DashPage>
-    );
-}
-
-function DocSection({ label, number, frontUrl, backUrl }) {
-    return (
-        <div className="border border-gray-200 rounded-lg p-3">
-            <p className="font-semibold text-sm text-gray-800 mb-1">{label}</p>
-            <p className="text-xs text-gray-500 mb-2">{number || "Not provided"}</p>
-            <div className="flex gap-2 text-xs">
-                {frontUrl && <a href={frontUrl} target="_blank" rel="noreferrer" className="text-[#D4A017] hover:underline flex items-center gap-1"><Eye size={12} /> Front</a>}
-                {backUrl && <a href={backUrl} target="_blank" rel="noreferrer" className="text-[#D4A017] hover:underline flex items-center gap-1"><Eye size={12} /> Back</a>}
-                {!frontUrl && !backUrl && <span className="text-gray-400">No documents</span>}
-            </div>
-        </div>
     );
 }

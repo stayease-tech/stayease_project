@@ -1,7 +1,10 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import { DashPage } from "../../../shared/Dashboard";
+import Pagination from "../../../shared/Pagination";
 
 function LoginData() {
     const date = new Date();
@@ -19,7 +22,7 @@ function LoginData() {
 
     const [searchDate, setSearchDate] = useState(formattedDate);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    const itemsPerPage = 12;
 
     const filteredData = userLoginData.filter(item =>
         Object.values(item).some(value =>
@@ -36,20 +39,14 @@ function LoginData() {
         setCurrentPage(1);
     };
 
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
-
     const convertTime = (isoDate) => {
-        const timeWithAMPM = new Date(isoDate).toLocaleTimeString('en-US', {
+        return new Date(isoDate).toLocaleTimeString('en-US', {
             hour12: true,
             hour: 'numeric',
             minute: '2-digit',
             second: '2-digit'
         });
-
-        return timeWithAMPM;
-    }
+    };
 
     const calculateLoginDuration = (loginTime, logoutTime) => {
         if (!loginTime) return '-';
@@ -118,142 +115,63 @@ function LoginData() {
     }, [id]);
 
     return (
-
-
         <DashPage>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LOGIN DATA</h1>
+            <div className="page-header">
+                <h1>Login Data</h1>
+                <div className="flex items-center gap-2">
+                    <button
+                        className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                        onClick={() => navigate(`/sales/sales-user-activity-data`)}
+                        type="button"
+                    >
+                        Prev
+                    </button>
+                    <input
+                        type="date"
+                        value={searchDate}
+                        onChange={handleSearchChange}
+                        className="form-input w-48 text-xs"
+                    />
+                </div>
+            </div>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/sales/sales-user-activity-data`)}
-                                type="button">Prev</button>
-
-                            <input
-                                type="date"
-                                value={searchDate}
-                                onChange={handleSearchChange}
-                                className="block mt-2 mb-3 text-black max-sm:w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs"
-                            />
-                        </div>
-
-                        <div className="w-full overflow-x-auto">
-                            <table className="min-w-full table-auto border-collapse shadow-md rounded-lg max-sm:text-xs">
-                                <thead>
-                                    <tr className="bg-gray-50 text-gray-700">
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">No.</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Login Time</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Logout Time</th>
-                                        <th className="border border-gray-300 py-2 px-4 text-left border-b text-center">Duration</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {paginatedData.length > 0 ? paginatedData.map((user, i) => (
-                                        <tr className="" key={user.id}>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{startIndex + i + 1}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{user?.login_time ? convertTime(user.login_time) : '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{user?.logout_time ? convertTime(user.logout_time) : '-'}</td>
-                                            <td className="border border-gray-300 px-4 py-2 text-center">{`${calculateLoginDuration(user?.login_time, user?.logout_time)} ${(userLoginData[userLoginData.length - 1].login_time === user.login_time && user?.logout_time === null) ? '(updating in real-time)' : ''}`}</td>
-                                        </tr>
-                                    )) : <tr>
-                                        <td colSpan="4" className="border border-gray-300 px-4 py-2 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
-                                    </tr>}
-                                    {loadingData || <tr>
-                                        <th colSpan="3" className="border border-gray-300 px-4 py-2 text-center">Total Time Logged In</th>
-                                        <td className="border border-gray-300 px-4 py-2 text-center">{calculateTotalDuration(userLoginData)}</td>
-                                    </tr>}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="flex flex-wrap justify-center items-center mt-4 gap-1 max-sm:gap-0.5">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200"
-                                aria-label="Previous page"
-                            >
-                                &lt;
-                            </button>
-
-                            <button
-                                key={1}
-                                onClick={() => handlePageChange(1)}
-                                className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === 1
-                                    ? "bg-[#D4A017] text-white"
-                                    : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                    }`}
-                            >
-                                1
-                            </button>
-
-                            {currentPage > 3 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
+            <div className="card">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full table-auto text-xs border-collapse">
+                        <thead>
+                            <tr className="bg-gray-50 border-b border-gray-200">
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Login Time</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Logout Time</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {paginatedData.length > 0 ? paginatedData.map((user, i) => (
+                                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{user?.login_time ? convertTime(user.login_time) : '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{user?.logout_time ? convertTime(user.logout_time) : '-'}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">{`${calculateLoginDuration(user?.login_time, user?.logout_time)} ${(userLoginData[userLoginData.length - 1].login_time === user.login_time && user?.logout_time === null) ? '(updating in real-time)' : ''}`}</td>
+                                </tr>
+                            )) : (
+                                <tr>
+                                    <td colSpan="4" className="px-3 py-1.5 text-xs text-gray-800 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
+                                </tr>
                             )}
-
-                            {Array.from({ length: Math.min(4, totalPages - 2) }, (_, i) => {
-                                let page;
-                                if (currentPage <= 3) {
-                                    page = i + 2;
-                                } else if (currentPage >= totalPages - 2) {
-                                    page = totalPages - 4 + i;
-                                } else {
-                                    page = currentPage - 2 + i;
-                                }
-
-                                if (page > 1 && page < totalPages) {
-                                    return (
-                                        <button
-                                            key={page}
-                                            onClick={() => handlePageChange(page)}
-                                            className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === page
-                                                ? "bg-[#D4A017] text-white"
-                                                : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                                }`}
-                                        >
-                                            {page}
-                                        </button>
-                                    );
-                                }
-                                return null;
-                            })}
-
-                            {currentPage < totalPages - 2 && (
-                                <span className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 max-sm:text-xs">
-                                    ...
-                                </span>
+                            {!loadingData && (
+                                <tr className="bg-gray-50">
+                                    <td colSpan="3" className="px-3 py-1.5 text-xs font-medium text-gray-500 uppercase tracking-wide">Total Time Logged In</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 font-semibold">{calculateTotalDuration(userLoginData)}</td>
+                                </tr>
                             )}
-
-                            {totalPages > 1 && (
-                                <button
-                                    key={totalPages}
-                                    onClick={() => handlePageChange(totalPages)}
-                                    className={`flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded transition-colors duration-200 max-sm:text-xs ${currentPage === totalPages
-                                        ? "bg-[#D4A017] text-white"
-                                        : "bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white"
-                                        }`}
-                                >
-                                    {totalPages}
-                                </button>
-                            )}
-
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages}
-                                className="flex items-center justify-center h-8 w-8 max-sm:h-7 max-sm:w-7 rounded bg-[#FDF6E3] text-[#B8860B] hover:bg-[#D4A017] hover:text-white disabled:opacity-50 transition-colors duration-200 max-sm:text-xs"
-                                aria-label="Next page"
-                            >
-                                &gt;
-                            </button>
-                        </div>
-
-
+                        </tbody>
+                    </table>
+                </div>
+                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            </div>
         </DashPage>
-
-
-    )
+    );
 }
 
-export default LoginData
+export default LoginData;

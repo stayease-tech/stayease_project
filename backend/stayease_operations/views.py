@@ -1004,28 +1004,29 @@ def operations_form_update(request, id):
                     updates['complaint_vendor'] = vendor_instance.id
 
             if updates:
-                instance.save(update_fields=updates.keys())
+                instance.save(update_fields=list(updates.keys()))
                 tracking_model.updatedDateAndTime = timezone.now()
                 tracking_model.save(update_fields=['updatedDateAndTime'])
 
-                complaint_category = ComplaintCategory.objects.get(pk=id)
+                # Email notification — failure here must not roll back the save
+                try:
+                    complaint_category = ComplaintCategory.objects.get(pk=id)
+                    bed_data = complaint_category.complaint.propertyComplaint_bed
 
-                bed_data = complaint_category.complaint.propertyComplaint_bed
+                    if instance.status in ['Open', 'Follow Up', 'Closed']:
+                        thread_key = f"{instance.ticket_number}"
+                        if thread_key not in email_threads:
+                            email_threads[thread_key] = ComplaintEmailThread(
+                                ticket_number=instance.ticket_number,
+                                resident_email=bed_data.email,
+                                resident_name=complaint_category.complaint.residentsName,
+                                category_type=instance.category_type
+                            )
+                        email_threads[thread_key].send_status_update(instance, bed_data, instance.status)
+                except Exception as email_err:
+                    print(f"Email notification failed (non-fatal): {email_err}")
 
-                if instance.status in ['Open', 'Follow Up', 'Closed']:
-                    thread_key = f"{instance.ticket_number}"
-                    
-                    if thread_key not in email_threads:
-                        email_threads[thread_key] = ComplaintEmailThread(
-                            ticket_number=instance.ticket_number,
-                            resident_email=bed_data.email,
-                            resident_name=complaint_category.complaint.residentsName,
-                            category_type=instance.category_type
-                        )
-                    
-                    email_threads[thread_key].send_status_update(instance, bed_data, instance.status)
-
-            return JsonResponse({'success': True, 'message': 'Vendor assigned successfully!'})
+            return JsonResponse({'success': True, 'message': 'Complaint updated successfully!'})
 
         except Exception as e:
             print (e)
@@ -1134,11 +1135,13 @@ def get_kyc_pending(request):
             data = []
             for t in residents:
                 bed = t.bed_data_instance
-                prop_name = room_no = ''
-                if bed and hasattr(bed, 'room') and bed.room:
-                    room_no = bed.room.roomNo or ''
-                    if hasattr(bed.room, 'property') and bed.room.property:
-                        prop_name = bed.room.property.propertyName or ''
+                prop_name = room_no = bed_label = ''
+                if bed:
+                    bed_label = bed.bedLabel or ''
+                    if hasattr(bed, 'room') and bed.room:
+                        room_no = bed.room.roomNo or ''
+                        if hasattr(bed.room, 'property') and bed.room.property:
+                            prop_name = bed.room.property.propertyName or ''
 
                 data.append({
                     'id': t.id,
@@ -1147,6 +1150,7 @@ def get_kyc_pending(request):
                     'email': t.email,
                     'propertyName': prop_name,
                     'roomNo': room_no,
+                    'bedLabel': bed_label,
                     'kycApprovalStatus': t.kycApprovalStatus,
                     'aadharNumber': t.aadharNumber,
                     'aadharFrontCopy': t.aadharFrontCopy.url if t.aadharFrontCopy else None,

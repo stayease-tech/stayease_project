@@ -96,6 +96,8 @@ export default function residentForm() {
         salesManager: "",
         comfortClass: "",
         mealType: "",
+        firstName: "",
+        lastName: "",
         residentsName: "",
         phoneNumber: "",
         email: "",
@@ -151,6 +153,12 @@ export default function residentForm() {
 
             const next = { ...prev, [name]: nextValue };
 
+            if (name === "firstName" || name === "lastName") {
+                const fn = name === "firstName" ? nextValue : prev.firstName;
+                const ln = name === "lastName" ? nextValue : prev.lastName;
+                next.residentsName = `${fn} ${ln}`.trim();
+            }
+
             if (name === "kycType") {
                 next.kycType = value;
                 next.aadharNumber = "";
@@ -169,8 +177,10 @@ export default function residentForm() {
 
     const validateForm = () => {
         if (!form.bedId) return "Please select a bed.";
-        if (!form.residentsName?.trim()) return "Resident name is required.";
-        if (!/^[A-Za-z ]{2,}$/.test(form.residentsName.trim())) return "Resident name must contain only letters and spaces.";
+        if (!form.firstName?.trim()) return "First name is required.";
+        if (!/^[A-Za-z]{1,}$/.test(form.firstName.trim())) return "First name must contain only letters.";
+        if (!form.lastName?.trim()) return "Last name is required.";
+        if (!/^[A-Za-z]{1,}$/.test(form.lastName.trim())) return "Last name must contain only letters.";
 
         if (!isValidIndianPhone(form.phoneNumber)) return "Phone number must be exactly 10 digits.";
 
@@ -182,11 +192,11 @@ export default function residentForm() {
         if (!form.checkIn) return "Check-in date is required.";
 
         if (!isValidIsoDateInRange(form.checkIn, DATE_INPUT_MIN, DATE_INPUT_MAX)) {
-            return "Check-in date must be between 1900-01-01 and 2099-12-31.";
+            return "Check-in date is not valid or out of range.";
         }
 
         if (form.checkOut && !isValidIsoDateInRange(form.checkOut, DATE_INPUT_MIN, DATE_INPUT_MAX)) {
-            return "Check-out date must be between 1900-01-01 and 2099-12-31.";
+            return "Check-out date is not valid or out of range.";
         }
 
         if (form.checkOut && form.checkOut < form.checkIn) return "Check-out date cannot be before check-in date.";
@@ -289,7 +299,7 @@ export default function residentForm() {
                                     <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => navigate("/sales/sales-beds-table")}>
                                         Back to Beds
                                     </button>
-                                    <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#D4A017] text-white hover:bg-[#B8860B] transition-colors" onClick={() => { setCredentials(null); setForm({ bedId: isNew ? "" : id, propertyManager: "", salesManager: "", comfortClass: "", mealType: "", residentsName: "", phoneNumber: "", email: "", permanentAddress: "", kycType: "", aadharNumber: "", aadharStatus: "", panNumber: "", panStatus: "", checkIn: "", checkOut: "", totalDepositPaid: "0", rentPerMonth: "" }); }}>
+                                    <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#D4A017] text-white hover:bg-[#B8860B] transition-colors" onClick={() => { setCredentials(null); setForm({ bedId: isNew ? "" : id, propertyManager: "", salesManager: "", comfortClass: "", mealType: "", firstName: "", lastName: "", residentsName: "", phoneNumber: "", email: "", permanentAddress: "", kycType: "", aadharNumber: "", aadharStatus: "", panNumber: "", panStatus: "", checkIn: "", checkOut: "", totalDepositPaid: "0", rentPerMonth: "" }); }}>
                                         Add Another
                                     </button>
                                 </div>
@@ -340,9 +350,14 @@ export default function residentForm() {
                         <SectionCard icon={User} title="Resident Details">
                             <div className="space-y-4">
                                 <FieldRow>
-                                    <Field label="Full Name *">
-                                        <input name="residentsName" value={form.residentsName} onChange={handleChange} className={FIELD_CLS} placeholder="Enter resident's full name" required />
+                                    <Field label="First Name *">
+                                        <input name="firstName" value={form.firstName} onChange={handleChange} className={FIELD_CLS} placeholder="First name" required />
                                     </Field>
+                                    <Field label="Last Name *">
+                                        <input name="lastName" value={form.lastName} onChange={handleChange} className={FIELD_CLS} placeholder="Last name" required />
+                                    </Field>
+                                </FieldRow>
+                                <FieldRow>
                                     <Field label="Phone Number *">
                                         <input
                                             name="phoneNumber"
@@ -356,11 +371,11 @@ export default function residentForm() {
                                             required
                                         />
                                     </Field>
-                                </FieldRow>
-                                <FieldRow>
                                     <Field label="Email Address">
                                         <input name="email" value={form.email} onChange={handleChange} className={FIELD_CLS} placeholder="email@example.com" type="email" />
                                     </Field>
+                                </FieldRow>
+                                <FieldRow>
                                     <Field label="Permanent Address">
                                         <input name="permanentAddress" value={form.permanentAddress} onChange={handleChange} className={FIELD_CLS} placeholder="City, State" />
                                     </Field>

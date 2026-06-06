@@ -1,64 +1,55 @@
-// Copyright Aravind Adari
-import { LoadingState, EmptyState } from "./StateDisplays";
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
 
 /**
- * DataTable — reusable styled table component with responsive column hiding.
+ * DataTable — compact table with sticky header, internal scroll, and responsive column hiding.
  *
- * @param {object} props
- * @param {Array<{key: string, label: string, render?: Function, priority?: number, className?: string}>} props.columns
- *   - `priority` 1 = always visible, 2 = hidden below lg (1024px), 3 = hidden below xl (1280px).
- *   - `render(row, index)` optional custom cell renderer.
- * @param {Array<object>} props.data - Array of row objects.
- * @param {boolean} [props.loading=false] - Shows loading spinner when true.
- * @param {string} [props.emptyMessage="No data available"] - Message for empty state.
- * @param {string} [props.className] - Extra class on the wrapper div.
- * @returns {React.ReactElement}
+ * Props:
+ *   columns  Array<{ key, label, render?(row,idx), className?, headerClassName?, priority? }>
+ *            priority 1=always, 2=hidden<lg, 3=hidden<xl  (default 1)
+ *   data     Array<object>
+ *   loading  bool
+ *   emptyMessage  string
  */
 export default function DataTable({
     columns = [],
     data = [],
     loading = false,
     emptyMessage = "No data available",
-    className = "",
 }) {
     const colSpan = columns.length;
 
-    /**
-     * Returns responsive Tailwind classes based on priority.
-     * Priority 2 hides below lg, priority 3 hides below xl.
-     */
-    function priorityCls(priority) {
-        if (priority === 2) return "hidden lg:table-cell";
-        if (priority === 3) return "hidden xl:table-cell";
+    function priCls(p) {
+        if (p === 2) return "hidden lg:table-cell";
+        if (p === 3) return "hidden xl:table-cell";
         return "";
     }
 
     return (
-        <div className={`w-full overflow-x-auto ${className}`}>
-            <table className="min-w-full table-auto border-collapse shadow-md rounded-lg text-sm">
+        <div className="w-full overflow-x-auto">
+            <table className="min-w-full table-auto border-collapse text-xs">
                 <thead>
-                    <tr className="bg-gray-50 text-gray-700">
+                    <tr className="bg-gray-50 border-b border-gray-200">
                         {columns.map((col) => (
                             <th
                                 key={col.key}
-                                className={`border border-gray-300 py-2 px-4 text-center font-medium ${priorityCls(col.priority)} ${col.className || ""}`}
+                                className={`px-3 py-2 text-left font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap ${priCls(col.priority)} ${col.headerClassName || ""}`}
                             >
                                 {col.label}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                     {loading ? (
                         <tr>
-                            <td colSpan={colSpan} className="border border-gray-300 px-4 py-8">
-                                <LoadingState />
+                            <td colSpan={colSpan} className="px-3 py-8 text-center text-gray-400">
+                                <div className="flex justify-center"><div className="spinner" /></div>
                             </td>
                         </tr>
                     ) : data.length === 0 ? (
                         <tr>
-                            <td colSpan={colSpan} className="border border-gray-300 px-4 py-2">
-                                <EmptyState message={emptyMessage} />
+                            <td colSpan={colSpan} className="px-3 py-10 text-center text-gray-400 text-sm">
+                                {emptyMessage}
                             </td>
                         </tr>
                     ) : (
@@ -67,11 +58,9 @@ export default function DataTable({
                                 {columns.map((col) => (
                                     <td
                                         key={col.key}
-                                        className={`border border-gray-300 px-4 py-2 text-center ${priorityCls(col.priority)} ${col.className || ""}`}
+                                        className={`px-3 py-1.5 text-gray-800 ${priCls(col.priority)} ${col.className || ""}`}
                                     >
-                                        {col.render
-                                            ? col.render(row, rowIdx)
-                                            : row[col.key] ?? "—"}
+                                        {col.render ? col.render(row, rowIdx) : (row[col.key] ?? "—")}
                                     </td>
                                 ))}
                             </tr>

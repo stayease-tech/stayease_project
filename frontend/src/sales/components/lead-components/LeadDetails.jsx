@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Aravind Adari. All rights reserved.
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import axios from 'axios';
@@ -154,176 +156,186 @@ function LeadDetails() {
 
     return (
         <DashPage>
-                    <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={handleLeadUpdate}>
-                        <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">LEADS DATA</h1>
+            <form className="max-w-3xl mx-auto py-6" onSubmit={handleLeadUpdate}>
+                <h1 className="text-center text-xl font-semibold mb-6 text-[#D4A017]">LEADS DATA</h1>
 
-                        <div className="sm:flex justify-between">
-                            <button
-                                className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => navigate(`/sales/sales-leads-table`)}
-                                type="button">Prev</button>
+                <div className="flex justify-between mb-4">
+                    <button
+                        className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                        onClick={() => navigate(`/sales/sales-leads-table`)}
+                        type="button"
+                    >
+                        Prev
+                    </button>
 
-                            <div className="flex justify-between sm:justify-end mb-5">
-                                <button
-                                    className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()} type="button">{!dataEditView ? 'Update Status' : 'View Details'}</button>
+                    <div className="flex gap-2">
+                        <button
+                            className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                            onClick={() => editHandle()}
+                            type="button"
+                        >
+                            {!dataEditView ? 'Update Status' : 'View Details'}
+                        </button>
 
-                                <button
-                                    className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" disabled={isSaving || isDeleting}
-                                    type={dataEditView ? "submit" : "button"}
-                                    onClick={!dataEditView ? handleLeadDelete : null}
+                        <button
+                            className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B] disabled:opacity-50"
+                            disabled={isSaving || isDeleting}
+                            type={dataEditView ? "submit" : "button"}
+                            onClick={!dataEditView ? handleLeadDelete : null}
+                        >
+                            {dataEditView ? (isSaving ? "Saving..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                    <div className="grid grid-cols-2 gap-3">
+
+                        {/* Lead Date */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Lead Date</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{leadDetails?.leadDate}</p>
+                            ) : (
+                                <input
+                                    type="date"
+                                    value={leadDetails.leadDate}
+                                    onChange={leadHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="leadDate"
+                                />
+                            )}
+                        </div>
+
+                        {/* Lead Source */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Lead Source</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{leadDetails?.leadSource}</p>
+                            ) : (
+                                <select
+                                    id="leadSource"
+                                    value={leadDetails.leadSource}
+                                    onChange={leadHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="leadSource"
+                                    required
                                 >
-                                    {dataEditView ? (isSaving ? "Saving Details..." : "Save Details") : (isDeleting ? "Deleting..." : "Delete")}
-                                </button>
+                                    <option value="" disabled>Select Lead Source</option>
+                                    {getOptions('lead_sources').map((src, i) => (
+                                        <option key={i} value={src}>{src}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Name */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Name</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{leadDetails?.name}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={leadDetails.name}
+                                    onChange={leadHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter name"
+                                    name="name"
+                                    required
+                                />
+                            )}
+                        </div>
+
+                        {/* Contact */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Contact</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{formatIndianPhone(leadDetails?.contact)}</p>
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={leadDetails.contact}
+                                    onChange={leadHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="98765 43210"
+                                    inputMode="numeric"
+                                    maxLength={11}
+                                    name="contact"
+                                    required
+                                />
+                            )}
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Email</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{leadDetails?.email}</p>
+                            ) : (
+                                <input
+                                    type="email"
+                                    value={leadDetails.email}
+                                    onChange={leadHandleChange}
+                                    className="form-input w-full text-xs"
+                                    placeholder="Enter email"
+                                    name="email"
+                                    required
+                                />
+                            )}
+                        </div>
+
+                        {/* Lead Status */}
+                        <div>
+                            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Lead Status</label>
+                            {!dataEditView ? (
+                                <p className="text-xs text-gray-800">{leadDetails?.leadResult}</p>
+                            ) : (
+                                <select
+                                    id="leadResult"
+                                    value={leadDetails.leadResult}
+                                    onChange={leadHandleChange}
+                                    className="form-input w-full text-xs"
+                                    name="leadResult"
+                                    required
+                                >
+                                    <option value="" disabled>Select Lead Status</option>
+                                    {getOptions('lead_statuses').map((s, i) => (
+                                        <option key={i} value={s}>{s}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+
+                        {/* Reason for Not Converted */}
+                        {leadDetails.leadResult === "Not Converted" && (
+                            <div className="col-span-2">
+                                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5 block">Reason for Not Converted</label>
+                                {!dataEditView ? (
+                                    <p className="text-xs text-gray-800">{leadDetails?.notConvertedReason}</p>
+                                ) : (
+                                    <select
+                                        id="notConvertedReason"
+                                        value={leadDetails.notConvertedReason}
+                                        onChange={leadHandleChange}
+                                        className="form-input w-full text-xs"
+                                        name="notConvertedReason"
+                                        required
+                                    >
+                                        <option value="" disabled>Select reason</option>
+                                        {getOptions('not_converted_reasons').map((r, i) => (
+                                            <option key={i} value={r}>{r}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
-                        </div>
+                        )}
 
-                        <div className="w-full overflow-x-auto">
-                            <table className="border-collapse border border-white min-w-full table-auto shadow-md rounded-lg max-sm:text-xs">
-                                <tbody>
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Lead Date</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{leadDetails?.leadDate}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="date"
-                                                        value={leadDetails.leadDate}
-                                                        onChange={(e) => leadHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        name="leadDate"
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Lead Source</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{leadDetails?.leadSource}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="leadSource" value={leadDetails.leadSource} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="leadSource" required>
-                                                        <option value="" disabled>Select the Lead Source here</option>
-                                                        {getOptions('lead_sources').map((src, i) => (
-                                                            <option key={i} value={src}>{src}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Name</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{leadDetails?.name}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={leadDetails.name}
-                                                        onChange={(e) => leadHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Name here"
-                                                        name="name"
-                                                        required
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Contact</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{formatIndianPhone(leadDetails?.contact)}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="text"
-                                                        value={leadDetails.contact}
-                                                        onChange={(e) => leadHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="98765 43210"
-                                                        inputMode="numeric"
-                                                        maxLength={11}
-                                                        name="contact"
-                                                        required
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Email</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{leadDetails?.email}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <input
-                                                        type="email"
-                                                        value={leadDetails.email}
-                                                        onChange={(e) => leadHandleChange(e)}
-                                                        className="text-black w-full p-2 text-sm placeholder-gray-400 placeholder:text-xs bg-white rounded text-xs sm:text-sm"
-                                                        placeholder="Enter the Name here"
-                                                        name="email"
-                                                        required
-                                                    />
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    <tr className="border-b border-white">
-                                        <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Lead Status</th>
-                                        {!dataEditView ? <>
-                                            <td className="py-1 px-2">{leadDetails?.leadResult}</td>
-                                        </> : <>
-                                            <td className="flex">
-                                                <span className="py-1 px-2 w-full">
-                                                    <select id="leadResult" value={leadDetails.leadResult} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="leadResult" required>
-                                                        <option value="" disabled>Select the Lead Status here</option>
-                                                        {getOptions('lead_statuses').map((s, i) => (
-                                                            <option key={i} value={s}>{s}</option>
-                                                        ))}
-                                                    </select>
-                                                </span>
-                                            </td>
-                                        </>}
-                                    </tr>
-
-                                    {leadDetails.leadResult === "Not Converted" && <>
-                                        <tr className="border-b border-white">
-                                            <th className="border-r border-white py-1 px-2 text-[#D4A017] text-left">Reason for Not Converted</th>
-                                            {!dataEditView ? <>
-                                                <td className="py-1 px-2">{leadDetails?.notConvertedReason}</td>
-                                            </> : <>
-                                                <td className="flex">
-                                                    <span className="py-1 px-2 w-full">
-                                                        <select id="notConvertedReason" value={leadDetails.notConvertedReason} onChange={leadHandleChange} className="text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="notConvertedReason" required>
-                                                            <option value="" disabled>Select the Reason here</option>
-                                                            {getOptions('not_converted_reasons').map((r, i) => (
-                                                                <option key={i} value={r}>{r}</option>
-                                                            ))}
-                                                        </select>
-                                                    </span>
-                                                </td>
-                                            </>}
-                                        </tr>
-                                    </>}
-                                </tbody>
-                            </table>
-                        </div>
-                    </form>
+                    </div>
+                </div>
+            </form>
         </DashPage>
-    )
+    );
 }
 
-export default LeadDetails
+export default LeadDetails;
