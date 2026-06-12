@@ -174,6 +174,70 @@ def get_staff_names(request):
             return JsonResponse({'success': False, 'message': 'Error fetching staff names.'})
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
+@api_view(['POST'])
+@permission_classes([IsAdminGroup])
+def employee_form_submit(request):
+    """Handle POST /accounts/employee-form-submit/ — create a new staff user and assign to RBAC group.
+
+    Accepts JSON body with firstName, lastName, phone, email, gender, role.
+    Creates a Django User with is_staff=True and adds them to the matching group.
+
+    Returns:
+        JsonResponse with success status and the generated username.
+    """
+    try:
+        data = request.data
+        first_name = data.get('firstName', '').strip()
+        last_name = data.get('lastName', '').strip()
+        phone = data.get('phone', '').strip()
+        email = data.get('email', '').strip()
+        role = data.get('role', '').strip()
+
+        if not all([first_name, last_name, phone, email, role]):
+            return JsonResponse({'success': False, 'message': 'All fields are required.'}, status=400)
+
+        # Generate username from first+last name, lowercased, spaces removed
+        base_username = f"{first_name.lower()}{last_name.lower()}".replace(' ', '')
+        username = base_username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        if User.objects.filter(email=email).exists():
+            return JsonResponse({'success': False, 'message': 'A user with this email already exists.'}, status=400)
+
+        # Generate a temporary password
+        temp_password = f"Stayease@{uuid.uuid4().hex[:8]}"
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=temp_password,
+            first_name=first_name,
+            last_name=last_name,
+            is_staff=True,
+            is_active=True,
+        )
+
+        # Assign to RBAC group matching the role
+        from django.contrib.auth.models import Group
+        try:
+            group = Group.objects.get(name=role)
+            user.groups.add(group)
+        except Group.DoesNotExist:
+            pass
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Employee account created. Username: {username}, Temporary Password: {temp_password}',
+            'username': username,
+            'temp_password': temp_password,
+        })
+    except Exception as e:
+        print(e)
+        return JsonResponse({'success': False, 'message': 'Error creating employee account.'}, status=500)
+
 def get_resident_deductions(resident, room):
     """Calculate total check-out deductions for a given resident and room.
 

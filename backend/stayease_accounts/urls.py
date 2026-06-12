@@ -37,4 +37,5 @@ urlpatterns = [
     path('get-liability-data/', views.get_liability_data, name='get_liability_data'),
     path('get-dropdown-config/', views.get_dropdown_config, name='get_dropdown_config'),
     path('get-staff-names/', views.get_staff_names, name='get_staff_names'),
+    path('employee-form-submit/', views.employee_form_submit, name='employee_form_submit'),
 ]

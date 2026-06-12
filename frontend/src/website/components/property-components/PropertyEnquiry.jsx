@@ -380,7 +380,7 @@ const PropertyEnquiry = memo(({ propertyData }) => {
 
                         {/* Neighbourhood Section - USING NEIGHBOURHOOD_IMAGES */}
                         <div className='p-8 text-left rounded-lg border md:border-slate-200 md:mt-8 m-5'>
-                            <h3 className='text-xl font-semibold my-5 text-[#eba312]'>Neighbourhood from Harmonia</h3>
+                            <h3 className='text-xl font-semibold my-5 text-[#eba312]'>Neighbourhood from {propertyData?.name}</h3>
                             {neighbourhoodGrid}
                         </div>
 

@@ -151,36 +151,31 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-# AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-# AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-# AWS_STORAGE_BUCKET_NAME = 'local-machine-bucket'
-# AWS_S3_REGION_NAME = 'us-east-1'
-# AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-# AWS_S3_FILE_OVERWRITE = False
-# AWS_DEFAULT_ACL = None
-
-# STORAGES = {
-#     "default": {
-#         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-#     },
-#     "staticfiles": {
-#         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
-#     },
-# }
-
-STATIC_URL = '/static/'  
+STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-# When switching to S3, replace the two lines below with:
-#   DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-#   MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-#   MEDIA_ROOT = None
-# and install:  pip install django-storages[boto3]
-# Also set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME,
-# AWS_S3_REGION_NAME, AWS_S3_CUSTOM_DOMAIN in .env
-# No code changes needed — FileField.url auto-adapts to the storage backend.
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Storage — toggle via USE_S3 in .env (no code changes needed to switch)
+USE_S3 = os.getenv('USE_S3', 'FALSE').upper() == 'TRUE'
+
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ap-south-1')
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+    MEDIA_ROOT = None
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 ZOHO_ESIGN_CONFIG = {
     'client_id': os.getenv('ZOHO_CLIENT_ID'),

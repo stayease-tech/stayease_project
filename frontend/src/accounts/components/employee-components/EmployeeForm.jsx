@@ -36,7 +36,7 @@ function EmployeeForm() {
 
     try {
       const response = await axios.post(
-        `/accounts/expense-form-submit/`,
+        `/accounts/employee-form-submit/`,
         employeeData,
         {
           withCredentials: true,
@@ -52,6 +52,7 @@ function EmployeeForm() {
           phone: '',
           email: '',
           gender: '',
+          role: '',
         });
       }
     } catch (error) {

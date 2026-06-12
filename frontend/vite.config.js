@@ -1,4 +1,5 @@
-import { defineConfig } from 'vite'
+import path from 'path'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -21,31 +22,37 @@ function shouldProxy(pathname, modulePrefix) {
   return !frontendRoutes.some((prefix) => secondSegment.startsWith(prefix));
 }
 
-const djangoTarget = 'http://127.0.0.1:8000';
 const modules = ['/accounts', '/operations', '/sales', '/supply', '/partners', '/contract', '/resident-details', '/resident-portal', '/api', '/media'];
-const proxy = {};
-for (const mod of modules) {
-  proxy[mod] = {
-    target: djangoTarget,
-    bypass(req) {
-      if (!shouldProxy(req.url, mod)) return req.url; // serve from Vite (SPA)
+
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, path.resolve(__dirname, '..'), '');
+  const djangoPort = env.DJANGO_PORT || '8001';
+  const djangoTarget = `http://127.0.0.1:${djangoPort}`;
+
+  const proxy = {};
+  for (const mod of modules) {
+    proxy[mod] = {
+      target: djangoTarget,
+      bypass(req) {
+        if (!shouldProxy(req.url, mod)) return req.url; // serve from Vite (SPA)
+      },
+    };
+  }
+
+  return {
+    plugins: [react(), tailwindcss()],
+    server: {
+      proxy,
+      host: true,  // Expose on local network (0.0.0.0) for iPhone testing
+    },
+    build: {
+      outDir: 'build',
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.js',
+      css: false,
     },
   };
-}
-
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    proxy,
-    host: true,  // Expose on local network (0.0.0.0) for iPhone testing
-  },
-  build: {
-    outDir: 'build',
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.js',
-    css: false,
-  },
 })

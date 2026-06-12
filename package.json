@@ -5,7 +5,7 @@
   "author": "Aravind Adari",
   "scripts": {
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && ../.venv/bin/python manage.py runserver",
+    "dev:backend": "cd backend && ../.venv/bin/python manage.py runserver 0.0.0.0:$(grep DJANGO_PORT ../.env | cut -d= -f2 || echo 8001)",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build": "cd frontend && npm run build",
     "deploy": "cd frontend && bash deploy.sh"

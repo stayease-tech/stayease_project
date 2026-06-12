@@ -1,6 +1,6 @@
 // Copyright Aravind Adari
 import { IoIosPerson } from "react-icons/io";
-import { MdOutlineStickyNote2, MdCheckCircle, MdUploadFile, MdUpdate } from "react-icons/md";
+import { MdOutlineStickyNote2, MdCheckCircle, MdUploadFile, MdUpdate, MdPersonAdd } from "react-icons/md";
 import { FaRegFileAlt } from "react-icons/fa";
 import { GiCoins } from "react-icons/gi";
 import { PiHandDepositBold } from "react-icons/pi";
@@ -15,6 +15,7 @@ const menuItems = [
     { name: "Upload Data", icon: <MdUploadFile />, link: "/accounts/accounts-rawdatafile-upload" },
     { name: "Update Status", icon: <MdUpdate />, link: "/accounts/accounts-update-status", disabled: true },
     { name: "Liability", icon: <PiHandDepositBold />, link: "/accounts/accounts-liability-table" },
+    { name: "Add Employee", icon: <MdPersonAdd />, link: "/accounts/accounts-employee-form" },
 ];
 
 export default function Sidebar() {

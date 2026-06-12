@@ -62,6 +62,7 @@ const AccOtherFilesTable = lazy(() => import("./accounts/components/other-files-
 const AccBedsTable = lazy(() => import("./accounts/components/beds_components/BedsTable"));
 const AccBedsDetails = lazy(() => import("./accounts/components/beds_components/BedsDetails"));
 const AccAgreementPdf = lazy(() => import("./accounts/components/beds_components/AgreementPdf"));
+const AccEmployeeForm = lazy(() => import("./accounts/components/employee-components/EmployeeForm"));
 
 // === OPERATIONS - lazy loaded ===
 const OpsActivityStats = lazy(() => import("./operations/components/activity-components/ActivityStats"));
@@ -226,6 +227,7 @@ function Routing() {
                     <Route path="/accounts/accounts-beds-table" element={<Protected type="accounts"><AccBedsTable /></Protected>} />
                     <Route path="/accounts/accounts-beds-details/:id" element={<Protected type="accounts"><AccBedsDetails /></Protected>} />
                     <Route path="/accounts/accounts-agreement-pdf/:id" element={<Protected type="accounts"><AccAgreementPdf /></Protected>} />
+                    <Route path="/accounts/accounts-employee-form" element={<Protected type="accounts"><AccEmployeeForm /></Protected>} />
 
                     {/* ========== OPERATIONS (PROTECTED + some public) ========== */}
                     <Route path="/operations/operations-user-activity-data" element={<Protected type="operations"><OpsActivityStats /></Protected>} />
