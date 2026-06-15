@@ -3,6 +3,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
+import { sanitizeNameValue, validateNameValue } from "../../../shared/formValidation";
 
 function EmployeeForm() {
   const { getOptions } = useDropdowns();
@@ -18,9 +19,12 @@ function EmployeeForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const employeeHandleChange = (e) => {
+    const { name, value } = e.target;
+    const nextValue = name === 'firstName' || name === 'lastName' ? sanitizeNameValue(value) : value;
+
     setEmployeeData({
       ...employeeData,
-      [e.target.name]: e.target.value,
+      [name]: nextValue,
     });
   };
 
@@ -32,6 +36,15 @@ function EmployeeForm() {
 
   const employeeHandleSubmit = async (e) => {
     e.preventDefault();
+
+    const firstNameError = validateNameValue(employeeData.firstName);
+    const lastNameError = validateNameValue(employeeData.lastName);
+
+    if (firstNameError || lastNameError) {
+      alert(firstNameError || lastNameError);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -92,6 +105,8 @@ function EmployeeForm() {
               className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
               placeholder="Enter the first name here"
               required
+              pattern="^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$"
+              title="Letters, spaces, apostrophes, periods, or hyphens only"
             />
 
             <label htmlFor="lastName" className="text-[#D4A017] max-sm:text-sm">
@@ -105,6 +120,8 @@ function EmployeeForm() {
               className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
               placeholder="Enter the last name here"
               required
+              pattern="^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$"
+              title="Letters, spaces, apostrophes, periods, or hyphens only"
             />
 
             <label htmlFor="phone" className="text-[#D4A017] max-sm:text-sm">

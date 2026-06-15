@@ -7,6 +7,7 @@ import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { DATE_INPUT_MAX, DATE_INPUT_MIN, isValidIsoDateInRange } from "../../../shared/dateInput";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { sanitizeNameValue, validateNameValue } from "../../../shared/formValidation";
 import { User, Phone, Mail, MapPin, Briefcase, Bed, Calendar, IndianRupee, ShieldCheck, CheckCircle, Copy, Eye, EyeOff, ChevronDown } from "lucide-react";
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
@@ -154,8 +155,10 @@ export default function residentForm() {
             const next = { ...prev, [name]: nextValue };
 
             if (name === "firstName" || name === "lastName") {
-                const fn = name === "firstName" ? nextValue : prev.firstName;
-                const ln = name === "lastName" ? nextValue : prev.lastName;
+                const sanitized = sanitizeNameValue(nextValue);
+                next[name] = sanitized;
+                const fn = name === "firstName" ? sanitized : prev.firstName;
+                const ln = name === "lastName" ? sanitized : prev.lastName;
                 next.residentsName = `${fn} ${ln}`.trim();
             }
 
@@ -177,10 +180,10 @@ export default function residentForm() {
 
     const validateForm = () => {
         if (!form.bedId) return "Please select a bed.";
-        if (!form.firstName?.trim()) return "First name is required.";
-        if (!/^[A-Za-z]{1,}$/.test(form.firstName.trim())) return "First name must contain only letters.";
-        if (!form.lastName?.trim()) return "Last name is required.";
-        if (!/^[A-Za-z]{1,}$/.test(form.lastName.trim())) return "Last name must contain only letters.";
+        const firstNameError = validateNameValue(form.firstName);
+        if (firstNameError) return firstNameError === "Name is required." ? "First name is required." : `First name ${firstNameError.toLowerCase()}`;
+        const lastNameError = validateNameValue(form.lastName);
+        if (lastNameError) return lastNameError === "Name is required." ? "Last name is required." : `Last name ${lastNameError.toLowerCase()}`;
 
         if (!isValidIndianPhone(form.phoneNumber)) return "Phone number must be exactly 10 digits.";
 
@@ -351,10 +354,10 @@ export default function residentForm() {
                             <div className="space-y-4">
                                 <FieldRow>
                                     <Field label="First Name *">
-                                        <input name="firstName" value={form.firstName} onChange={handleChange} className={FIELD_CLS} placeholder="First name" required />
+                                        <input name="firstName" value={form.firstName} onChange={handleChange} className={FIELD_CLS} placeholder="First name" required pattern="^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$" title="Letters, spaces, apostrophes, periods, or hyphens only" autoComplete="given-name" />
                                     </Field>
                                     <Field label="Last Name *">
-                                        <input name="lastName" value={form.lastName} onChange={handleChange} className={FIELD_CLS} placeholder="Last name" required />
+                                        <input name="lastName" value={form.lastName} onChange={handleChange} className={FIELD_CLS} placeholder="Last name" required pattern="^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$" title="Letters, spaces, apostrophes, periods, or hyphens only" autoComplete="family-name" />
                                     </Field>
                                 </FieldRow>
                                 <FieldRow>
