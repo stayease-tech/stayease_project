@@ -42,8 +42,7 @@ function normalizeDateInputElement(input) {
   const isDateField = input.type === "date" || input.dataset.stayeaseDateInput === "true";
   if (!isDateField) return;
 
-  if (input.type === "date") {
-    input.type = "text";
+  if (!input.dataset.stayeaseDateInput) {
     input.dataset.stayeaseDateInput = "true";
     input.setAttribute("inputmode", "numeric");
     input.setAttribute("placeholder", "YYYY-MM-DD");
@@ -55,29 +54,50 @@ function normalizeDateInputElement(input) {
   if (!input.step) input.step = "1";
 
   const rawValue = input.value ?? "";
-  const value = normalizeDateTextValue(rawValue);
-  if (value !== rawValue) {
-    input.value = value;
-  }
+  const normalizedValue = normalizeDateTextValue(rawValue);
 
-  if (!value) {
+  if (input.type === "date") {
+    if (!rawValue) {
+      input.setCustomValidity("");
+      return;
+    }
+
+    if (!isIsoDate(rawValue) || !isCalendarValidDate(rawValue)) {
+      input.setCustomValidity("Please enter a valid date in YYYY-MM-DD format.");
+      return;
+    }
+
+    if (rawValue < input.min || rawValue > input.max) {
+      input.setCustomValidity(`Date must be between ${input.min} and ${input.max}.`);
+      return;
+    }
+
     input.setCustomValidity("");
     return;
   }
 
-  if (!isIsoDate(value)) {
+  if (normalizedValue !== rawValue && isIsoDate(normalizedValue)) {
+    input.value = normalizedValue;
+  }
+
+  if (!normalizedValue) {
+    input.setCustomValidity("");
+    return;
+  }
+
+  if (!isIsoDate(normalizedValue)) {
     input.setCustomValidity("Please enter a valid date in YYYY-MM-DD format.");
     return;
   }
 
-  if (!isCalendarValidDate(value)) {
+  if (!isCalendarValidDate(normalizedValue)) {
     input.setCustomValidity("Please enter a real calendar date (e.g. June only has 30 days).");
     return;
   }
 
-  if (value < input.min) {
+  if (normalizedValue < input.min) {
     input.value = input.min;
-  } else if (value > input.max) {
+  } else if (normalizedValue > input.max) {
     input.value = input.max;
   }
 
@@ -197,21 +217,27 @@ export function configureGlobalDateInputGuards() {
 
   document.addEventListener("focusin", (event) => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
-      normalizeDateInputElement(event.target);
+      if (event.target.dataset.stayeaseDateInput === "true") {
+        normalizeDateInputElement(event.target);
+      }
       applyCustomFieldValidation(event.target);
     }
   });
 
   document.addEventListener("input", (event) => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
-      normalizeDateInputElement(event.target);
+      if (event.target.dataset.stayeaseDateInput === "true") {
+        normalizeDateInputElement(event.target);
+      }
       applyCustomFieldValidation(event.target);
     }
   });
 
   document.addEventListener("change", (event) => {
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) {
-      normalizeDateInputElement(event.target);
+      if (event.target.dataset.stayeaseDateInput === "true") {
+        normalizeDateInputElement(event.target);
+      }
       applyCustomFieldValidation(event.target);
     }
   });
