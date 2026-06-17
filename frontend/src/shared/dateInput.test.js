@@ -42,4 +42,17 @@ describe('form validation', () => {
     expect(result.valid).toBe(false);
     expect(result.input).toBe(input);
   });
+
+  it('allows username fields to keep special characters that are valid for login credentials', () => {
+    const form = document.createElement('form');
+    const input = document.createElement('input');
+    input.name = 'username';
+    input.value = 'john.doe_123';
+    form.appendChild(input);
+
+    const result = validateFormInputs(form);
+
+    expect(result.valid).toBe(true);
+    expect(result.input).toBe(null);
+  });
 });

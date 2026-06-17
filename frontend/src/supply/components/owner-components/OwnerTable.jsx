@@ -30,14 +30,14 @@ function OwnerTable() {
         setCurrentPage(1);
     };
 
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    const formatter = new Intl.DateTimeFormat('en-IN', {
         year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        month: 'short',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        timeZoneName: 'short'
+        hour12: true
     });
 
     useEffect(() => {
@@ -72,7 +72,7 @@ function OwnerTable() {
     return (
         <DashPage>
             <div className="page-header">
-                <h1>StayEase Owner Table</h1>
+                <h1>Owner Management</h1>
                 <div className="flex items-center gap-2">
                     <button
                         className="px-3 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"

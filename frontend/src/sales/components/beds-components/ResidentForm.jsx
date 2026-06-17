@@ -103,6 +103,7 @@ export default function residentForm() {
         phoneNumber: "",
         email: "",
         permanentAddress: "",
+        dateOfBirth: "",
         kycType: "",
         aadharNumber: "",
         aadharStatus: "",
@@ -302,7 +303,7 @@ export default function residentForm() {
                                     <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => navigate("/sales/sales-beds-table")}>
                                         Back to Beds
                                     </button>
-                                    <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#D4A017] text-white hover:bg-[#B8860B] transition-colors" onClick={() => { setCredentials(null); setForm({ bedId: isNew ? "" : id, propertyManager: "", salesManager: "", comfortClass: "", mealType: "", firstName: "", lastName: "", residentsName: "", phoneNumber: "", email: "", permanentAddress: "", kycType: "", aadharNumber: "", aadharStatus: "", panNumber: "", panStatus: "", checkIn: "", checkOut: "", totalDepositPaid: "0", rentPerMonth: "" }); }}>
+                                    <button className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#D4A017] text-white hover:bg-[#B8860B] transition-colors" onClick={() => { setCredentials(null); setForm({ bedId: isNew ? "" : id, propertyManager: "", salesManager: "", comfortClass: "", mealType: "", firstName: "", lastName: "", residentsName: "", phoneNumber: "", email: "", permanentAddress: "", dateOfBirth: "", kycType: "", aadharNumber: "", aadharStatus: "", panNumber: "", panStatus: "", checkIn: "", checkOut: "", totalDepositPaid: "0", rentPerMonth: "" }); }}>
                                         Add Another
                                     </button>
                                 </div>
@@ -381,6 +382,17 @@ export default function residentForm() {
                                 <FieldRow>
                                     <Field label="Permanent Address">
                                         <input name="permanentAddress" value={form.permanentAddress} onChange={handleChange} className={FIELD_CLS} placeholder="City, State" />
+                                    </Field>
+                                    <Field label="Date of Birth">
+                                        <input
+                                            name="dateOfBirth"
+                                            value={form.dateOfBirth}
+                                            onChange={handleChange}
+                                            className={FIELD_CLS}
+                                            type="date"
+                                            min="1900-01-01"
+                                            max={new Date().toISOString().split('T')[0]}
+                                        />
                                     </Field>
                                 </FieldRow>
                             </div>

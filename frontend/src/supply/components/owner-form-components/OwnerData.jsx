@@ -73,6 +73,7 @@ function OwnerData({ ownerData, ownerHandleChange, emailError }) {
                 id="ownerDob"
                 value={ownerData.ownerDob}
                 onChange={ownerHandleChange}
+                min="1900-01-01"
                 max={new Date().toISOString().split('T')[0]}
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name="ownerDob"

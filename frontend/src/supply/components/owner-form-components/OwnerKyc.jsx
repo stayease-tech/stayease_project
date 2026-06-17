@@ -36,11 +36,11 @@ function OwnerKyc({ ownerHandleChange, ownerData, triggerFileInput }) {
                 id="aadharNumber"
                 value={ownerData.aadharNumber ? ownerData.aadharNumber.replace(/(\d{4})(?=\d)/g, '$1 ').trim() : ''}
                 onChange={ownerHandleChange}
-                className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm tracking-wider"
+                className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm tracking-widest"
                 name="aadharNumber"
                 placeholder="XXXX XXXX XXXX"
                 maxLength={14}
-                inputMode="numeric"
+                pattern="[0-9 ]*"
                 required />
 
             <label htmlFor="rentFree" className="text-[#D4A017] max-sm:text-sm"><strong>Upload Aadhar:</strong></label>

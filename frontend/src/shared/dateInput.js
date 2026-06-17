@@ -1,4 +1,4 @@
-export const DATE_INPUT_MIN = "2000-01-01";
+export const DATE_INPUT_MIN = "1900-01-01";
 export const DATE_INPUT_MAX = "2100-12-31";
 
 export function normalizeDateTextValue(value) {
@@ -127,7 +127,7 @@ function applyCustomFieldValidation(input) {
   }
 
   const value = input.value ?? "";
-  const name = `${input.name || ""} ${input.id || ""}`.toLowerCase();
+  const fieldName = (input.name || input.id || "").toLowerCase();
   const type = input.type || "text";
   const isRequired = input.hasAttribute("required") || input.required;
 
@@ -141,7 +141,10 @@ function applyCustomFieldValidation(input) {
     return false;
   }
 
-  if ((name.includes("name") || name.includes("fullname")) && value && !/^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$/.test(value.trim())) {
+  const isLikelyNameField = /^(?:first|last|middle|full|display|company|owner|employee|resident|vendor|contact|legal|given|family)?name$/i.test(name) ||
+    /(?:^|[_-])(first|last|middle|full|display|company|owner|employee|resident|vendor|contact|legal|given|family)name(?:$|[_-])/i.test(name);
+
+  if (isLikelyNameField && value && !/^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$/.test(value.trim())) {
     input.setCustomValidity("Names may only contain letters, spaces, apostrophes, periods, or hyphens.");
     return false;
   }
