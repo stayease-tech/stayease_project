@@ -4,6 +4,7 @@ import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 import { sanitizeNameValue, validateNameValue } from "../../../shared/formValidation";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
 
 function EmployeeForm() {
   const { getOptions } = useDropdowns();
@@ -20,7 +21,9 @@ function EmployeeForm() {
 
   const employeeHandleChange = (e) => {
     const { name, value } = e.target;
-    const nextValue = name === 'firstName' || name === 'lastName' ? sanitizeNameValue(value) : value;
+    let nextValue = value;
+    if (name === 'firstName' || name === 'lastName') nextValue = sanitizeNameValue(value);
+    if (name === 'phone') nextValue = formatIndianPhone(value);
 
     setEmployeeData({
       ...employeeData,
@@ -45,12 +48,17 @@ function EmployeeForm() {
       return;
     }
 
+    if (!isValidIndianPhone(employeeData.phone)) {
+      alert('Phone number must be exactly 10 digits.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const response = await axios.post(
         `/accounts/employee-form-submit/`,
-        employeeData,
+        { ...employeeData, phone: normalizePhoneDigits(employeeData.phone) },
         {
           withCredentials: true,
         }
@@ -133,7 +141,8 @@ function EmployeeForm() {
               value={employeeData.phone}
               onChange={employeeHandleChange}
               className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
-              placeholder="Enter the phone number here"
+              placeholder="XXXXX XXXXX"
+              maxLength={11}
               required
             />
 

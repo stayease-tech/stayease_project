@@ -28,6 +28,7 @@ function PropertyForm() {
     rent: "",
     deposit: "",
     rentFree: "",
+    rentFreeUnit: "Days",
     rating: '',
     selectedAmenities: [],
     image: '',

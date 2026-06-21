@@ -10,7 +10,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function RawdataDetails() {
-    const { getOptions, getExpenseCategories } = useDropdowns();
+    const { getOptions, getOptionsWithCurrent, getExpenseCategories } = useDropdowns();
     const navigate = useNavigate();
 
     const [dataEditView, setDataEditView] = useState(false);
@@ -315,7 +315,7 @@ function RawdataDetails() {
                                     </> : <>
                                         <select id="headOfExpense" value={rawDataForm.headOfExpense} onChange={(e) => rawDataFormHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="headOfExpense" required>
                                             <option value="" disabled>Select the Head of Expense here</option>
-                                            {getOptions('head_of_expense').map((h, i) => (
+                                            {getOptionsWithCurrent('head_of_expense', rawDataForm.headOfExpense).map((h, i) => (
                                                 <option key={i} value={h}>{h}</option>
                                             ))}
                                         </select>
@@ -333,19 +333,19 @@ function RawdataDetails() {
                                             <option value="" disabled>Select the Expense Type here</option>
 
                                             {(rawDataForm.headOfExpense !== 'Owners' && rawDataForm.headOfExpense !== 'Resident') &&
-                                                getOptions('expense_types__stayease_property').map((t, i) => (
+                                                getOptionsWithCurrent('expense_types__stayease_property', rawDataForm.expenseType).map((t, i) => (
                                                     <option key={i} value={t}>{t}</option>
                                                 ))
                                             }
 
                                             {rawDataForm.headOfExpense === 'Owners' &&
-                                                getOptions('expense_types__owners').map((t, i) => (
+                                                getOptionsWithCurrent('expense_types__owners', rawDataForm.expenseType).map((t, i) => (
                                                     <option key={i} value={t}>{t}</option>
                                                 ))
                                             }
 
                                             {rawDataForm.headOfExpense === 'Resident' &&
-                                                getOptions('expense_types__resident').map((t, i) => (
+                                                getOptionsWithCurrent('expense_types__resident', rawDataForm.expenseType).map((t, i) => (
                                                     <option key={i} value={t}>{t}</option>
                                                 ))
                                             }

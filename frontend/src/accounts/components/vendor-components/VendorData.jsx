@@ -8,7 +8,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function VendorData() {
-  const { getOptions } = useDropdowns();
+  const { getOptionsWithCurrent } = useDropdowns();
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -179,7 +179,7 @@ function VendorData() {
                   <td className={tdClass}>
                     <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="text-black w-full p-1.5 text-xs rounded border border-gray-300" name="category" required>
                       <option value="" disabled>Select the Category here</option>
-                      {getOptions('vendor_categories').map((cat, i) => (
+                      {getOptionsWithCurrent('vendor_categories', vendorData.category).map((cat, i) => (
                         <option key={i} value={cat}>{cat}</option>
                       ))}
                     </select>
@@ -195,7 +195,7 @@ function VendorData() {
                   <td className={tdClass}>
                     <select id="billingType" value={vendorData.billingType} onChange={vendorHandleChange} className="text-black w-full p-1.5 text-xs rounded border border-gray-300" name="billingType" required>
                       <option value="" disabled>Select the Billing Type here</option>
-                      {getOptions('billing_types').map((b, i) => (
+                      {getOptionsWithCurrent('billing_types', vendorData.billingType).map((b, i) => (
                         <option key={i} value={b}>{b}</option>
                       ))}
                     </select>

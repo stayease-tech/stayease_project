@@ -9,7 +9,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function RoomDetails() {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const navigate = useNavigate();
 
     const oneBhk = ['A1', 'A2'];
@@ -276,7 +276,7 @@ function RoomDetails() {
                                             required
                                         >
                                             <option value="" disabled>Select the Room type here</option>
-                                            {getOptions('room_types').map((t, i) => (
+                                            {getOptionsWithCurrent('room_types', roomDetails.roomType).map((t, i) => (
                                                 <option key={i} value={t}>{t}</option>
                                             ))}
                                         </select>
@@ -313,7 +313,7 @@ function RoomDetails() {
                                                     required
                                                 >
                                                     <option value="" disabled>Select the Balcony Access here</option>
-                                                    {getOptions('balcony_options').map((t, i) => (
+                                                    {getOptionsWithCurrent('balcony_options', data.balconyAccess).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
@@ -335,7 +335,7 @@ function RoomDetails() {
                                                     required
                                                 >
                                                     <option value="" disabled>Select the Bath Access here</option>
-                                                    {getOptions('bathroom_options').map((t, i) => (
+                                                    {getOptionsWithCurrent('bathroom_options', data.bathAccess).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
@@ -357,7 +357,7 @@ function RoomDetails() {
                                                     required
                                                 >
                                                     <option value="" disabled>Select the Room Type here</option>
-                                                    {getOptions('sharing_types').map((t, i) => (
+                                                    {getOptionsWithCurrent('sharing_types', data.roomType).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
@@ -379,7 +379,7 @@ function RoomDetails() {
                                                     required
                                                 >
                                                     <option value="" disabled>Select the Energy Plan here</option>
-                                                    {getOptions('electricity_options').map((t, i) => (
+                                                    {getOptionsWithCurrent('electricity_options', data.energyPlan).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
@@ -401,7 +401,7 @@ function RoomDetails() {
                                                     required
                                                 >
                                                     <option value="" disabled>Select the Hall Access here</option>
-                                                    {getOptions('yes_no_na_options').map((t, i) => (
+                                                    {getOptionsWithCurrent('yes_no_na_options', data.hallAccess).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
@@ -423,7 +423,7 @@ function RoomDetails() {
                                                     required
                                                 >
                                                     <option value="" disabled>Select the Kitchen Access here</option>
-                                                    {getOptions('yes_no_na_options').map((t, i) => (
+                                                    {getOptionsWithCurrent('yes_no_na_options', data.kitchenAccess).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>

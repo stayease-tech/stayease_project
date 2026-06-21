@@ -5,7 +5,7 @@ import { useDropdowns } from "../../shared/DropdownContext";
 
 // Move ProfileField component outside to prevent recreation on each render
 const ProfileField = ({ icon, label, value, field, type = "text", editable = true, isEditing, onInputChange }) => {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     return (
     <div className="group bg-gradient-to-br from-white to-gray-50  border border-gray-200 rounded-xl p-4 hover:border-[#D4A017]/30 transition-all duration-300">
         <div className="flex items-start space-x-3">
@@ -23,7 +23,7 @@ const ProfileField = ({ icon, label, value, field, type = "text", editable = tru
                             onChange={(e) => onInputChange(field, e.target.value)}
                             className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:border-[#D4A017] focus:ring-2 focus:ring-[#D4A017]/20 focus:outline-none transition-all duration-300"
                         >
-                            {getOptions('genders').map((g, i) => (
+                            {getOptionsWithCurrent('genders', value).map((g, i) => (
                                 <option key={i} value={g}>{g}</option>
                             ))}
                         </select>

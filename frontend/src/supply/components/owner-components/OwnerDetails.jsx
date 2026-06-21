@@ -4,6 +4,7 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { toast } from "react-toastify";
 import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { normalizeDateTextValue } from "../../../shared/dateInput";
 import OwnerData from "../owner-details-components/OwnerData";
 import OwnerKyc from "../owner-details-components/OwnerKyc";
 import { DashPage } from "../../../shared/Dashboard";
@@ -24,7 +25,7 @@ function OwnerDetails() {
         ownerPhone: ownerData?.ownerPhone || "",
         ownerEmail: ownerData?.ownerEmail || "",
         ownerAddress: ownerData?.ownerAddress || "",
-        ownerDob: ownerData?.ownerDob || "",
+        ownerDob: normalizeDateTextValue(ownerData?.ownerDob) || "",
         ownerGender: ownerData?.ownerGender || "",
         aadharNumber: ownerData?.aadharNumber || "",
         aadharFrontCopy: ownerData?.aadharFrontCopy || "",
@@ -106,12 +107,6 @@ function OwnerDetails() {
         return null;
     };
 
-    const getCSRFToken = () => {
-        return Cookies.get('csrftoken');
-    }
-
-    axios.defaults.headers.common['X-CSRFToken'] = getCSRFToken();
-
     const handleUpdate = async (e) => {
         e.preventDefault();
         const validationError = validateOwnerData();
@@ -151,6 +146,7 @@ function OwnerDetails() {
             const response = await axios.put(`/supply/owner-form-update/${id}/`, formData, {
                 withCredentials: true,
                 skipGlobalErrorToast: true,
+                headers: { 'X-CSRFToken': Cookies.get('csrftoken') },
             });
 
             if (response.data.success) {

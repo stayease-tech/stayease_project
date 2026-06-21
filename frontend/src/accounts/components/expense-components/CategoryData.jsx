@@ -8,7 +8,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function CategoryData() {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const navigate = useNavigate();
     const location = useLocation();
     const data = location.state?.data;
@@ -350,7 +350,7 @@ function CategoryData() {
                                         <td className={tdClass}>
                                             <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="status" required>
                                                 <option value="" disabled>Select the status of the payment here</option>
-                                                {getOptions('expense_statuses').map((s, i) => (
+                                                {getOptionsWithCurrent('expense_statuses', category.status).map((s, i) => (
                                                     <option key={i} value={s}>{s}</option>
                                                 ))}
                                             </select>
@@ -367,7 +367,7 @@ function CategoryData() {
                                             <td className={tdClass}>
                                                 <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="transferType" required>
                                                     <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                    {getOptions('transfer_types').map((t, i) => (
+                                                    {getOptionsWithCurrent('transfer_types', category.transferType).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>
@@ -461,7 +461,7 @@ function CategoryData() {
                                         <td className={tdClass}>
                                             <select id="status" value={category.status} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="status" required>
                                                 <option value="" disabled>Select the status of the payment here</option>
-                                                {getOptions('expense_statuses').map((s, i) => (
+                                                {getOptionsWithCurrent('expense_statuses', category.status).map((s, i) => (
                                                     <option key={i} value={s}>{s}</option>
                                                 ))}
                                             </select>
@@ -478,7 +478,7 @@ function CategoryData() {
                                             <td className={tdClass}>
                                                 <select id="transferType" value={category.transferType} onChange={(e) => categoryHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="transferType" required>
                                                     <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                    {getOptions('transfer_types').map((t, i) => (
+                                                    {getOptionsWithCurrent('transfer_types', category.transferType).map((t, i) => (
                                                         <option key={i} value={t}>{t}</option>
                                                     ))}
                                                 </select>

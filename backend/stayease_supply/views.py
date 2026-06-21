@@ -1,10 +1,10 @@
 import json
 from django.utils import timezone
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
-from stayease_project.permissions import IsSupplyTeam
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from stayease_project.permissions import IsSupplyTeam, CsrfExemptSessionAuthentication
 from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
@@ -12,6 +12,7 @@ from django.db.models import Prefetch
 from .models import User_Activity_Data, User_Login_Data, Owner_Data, Property_Data, Room_Data, Bed_Data, Property_Detail, Neighbourhood_Image, Price_Board_Detail
 
 @login_required
+@ensure_csrf_cookie
 def auth_check(request):
     """Handle GET /auth/check/ — verify whether the current session user is authenticated.
 
@@ -23,6 +24,7 @@ def auth_check(request):
     return JsonResponse({"isAuthenticated": False})
 
 @csrf_exempt
+@ensure_csrf_cookie
 def login_view(request):
     """Handle POST /login/ — authenticate a supply portal user and open a session.
 
@@ -238,8 +240,8 @@ def get_owner_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(["PUT"])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([IsSupplyTeam])
-@csrf_exempt
 def owner_form_update(request, id):
     """Handle PUT /owner/update/<id>/ — update changed fields on an existing owner record.
 
@@ -382,6 +384,7 @@ def property_data_submit(request, id):
                 rent=request.POST.get('rent'),
                 deposit=request.POST.get('deposit'),
                 rentFree=request.POST.get('rentFree'),
+                rentFreeUnit=request.POST.get('rentFreeUnit', 'Days'),
                 rating=request.POST.get('rating'),
                 selectedAmenities=json.loads(request.POST.get('selectedAmenities')),
                 image=request.FILES.get('image'),
@@ -472,6 +475,7 @@ def get_property_data(request, id):
                     "rent": detail.rent,
                     "deposit": detail.deposit,
                     "rentFree": detail.rentFree,
+                    "rentFreeUnit": detail.rentFreeUnit,
                     "rating": detail.rating,
                     "selectedAmenities": detail.selectedAmenities,
                     "image": detail.image.url if detail.image else None,
@@ -498,8 +502,8 @@ def get_property_data(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(["PUT"])
+@authentication_classes([CsrfExemptSessionAuthentication])
 @permission_classes([IsSupplyTeam])
-@csrf_exempt
 def property_form_update(request, id):
     """Handle PUT /property/update/<id>/ — update changed fields on an existing property record.
 
@@ -533,7 +537,7 @@ def property_form_update(request, id):
 
             updated_fields = []
 
-            for field in ['propertyName', 'propertyType', 'foundedYear', 'doorBuilding', 'streetAddress', 'area', 'landmark', 'state', 'city', 'pincode', 'rent', 'deposit', 'rentFree', 'rating', 'status', 'noOfBasements', 'noOfFloors', 'noOfRooms']:
+            for field in ['propertyName', 'propertyType', 'foundedYear', 'doorBuilding', 'streetAddress', 'area', 'landmark', 'state', 'city', 'pincode', 'rent', 'deposit', 'rentFree', 'rentFreeUnit', 'rating', 'status', 'noOfBasements', 'noOfFloors', 'noOfRooms']:
                 if field in request.POST:
                     new_value = request.POST[field]
                     current_value = getattr(property_data, field)

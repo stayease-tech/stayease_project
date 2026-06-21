@@ -108,6 +108,7 @@ class Property_Data(models.Model):
     rent = models.CharField()
     deposit = models.CharField()
     rentFree = models.CharField()
+    rentFreeUnit = models.CharField(default='Days', blank=True, null=True)
     rating = models.CharField(blank=True, null=True)
     selectedAmenities = models.JSONField(blank=True, null=True)
     image = models.FileField(upload_to='images/property-images/%Y/%m/%d/', blank=True, null=True)

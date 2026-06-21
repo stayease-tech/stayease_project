@@ -34,6 +34,7 @@ function PropertyDetails() {
         rent: propertyData?.rent || '',
         deposit: propertyData?.deposit || '',
         rentFree: propertyData?.rentFree || '',
+        rentFreeUnit: propertyData?.rentFreeUnit || 'Days',
         rating: propertyData?.rating || '',
         selectedAmenities: propertyData?.selectedAmenities || [],
         image: propertyData?.image || null,

@@ -1071,15 +1071,18 @@ def expense_form_submit(request):
                             status='Pending'
                         )
 
-            expense_email(
-                expenseRaisedEmail=request.POST.get('expenseRaisedEmail'),
-                propertyName=request.POST.get('propertyName'),
-                headOfExpense=request.POST.get('headOfExpense'),
-                expenseType=request.POST.get('expenseType'),
-                categories=categories,
-                email_type='pendingStatus',
-                expense_instance=expense_instance
-            )
+            try:
+                expense_email(
+                    expenseRaisedEmail=request.POST.get('expenseRaisedEmail'),
+                    propertyName=request.POST.get('propertyName'),
+                    headOfExpense=request.POST.get('headOfExpense'),
+                    expenseType=request.POST.get('expenseType'),
+                    categories=categories,
+                    email_type='pendingStatus',
+                    expense_instance=expense_instance
+                )
+            except Exception as email_err:
+                print(f'Expense email failed (non-fatal): {email_err}')
 
             return JsonResponse({'success': True, 'message': 'Expense data submitted successfully!'})
         except Exception as e:
@@ -1195,15 +1198,18 @@ def accounts_form_update(request, id):
 
                 expense_detail = instance.expense_instance
 
-                expense_email(
-                    expenseRaisedEmail=instance.expenseRaisedEmail,
-                    propertyName=expense_detail.propertyName,
-                    headOfExpense=expense_detail.headOfExpense,
-                    expenseType=expense_detail.expenseType,
-                    categories=instance,
-                    email_type='statusUpdate',
-                    expense_instance=expense_detail
-                )
+                try:
+                    expense_email(
+                        expenseRaisedEmail=instance.expenseRaisedEmail,
+                        propertyName=expense_detail.propertyName,
+                        headOfExpense=expense_detail.headOfExpense,
+                        expenseType=expense_detail.expenseType,
+                        categories=instance,
+                        email_type='statusUpdate',
+                        expense_instance=expense_detail
+                    )
+                except Exception as email_err:
+                    print(f'Expense status email failed (non-fatal): {email_err}')
 
             return JsonResponse({'success': True, 'message': 'Expense details updated successfully!'})
 
@@ -1340,7 +1346,8 @@ def get_fixed_expense_data(request):
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
-@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAdminGroup])
 def accounts_fixed_expense_update(request, id):
     """Handle PUT /accounts/fixed-expense/<id>/update/ — update a fixed expense record.
 
@@ -1450,7 +1457,8 @@ def accounts_fixed_expense_update(request, id):
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. PUT expected!'})
 
-@csrf_exempt
+@api_view(['DELETE'])
+@permission_classes([IsAdminGroup])
 def accounts_fixed_expense_delete(request, id):
     """Handle DELETE /accounts/fixed-expense/<id>/delete/ — remove a fixed expense record.
 
@@ -1473,6 +1481,8 @@ def accounts_fixed_expense_delete(request, id):
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. DELETE expected!'})
 
+@api_view(['GET'])
+@permission_classes([IsAdminGroup])
 def get_beds_data(request):
     """Handle GET /accounts/beds/ — return active residents with bed, room, and liability data.
 
@@ -1677,7 +1687,8 @@ def liability_form_submit(request):
     
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
 
-@csrf_exempt
+@api_view(['PUT'])
+@permission_classes([IsAdminGroup])
 def liability_data_update(request, id):
     """Handle PUT /accounts/liability/<id>/update/ — update a resident's deposit liability record.
 

@@ -47,6 +47,14 @@ export const DropdownProvider = ({ children }) => {
 
     const getOptions = (group) => dropdownConfig[group] || [];
 
+    const getOptionsWithCurrent = (group, currentValue) => {
+        const options = dropdownConfig[group] || [];
+        if (currentValue && !options.includes(currentValue)) {
+            return [currentValue, ...options];
+        }
+        return options;
+    };
+
     const getExpenseCategories = (expenseType) => {
         const key = EXPENSE_CATEGORY_MAP[expenseType];
         return key ? (dropdownConfig[key] || []) : [];
@@ -60,6 +68,7 @@ export const DropdownProvider = ({ children }) => {
             staffNames,
             loaded,
             getOptions,
+            getOptionsWithCurrent,
             getExpenseCategories,
             getStaffNamesList,
         }}>

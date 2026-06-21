@@ -194,16 +194,28 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 required />
 
             <label htmlFor={`rentFree`} className="text-[#D4A017] max-sm:text-sm"><strong>Rent Free Period: <span className="text-red-500">*</span></strong></label>
-            <input
-                type="text"
-                id={`rentFree`}
-                value={propertyData.rentFree}
-                onChange={propertyHandleChange}
-                className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
-                name={`rentFree`}
-                placeholder="Enter the number of days"
-                inputMode="numeric"
-                required />
+            <div className="flex gap-3 mt-2 mb-3">
+                <input
+                    type="text"
+                    id={`rentFree`}
+                    value={propertyData.rentFree}
+                    onChange={propertyHandleChange}
+                    className="text-black flex-1 p-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs"
+                    name={`rentFree`}
+                    placeholder="Enter the number of days"
+                    inputMode="numeric"
+                    required />
+                <select
+                    id={`rentFreeUnit`}
+                    value={propertyData.rentFreeUnit}
+                    onChange={propertyHandleChange}
+                    className="text-black w-28 p-2 border border-gray-300 rounded text-xs sm:text-sm"
+                    name={`rentFreeUnit`}>
+                    <option value="Days">Days</option>
+                    <option value="Months">Months</option>
+                    <option value="Years">Years</option>
+                </select>
+            </div>
 
             <label htmlFor={`rating`} className="text-[#D4A017] max-sm:text-sm"><strong>Rating: <span className="text-red-500">*</span></strong></label>
             <input
@@ -214,6 +226,9 @@ function PropertyData({ propertyData, triggerPropertyFileInput, propertyHandleCh
                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs text-xs sm:text-sm"
                 name={`rating`}
                 placeholder="Enter the rating (1-5)"
+                step="0.1"
+                min="1"
+                max="5"
                 required />
 
             <div className="mb-3">

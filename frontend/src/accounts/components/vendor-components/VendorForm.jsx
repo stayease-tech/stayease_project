@@ -4,6 +4,8 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
+import { formatIndianPhone, isValidIndianPhone, normalizePhoneDigits } from "../../../shared/phone";
+import { sanitizeNameValue } from "../../../shared/formValidation";
 
 function VendorForm() {
     const { getOptions } = useDropdowns();
@@ -35,19 +37,35 @@ function VendorForm() {
         if (e.target.type === 'file') {
             const file = e.target.files?.[0];
             if (file) {
-                setVendorData(prev => ({
-                    ...prev,
-                    file: file,
-                }));
+                setVendorData(prev => ({ ...prev, file }));
             }
         } else {
             const { name, value } = e.target;
-            setVendorData(prev => ({
-                ...prev,
-                [name]: value
-            }));
+            let next = value;
+            if (name === 'vendor' || name === 'accountHolderName') next = sanitizeNameValue(value);
+            if (name === 'bankName' || name === 'bankBranch') next = value.replace(/[^A-Za-z\s]/g, '').replace(/\s+/g, ' ');
+            if (name === 'contact') next = formatIndianPhone(value);
+            if (name === 'accountNumber') next = value.replace(/\D/g, '').slice(0, 18);
+            if (name === 'ifscCode') next = value.toUpperCase().replace(/\s/g, '').slice(0, 11);
+            setVendorData(prev => ({ ...prev, [name]: next }));
         }
     }
+
+    const validateVendor = () => {
+        if (!vendorData.vendor?.trim() || !/^[A-Za-z ]{2,}$/.test(vendorData.vendor.trim()))
+            return 'Please enter a valid vendor name (letters and spaces only).';
+        if (!isValidIndianPhone(vendorData.contact))
+            return 'Contact number must be exactly 10 digits.';
+        if (vendorData.billingType === 'Bank Transfer') {
+            if (!vendorData.accountHolderName?.trim())
+                return 'Account holder name is required.';
+            if (!/^\d{9,18}$/.test(vendorData.accountNumber || ''))
+                return 'Account number must be 9 to 18 digits.';
+            if (vendorData.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(vendorData.ifscCode))
+                return 'IFSC must follow format: ABCD0XXXXXX.';
+        }
+        return null;
+    };
 
     const getCSRFToken = () => {
         return Cookies.get('csrftoken');
@@ -57,10 +75,17 @@ function VendorForm() {
 
     const vendorHandleSubmit = async (e) => {
         e.preventDefault();
+        const validationError = validateVendor();
+        if (validationError) { alert(validationError); return; }
         setIsSubmitting(true);
 
+        const payload = {
+            ...vendorData,
+            contact: normalizePhoneDigits(vendorData.contact),
+        };
+
         try {
-            const response = await axios.post('/accounts/vendor-form-submit/', vendorData, {
+            const response = await axios.post('/accounts/vendor-form-submit/', payload, {
                 withCredentials: true,
             });
 
@@ -109,7 +134,7 @@ function VendorForm() {
                         <input type="text" id="vendor" value={vendorData.vendor} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="vendor" placeholder="Enter the Vendor Name here" required />
 
                         <label htmlFor="contact" className="text-[#D4A017] max-sm:text-sm"><strong>Contact: <span className="text-red-500">*</span></strong></label>
-                        <input type="tel" id="contact" value={vendorData.contact} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="contact" placeholder="Enter the Contact Number here" required />
+                        <input type="tel" id="contact" value={vendorData.contact} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm placeholder-gray-400 placeholder:text-xs" name="contact" placeholder="XXXXX XXXXX" maxLength={11} required />
 
                         <label htmlFor="category" className="text-[#D4A017] max-sm:text-sm"><strong>Category: <span className="text-red-500">*</span></strong></label>
                         <select id="category" value={vendorData.category} onChange={vendorHandleChange} className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm" name="category" required>

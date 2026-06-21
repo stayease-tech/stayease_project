@@ -141,8 +141,8 @@ function applyCustomFieldValidation(input) {
     return false;
   }
 
-  const isLikelyNameField = /^(?:first|last|middle|full|display|company|owner|employee|resident|vendor|contact|legal|given|family)?name$/i.test(name) ||
-    /(?:^|[_-])(first|last|middle|full|display|company|owner|employee|resident|vendor|contact|legal|given|family)name(?:$|[_-])/i.test(name);
+  const isLikelyNameField = /^(?:first|last|middle|full|display|company|owner|employee|resident|vendor|contact|legal|given|family)?name$/i.test(fieldName) ||
+    /(?:^|[_-])(first|last|middle|full|display|company|owner|employee|resident|vendor|contact|legal|given|family)name(?:$|[_-])/i.test(fieldName);
 
   if (isLikelyNameField && value && !/^[A-Za-zÀ-ÖØ-öø-ÿ .'-]+$/.test(value.trim())) {
     input.setCustomValidity("Names may only contain letters, spaces, apostrophes, periods, or hyphens.");
@@ -154,19 +154,22 @@ function applyCustomFieldValidation(input) {
     return false;
   }
 
-  if ((name.includes("phone") || name.includes("mobile") || name.includes("contact")) && value && !/^\d{10}$/.test(value.replace(/\D/g, ""))) {
+  if ((fieldName.includes("phone") || fieldName.includes("mobile") || fieldName.includes("contact")) && value && !/^\d{10}$/.test(value.replace(/\D/g, ""))) {
     input.setCustomValidity("Please enter a valid 10-digit phone number.");
     return false;
   }
 
-  if ((name.includes("pincode") || name.includes("zip")) && value && !/^\d{6}$/.test(value)) {
+  if ((fieldName.includes("pincode") || fieldName.includes("zip")) && value && !/^\d{6}$/.test(value)) {
     input.setCustomValidity("Please enter a valid 6-digit pincode.");
     return false;
   }
 
-  if ((input.getAttribute("inputmode") === "numeric" || type === "number") && value && Number.isNaN(Number(value))) {
-    input.setCustomValidity("Please enter a valid number.");
-    return false;
+  if (type === "number" && value) {
+    const stripped = value.replace(/\s/g, "");
+    if (stripped && Number.isNaN(Number(stripped))) {
+      input.setCustomValidity("Please enter a valid number.");
+      return false;
+    }
   }
 
   if (input.dataset.stayeaseDateInput === "true" && value && !isIsoDate(normalizeDateTextValue(value))) {

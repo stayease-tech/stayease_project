@@ -9,7 +9,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function LiabilityData() {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const navigate = useNavigate();
     const location = useLocation();
     const residentData = location.state?.residentData;
@@ -277,7 +277,7 @@ function LiabilityData() {
                                     <td className={tdClass}>
                                         <select id="status" value={liabiltyData.status} onChange={liabilityHandleChange} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="status" required>
                                             <option value="" disabled>Select the status here</option>
-                                            {getOptions('liability_statuses').map((s, i) => (
+                                            {getOptionsWithCurrent('liability_statuses', liabiltyData.status).map((s, i) => (
                                                 <option key={i} value={s}>{s}</option>
                                             ))}
                                         </select>

@@ -33,7 +33,7 @@ function DetailRow({ label, value, editMode, children }) {
 }
 
 function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, triggerFileInput }) {
-    const { getOptions } = useDropdowns();
+    const { getOptions, getOptionsWithCurrent } = useDropdowns();
     const country = Country.getCountryByCode('IN');
     const states = State.getStatesOfCountry(country.isoCode);
     const state = states.find((state) => state.name === propertyDetails.state);
@@ -65,7 +65,7 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                         <select name="propertyType" value={propertyDetails.propertyType}
                             onChange={propertyHandleChange} className={selectClass} required>
                             <option value="" disabled>Select property type</option>
-                            {getOptions('property_types').map((t, i) => (
+                            {getOptionsWithCurrent('property_types', propertyDetails.propertyType).map((t, i) => (
                                 <option key={i} value={t}>{t}</option>
                             ))}
                         </select>
@@ -81,7 +81,7 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                         <select name="status" value={propertyDetails.status}
                             onChange={propertyHandleChange} className={selectClass} required>
                             <option value="" disabled>Select status</option>
-                            {getOptions('property_statuses').map((s, i) => (
+                            {getOptionsWithCurrent('property_statuses', propertyDetails.status).map((s, i) => (
                                 <option key={i} value={s}>{s}</option>
                             ))}
                         </select>
@@ -90,7 +90,7 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                     <DetailRow label="Rating" value={propertyDetails.rating || '—'} editMode={dataEditView}>
                         <input type="number" name="rating" value={propertyDetails.rating}
                             onChange={propertyHandleChange} className={inputClass}
-                            placeholder="Enter rating (1-5)" min="1" max="5" />
+                            placeholder="Enter rating (1-5)" min="1" max="5" step="0.1" />
                     </DetailRow>
                 </dl>
             </div>
@@ -167,15 +167,26 @@ function PropertyData({ dataEditView, propertyDetails, propertyHandleChange, tri
                             placeholder="Enter deposit amount" inputMode="numeric" required />
                     </DetailRow>
 
-                    <DetailRow label="Rent Free *" value={propertyDetails.rentFree ? `₹${propertyDetails.rentFree}` : '—'} editMode={dataEditView}>
-                        <select name="rentFree" value={propertyDetails.rentFree}
-                            onChange={propertyHandleChange} className={selectClass} required>
-                            <option value="" disabled>Select rent free amount</option>
-                            {getOptions('rent_free_options').map((r, i) => (
-                                <option key={i} value={r}>{Number(r).toLocaleString('en-IN')}</option>
-                            ))}
-                        </select>
-                    </DetailRow>
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 py-3 border-b border-gray-100 last:border-b-0">
+                        <dt className="text-sm font-medium text-[#D4A017] sm:w-40 sm:min-w-[10rem] sm:flex-shrink-0">Rent Free *</dt>
+                        <dd className="text-sm text-slate-700 sm:flex-1 min-w-0">
+                            {dataEditView ? (
+                                <div className="flex gap-3">
+                                    <input type="text" name="rentFree" value={propertyDetails.rentFree}
+                                        onChange={propertyHandleChange} className={`${inputClass} flex-1`}
+                                        placeholder="Enter the number of days" inputMode="numeric" required />
+                                    <select name="rentFreeUnit" value={propertyDetails.rentFreeUnit}
+                                        onChange={propertyHandleChange} className={`${selectClass} w-28`}>
+                                        <option value="Days">Days</option>
+                                        <option value="Months">Months</option>
+                                        <option value="Years">Years</option>
+                                    </select>
+                                </div>
+                            ) : (
+                                <span>{propertyDetails.rentFree || '—'} {propertyDetails.rentFreeUnit || 'Days'}</span>
+                            )}
+                        </dd>
+                    </div>
                 </dl>
             </div>
 

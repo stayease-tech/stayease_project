@@ -10,7 +10,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function BedsDetails() {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -360,7 +360,7 @@ function BedsDetails() {
                                                 <td className={tdClass}>
                                                     <select id="rentStatus" value={bedsDetails.rentStatus} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="rentStatus" required>
                                                         <option value="" disabled>Select the status here</option>
-                                                        {getOptions('deposit_statuses').map((t, i) => (
+                                                        {getOptionsWithCurrent('deposit_statuses', bedsDetails.rentStatus).map((t, i) => (
                                                             <option key={i} value={t}>{t}</option>
                                                         ))}
                                                     </select>
@@ -377,7 +377,7 @@ function BedsDetails() {
                                                     <td className={tdClass}>
                                                         <select id="transferType" value={bedsDetails.transferType} onChange={(e) => bedsHandleChange(e)} className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300" name="transferType" required>
                                                             <option value="" disabled>Select the Transfer Type of the payment here</option>
-                                                            {getOptions('transfer_types').map((t, i) => (
+                                                            {getOptionsWithCurrent('transfer_types', bedsDetails.transferType).map((t, i) => (
                                                                 <option key={i} value={t}>{t}</option>
                                                             ))}
                                                         </select>

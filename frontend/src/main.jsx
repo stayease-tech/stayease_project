@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, useLocation } from 'react-router-dom'
 import { ToastContainer, toast } from 'react-toastify'
@@ -15,8 +15,15 @@ configureGlobalDateInputGuards()
 
 function ToastRouteCleanup() {
   const location = useLocation();
+  const prevPath = useRef(location.pathname);
   useEffect(() => {
-    toast.dismiss();
+    if (prevPath.current !== location.pathname) {
+      prevPath.current = location.pathname;
+      // Delay dismiss so toasts shown just before navigation remain visible
+      setTimeout(() => {
+        toast.dismiss();
+      }, 3000);
+    }
   }, [location.pathname]);
   return null;
 }

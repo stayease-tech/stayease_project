@@ -10,7 +10,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function LeadDetails() {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -222,7 +222,7 @@ function LeadDetails() {
                                     required
                                 >
                                     <option value="" disabled>Select Lead Source</option>
-                                    {getOptions('lead_sources').map((src, i) => (
+                                    {getOptionsWithCurrent('lead_sources', leadDetails.leadSource).map((src, i) => (
                                         <option key={i} value={src}>{src}</option>
                                     ))}
                                 </select>
@@ -300,7 +300,7 @@ function LeadDetails() {
                                     required
                                 >
                                     <option value="" disabled>Select Lead Status</option>
-                                    {getOptions('lead_statuses').map((s, i) => (
+                                    {getOptionsWithCurrent('lead_statuses', leadDetails.leadResult).map((s, i) => (
                                         <option key={i} value={s}>{s}</option>
                                     ))}
                                 </select>
@@ -323,7 +323,7 @@ function LeadDetails() {
                                         required
                                     >
                                         <option value="" disabled>Select reason</option>
-                                        {getOptions('not_converted_reasons').map((r, i) => (
+                                        {getOptionsWithCurrent('not_converted_reasons', leadDetails.notConvertedReason).map((r, i) => (
                                             <option key={i} value={r}>{r}</option>
                                         ))}
                                     </select>

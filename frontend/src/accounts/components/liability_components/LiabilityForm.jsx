@@ -33,12 +33,25 @@ export default function LiabilityForm() {
 
     const liabilityHandleChange = (e) => {
         const { name, type, checked, value } = e.target;
+        let next = value;
+        if (name === 'amount') next = value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+        if (name === 'utrNumber') next = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 22);
 
         setLiabiltyData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : next
         }));
     }
+
+    const validateLiability = () => {
+        if (liabiltyData.status === 'Settled') {
+            if (!liabiltyData.amount || isNaN(Number(liabiltyData.amount)) || Number(liabiltyData.amount) <= 0)
+                return 'Please enter a valid amount.';
+            if (!liabiltyData.utrNumber || liabiltyData.utrNumber.length < 6)
+                return 'Please enter a valid UTR number.';
+        }
+        return null;
+    };
 
     const getCSRFToken = () => {
         return Cookies.get('csrftoken');
@@ -48,6 +61,8 @@ export default function LiabilityForm() {
 
     const liabilityHandleSubmit = async (e) => {
         e.preventDefault();
+        const validationError = validateLiability();
+        if (validationError) { alert(validationError); return; }
         setIsSubmitting(true);
 
         try {

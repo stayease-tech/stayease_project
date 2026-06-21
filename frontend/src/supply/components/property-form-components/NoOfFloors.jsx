@@ -9,8 +9,8 @@ function NoOfFloors({ propertyData, setPropertyData }) {
                 ...prev,
                 floorNos: newFloorNos,
                 roomsPerFloor: Array.from({ length: newFloorNos }, (_, i) => {
-                    const existingFloor = prev.roomsPerFloor.find(f => f.floor === i + 1);
-                    return existingFloor || { floor: i + 1, rooms: 0 };
+                    const existingFloor = prev.roomsPerFloor.find(f => f.floor === i);
+                    return existingFloor || { floor: i, rooms: 0 };
                 })
             };
         });
@@ -24,7 +24,7 @@ function NoOfFloors({ propertyData, setPropertyData }) {
                 ...prev,
                 floorNos: newFloorNos,
                 roomsPerFloor: prev.roomsPerFloor
-                    .filter(f => f.floor >= 1 && f.floor <= newFloorNos)
+                    .filter(f => f.floor >= 0 && f.floor < newFloorNos)
                     .map(f => ({ ...f }))
             };
         });
@@ -41,8 +41,8 @@ function NoOfFloors({ propertyData, setPropertyData }) {
                     ...prev,
                     floorNos: num,
                     roomsPerFloor: Array.from({ length: num }, (_, i) => {
-                        const existingFloor = prev.roomsPerFloor.find(f => f.floor === i + 1);
-                        return existingFloor || { floor: i + 1, rooms: 0 };
+                        const existingFloor = prev.roomsPerFloor.find(f => f.floor === i);
+                        return existingFloor || { floor: i, rooms: 0 };
                     })
                 };
             });

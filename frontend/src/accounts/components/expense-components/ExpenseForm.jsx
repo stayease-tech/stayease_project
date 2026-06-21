@@ -776,6 +776,8 @@ function ExpenseForm({ loggedUserEmail }) {
                                                 type="date"
                                                 value={cat.amountTransferredDate}
                                                 onChange={(e) => expenseHandleChange(e, index, "amountTransferredDate")}
+                                                min="1900-01-01"
+                                                max="2100-12-31"
                                                 className="mt-2 mb-3 text-black w-full p-2 mb-2 border border-gray-300 rounded text-xs sm:text-sm"
                                             />
 

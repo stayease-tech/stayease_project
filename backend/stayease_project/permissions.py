@@ -1,4 +1,12 @@
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import BasePermission
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    """SessionAuthentication without CSRF enforcement for internal SPA views."""
+
+    def enforce_csrf(self, request):
+        return
 
 
 class IsStaffUser(BasePermission):

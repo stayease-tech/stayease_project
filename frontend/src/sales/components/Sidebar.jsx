@@ -14,6 +14,7 @@ const menuItems = [
     { name: "Track Rent", icon: <TbReportMoney />, link: "/sales/sales-track-rent", disabled: true },
     { name: "Leads", icon: <MdLeaderboard />, link: "/sales/sales-leads-table" },
     { name: "KYC Management", icon: <HiShieldCheck />, link: "/sales/sales-kyc-management" },
+    { name: "Raise Expense", icon: <TbReportMoney />, link: "/sales/sales-expense-form" },
 ];
 
 export default function Sidebar() {

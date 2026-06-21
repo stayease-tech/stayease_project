@@ -62,7 +62,7 @@ function FileRow({ label, fileValue, fieldName, editMode, onChange, onTrigger })
 }
 
 function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, ownerHandleChange }) {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
     const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
 
@@ -93,7 +93,7 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="aadharVerification" value={ownerDetails.aadharVerification}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select status</option>
-                            {getOptions('verification_statuses').map((v, i) => (
+                            {getOptionsWithCurrent('verification_statuses', ownerDetails.aadharVerification).map((v, i) => (
                                 <option key={i} value={v}>{v}</option>
                             ))}
                         </select>
@@ -121,7 +121,7 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="panVerification" value={ownerDetails.panVerification}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select status</option>
-                            {getOptions('verification_statuses').map((v, i) => (
+                            {getOptionsWithCurrent('verification_statuses', ownerDetails.panVerification).map((v, i) => (
                                 <option key={i} value={v}>{v}</option>
                             ))}
                         </select>
@@ -167,7 +167,7 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="accountStatus" value={ownerDetails.accountStatus}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select status</option>
-                            {getOptions('owner_account_statuses').map((s, i) => (
+                            {getOptionsWithCurrent('owner_account_statuses', ownerDetails.accountStatus).map((s, i) => (
                                 <option key={i} value={s}>{s}</option>
                             ))}
                         </select>
@@ -177,7 +177,7 @@ function OwnerKyc({ dataEditView, ownerData, ownerDetails, triggerFileInput, own
                         <select name="paymentType" value={ownerDetails.paymentType}
                             onChange={ownerHandleChange} className={selectClass}>
                             <option value="" disabled>Select type</option>
-                            {getOptions('owner_payment_types').map((p, i) => (
+                            {getOptionsWithCurrent('owner_payment_types', ownerDetails.paymentType).map((p, i) => (
                                 <option key={i} value={p}>{p}</option>
                             ))}
                         </select>

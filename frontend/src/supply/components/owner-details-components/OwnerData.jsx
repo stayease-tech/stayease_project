@@ -14,7 +14,7 @@ function DetailRow({ label, value, editMode, children }) {
 }
 
 function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
-    const { getOptions } = useDropdowns();
+    const { getOptionsWithCurrent } = useDropdowns();
     const inputClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
     const selectClass = "w-full p-2 border border-gray-300 rounded text-sm text-black bg-white focus:ring-2 focus:ring-[#D4A017] focus:border-transparent outline-none";
 
@@ -44,7 +44,7 @@ function OwnerData({ ownerDetails, dataEditView, ownerHandleChange }) {
                         <select name="ownerGender" value={ownerDetails.ownerGender}
                             onChange={ownerHandleChange} className={selectClass} required>
                             <option value="" disabled>Select gender</option>
-                            {getOptions('genders').map((g, i) => (
+                            {getOptionsWithCurrent('genders', ownerDetails.ownerGender).map((g, i) => (
                                 <option key={i} value={g}>{g}</option>
                             ))}
                         </select>

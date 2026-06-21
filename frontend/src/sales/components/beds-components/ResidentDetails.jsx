@@ -13,7 +13,7 @@ import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
 function residentDetails() {
-    const { getOptions, getStaffNamesList } = useDropdowns();
+    const { getOptions, getOptionsWithCurrent, getStaffNamesList } = useDropdowns();
     const navigate = useNavigate();
     const [dataEditView, setDataEditView] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -325,7 +325,7 @@ function residentDetails() {
                                     required
                                 >
                                     <option value="" disabled>Select Comfort Class</option>
-                                    {getOptions('comfort_classes').map((c, i) => (
+                                    {getOptionsWithCurrent('comfort_classes', residentDetails.comfortClass).map((c, i) => (
                                         <option key={i} value={c}>{c}</option>
                                     ))}
                                 </select>
@@ -347,7 +347,7 @@ function residentDetails() {
                                     required
                                 >
                                     <option value="" disabled>Select Meal Type</option>
-                                    {getOptions('meal_types').map((m, i) => (
+                                    {getOptionsWithCurrent('meal_types', residentDetails.mealType).map((m, i) => (
                                         <option key={i} value={m}>{m}</option>
                                     ))}
                                 </select>
@@ -439,7 +439,7 @@ function residentDetails() {
                                     required
                                 >
                                     <option value="" disabled>Select document type</option>
-                                    {getOptions('kyc_types').map((k, i) => (
+                                    {getOptionsWithCurrent('kyc_types', residentDetails.kycType).map((k, i) => (
                                         <option key={i} value={k}>{k}</option>
                                     ))}
                                 </select>
@@ -540,7 +540,7 @@ function residentDetails() {
                                         required
                                     >
                                         <option value="" disabled>Select status</option>
-                                        {getOptions('verification_statuses').map((v, i) => (
+                                        {getOptionsWithCurrent('verification_statuses', residentDetails.aadharStatus).map((v, i) => (
                                             <option key={i} value={v}>{v}</option>
                                         ))}
                                     </select>
@@ -642,7 +642,7 @@ function residentDetails() {
                                         required
                                     >
                                         <option value="" disabled>Select status</option>
-                                        {getOptions('verification_statuses').map((v, i) => (
+                                        {getOptionsWithCurrent('verification_statuses', residentDetails.panStatus).map((v, i) => (
                                             <option key={i} value={v}>{v}</option>
                                         ))}
                                     </select>
