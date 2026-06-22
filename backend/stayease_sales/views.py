@@ -12,7 +12,6 @@ from django.db.models.functions import Cast
 from dateutil.relativedelta import relativedelta
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.core.exceptions import ValidationError
 from .models import User_Activity_Data, User_Login_Data, resident_Data, resident_Rent_Data, Leads_Detail, Document, SigningRequest, PaymentTransaction, PaymentRefund
@@ -30,7 +29,6 @@ DATE_MIN = date(1900, 1, 1)
 DATE_MAX = date(2099, 12, 31)
 
 # Create your views here.
-@login_required
 def auth_check(request):
     """Handle GET /auth/check/ — verify whether the current session user is authenticated.
 

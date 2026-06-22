@@ -22,7 +22,6 @@ from stayease_supply.models import Owner_Data, Property_Data, Room_Data, Bed_Dat
 from stayease_sales.models import resident_Data
 
 # Create your views here.
-@login_required
 def auth_check(request):
     """Handle GET /auth/check/ — confirm whether the current session is authenticated.
 

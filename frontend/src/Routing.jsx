@@ -199,7 +199,7 @@ function Routing() {
                     <Route path="/blog/why-co-living-best-for-young-professionals" element={<PublicLayout><Blog7 /></PublicLayout>} />
                     <Route path="/blog/top-amenities-in-modern-co-living" element={<PublicLayout><Blog8 /></PublicLayout>} />
                     <Route path="/contact" element={<PublicLayout><WebContact /></PublicLayout>} />
-                    <Route path="/resident-login" element={<PublicLayout><WebResidentLogin /></PublicLayout>} />
+                    <Route path="/resident-login" element={<WebResidentLogin />} />
                     <Route path="/privacy-policy" element={<PublicLayout><WebPrivacyPolicy /></PublicLayout>} />
                     <Route path="/Terms-conditions" element={<PublicLayout><WebTermsConditions /></PublicLayout>} />
                     <Route path="/refund-policy" element={<PublicLayout><WebRefundPolicy /></PublicLayout>} />

@@ -8,7 +8,6 @@ import uuid
 from django.db.models import F
 from email.utils import formatdate
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -20,7 +19,6 @@ from stayease_sales.models import resident_Data
 from stayease_accounts.models import Vendor_Detail
 
 # Create your views here.
-@login_required
 def auth_check(request):
     """Handle GET /auth/check/ — verify whether the current session user is authenticated.
 

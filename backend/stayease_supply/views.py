@@ -6,12 +6,10 @@ from stayease_project.permissions import IsSupplyTeam, CsrfExemptSessionAuthenti
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.db.models import Prefetch
 from .models import User_Activity_Data, User_Login_Data, Owner_Data, Property_Data, Room_Data, Bed_Data, Property_Detail, Neighbourhood_Image, Price_Board_Detail
 
-@login_required
 @ensure_csrf_cookie
 def auth_check(request):
     """Handle GET /auth/check/ — verify whether the current session user is authenticated.
