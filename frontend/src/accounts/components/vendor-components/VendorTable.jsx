@@ -41,14 +41,14 @@ function VendorTable() {
         setCurrentPage(pageNumber);
     };
 
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    const formatter = new Intl.DateTimeFormat('en-IN', {
         year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        month: 'short',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        timeZoneName: 'short'
+        hour12: true,
     });
 
     useEffect(() => {
@@ -90,7 +90,7 @@ function VendorTable() {
         vendorData.categories.length !== 0 ?
             navigate(`/accounts/accounts-expense-table/${vendorData?.id}`, { state: { type: 'vendor' } })
             :
-            navigate(`/accounts/accounts-expense-form`);
+            navigate(`/accounts/accounts-expense-form`, { state: { activeOption: 'Expense' } });
     };
 
     const editVendorDetails = (vendorData) => {

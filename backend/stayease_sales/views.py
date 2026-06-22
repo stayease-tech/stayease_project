@@ -747,6 +747,77 @@ def parse_and_validate_iso_date(date_str, field_label, required=False):
 
     return raw, parsed, None
 
+def get_all_residents(request):
+    """Handle GET /sales/get-all-residents/ — return all residents directly from the resident model.
+
+    Unlike get_beds_data (which traverses Property→Room→Bed→Resident), this queries
+    resident_Data directly so residents appear regardless of bed/property hierarchy gaps.
+
+    Returns:
+        JsonResponse with `residents` list.
+    """
+    if request.method == 'GET':
+        try:
+            residents = resident_Data.objects.select_related(
+                'bed_data_instance__room__property'
+            ).order_by('-id')
+
+            data = []
+            for r in residents:
+                bed = r.bed_data_instance
+                bed_label = room_no = property_name = ''
+                if bed:
+                    bed_label = bed.bedLabel or ''
+                    if hasattr(bed, 'room') and bed.room:
+                        room_no = bed.room.roomNo or ''
+                        if hasattr(bed.room, 'property') and bed.room.property:
+                            property_name = bed.room.property.propertyName or ''
+
+                data.append({
+                    'id': r.id,
+                    'bed_data_instance_id': r.bed_data_instance_id,
+                    'propertyName': property_name,
+                    'roomNo': room_no,
+                    'bedLabel': bed_label,
+                    # personal & stay details
+                    'propertyManager': r.propertyManager,
+                    'salesManager': r.salesManager,
+                    'comfortClass': r.comfortClass,
+                    'mealType': r.mealType,
+                    'residentsName': r.residentsName,
+                    'phoneNumber': r.phoneNumber,
+                    'email': r.email,
+                    'permanentAddress': r.permanentAddress,
+                    # KYC
+                    'kycType': r.kycType,
+                    'aadharNumber': r.aadharNumber,
+                    'aadharFrontCopy': r.aadharFrontCopy.url if r.aadharFrontCopy else '',
+                    'aadharBackCopy': r.aadharBackCopy.url if r.aadharBackCopy else '',
+                    'aadharStatus': r.aadharStatus,
+                    'panNumber': r.panNumber,
+                    'panFrontCopy': r.panFrontCopy.url if r.panFrontCopy else '',
+                    'panBackCopy': r.panBackCopy.url if r.panBackCopy else '',
+                    'panStatus': r.panStatus,
+                    'kycApprovalStatus': r.kycApprovalStatus,
+                    # stay dates & financials
+                    'checkIn': r.checkIn,
+                    'checkOut': r.checkOut,
+                    'checkoutReason': r.checkoutReason,
+                    'totalDepositPaid': r.totalDepositPaid,
+                    'rentPerMonth': r.rentPerMonth,
+                    'residentStatus': r.residentStatus,
+                    'submittedDateAndTime': r.submittedDateAndTime,
+                    'updatedDateAndTime': r.updatedDateAndTime,
+                })
+
+            return JsonResponse({'success': True, 'residents': data})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'success': False, 'message': 'Error fetching data.'})
+
+    return JsonResponse({'success': False, 'message': 'GET expected.'})
+
+
 @csrf_exempt
 def resident_form_submit(request):
     """Handle POST /resident/ — create a new resident record, assign a bed, generate rent records, and create a portal user.

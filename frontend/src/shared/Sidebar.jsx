@@ -80,6 +80,7 @@ export default function Sidebar({ menuItems }) {
                                 ) : (
                                     <Link
                                         to={item.link}
+                                        state={item.state}
                                         className={`flex items-center gap-2.5 rounded-lg transition-all duration-200 ${
                                             isExpanded ? "px-3 py-2.5" : "px-0 py-2.5 justify-center"
                                         } ${

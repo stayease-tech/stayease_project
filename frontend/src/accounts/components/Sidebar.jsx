@@ -8,9 +8,9 @@ import { TbReportMoney } from "react-icons/tb";
 import SharedSidebar from "../../shared/Sidebar";
 
 const menuItems = [
-    { name: "Add Vendor", icon: <IoIosPerson />, link: "/accounts/accounts-vendor-form" },
+    { name: "Vendors", icon: <IoIosPerson />, link: "/accounts/accounts-vendor-table" },
     { name: "Approve Expense", icon: <MdCheckCircle />, link: "/accounts/accounts-expense-table" },
-    { name: "Fixed Expense", icon: <TbReportMoney />, link: "/accounts/accounts-fixed-expense", disabled: true },
+    { name: "Fixed Expense", icon: <TbReportMoney />, link: "/accounts/accounts-expense-table", state: { activeOption: 'Fixed Expense' } },
     { name: "Upload Data", icon: <MdUploadFile />, link: "/accounts/accounts-rawdatafile-upload" },
     { name: "Update Status", icon: <MdUpdate />, link: "/accounts/accounts-update-status", disabled: true },
     { name: "Liability", icon: <PiHandDepositBold />, link: "/accounts/accounts-liability-table" },

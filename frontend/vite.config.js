@@ -11,6 +11,14 @@ const frontendRoutes = [
   'user-activity',
 ];
 
+// Backend API path prefixes (second URL segment) that must always be proxied,
+// even if they also match a frontendRoutes prefix above.
+// e.g. /accounts/accounts-form-update/1/ must reach Django, not the SPA.
+const backendApiPaths = [
+  'accounts-form-',
+  'accounts-fixed-expense-',
+];
+
 /** Only proxy to Django if the path looks like an API call, not a frontend route */
 function shouldProxy(pathname, modulePrefix) {
   // These prefixes are backend-only and should never be treated as SPA routes.
@@ -19,6 +27,12 @@ function shouldProxy(pathname, modulePrefix) {
   }
 
   const secondSegment = pathname.split('/').filter(Boolean)[1] || '';
+
+  // Always proxy known backend API paths, regardless of frontendRoutes.
+  if (backendApiPaths.some((prefix) => secondSegment.startsWith(prefix))) {
+    return true;
+  }
+
   return !frontendRoutes.some((prefix) => secondSegment.startsWith(prefix));
 }
 

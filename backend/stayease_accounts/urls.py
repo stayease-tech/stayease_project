@@ -22,6 +22,7 @@ urlpatterns = [
     path('accounts-fixed-expense-update/<str:id>/', views.accounts_fixed_expense_update, name='accounts_fixed_expense_update'),
     path('accounts-fixed-expense-delete/<str:id>/', views.accounts_fixed_expense_delete, name='accounts_fixed_expense_delete'),
     path('get-beds-data/', views.get_beds_data, name='get_beds_data'),
+    path('get-checked-out-residents/', views.get_checked_out_residents, name='get_checked_out_residents'),
     path('liability-form-submit/', views.liability_form_submit, name='liability_form_submit'),
     path('liability-data-update/<str:id>/', views.liability_data_update, name='liability_data_update'),
     path('rawdata-file-upload/', views.rawdata_file_upload, name='rawdata_file_upload'),

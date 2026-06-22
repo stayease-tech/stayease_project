@@ -1,6 +1,7 @@
 import boto3
 import json
 import uuid
+import threading
 from django.utils import timezone
 from django.core import serializers
 from django.http import JsonResponse
@@ -14,7 +15,7 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from collections import defaultdict
 from django.contrib.auth.models import User
 from .models import User_Activity_Data, User_Login_Data, Vendor_Detail, RawdataFile, Rawdata_Detail, Expense_Detail, Expense_Category_Detail, Fixed_Expense_Detail, Liability_Detail, OtherFile, DropdownConfig
@@ -968,9 +969,11 @@ def expense_form_submit(request):
             categories = []
             index = 0
 
+            raised_email = request.user.email or request.POST.get('expenseRaisedEmail') or ''
+
             while f'selectedCategories[{index}].category' in request.POST:
                 category_data = {
-                    'expenseRaisedEmail': request.POST.get('expenseRaisedEmail'),
+                    'expenseRaisedEmail': raised_email,
                     'category': request.POST.get(f'selectedCategories[{index}].category'),
                     'amount': request.POST.get(f'selectedCategories[{index}].amount'),
                     'gst': request.POST.get(f'selectedCategories[{index}].gst'),
@@ -1004,7 +1007,7 @@ def expense_form_submit(request):
                     if category['paymentType'] == 'Reimbursement':
                             Expense_Category_Detail.objects.create(
                                 expense_instance=expense_instance,
-                                expenseRaisedEmail=request.POST.get('expenseRaisedEmail'),
+                                expenseRaisedEmail=raised_email,
                                 category=category['category'],
                                 amount=category['amount'],
                                 gst=category['gst'],
@@ -1045,7 +1048,7 @@ def expense_form_submit(request):
                     for category in categories:
                         Expense_Category_Detail.objects.create(
                             expense_instance=expense_instance,
-                            expenseRaisedEmail=request.POST.get('expenseRaisedEmail'),
+                            expenseRaisedEmail=raised_email,
                             category=category['category'],
                             amount=category['amount'],
                             gst=category['gst'],
@@ -1070,18 +1073,19 @@ def expense_form_submit(request):
                             status='Pending'
                         )
 
-            try:
-                expense_email(
-                    expenseRaisedEmail=request.POST.get('expenseRaisedEmail'),
+            threading.Thread(
+                target=expense_email,
+                kwargs=dict(
+                    expenseRaisedEmail=raised_email,
                     propertyName=request.POST.get('propertyName'),
                     headOfExpense=request.POST.get('headOfExpense'),
                     expenseType=request.POST.get('expenseType'),
                     categories=categories,
                     email_type='pendingStatus',
-                    expense_instance=expense_instance
-                )
-            except Exception as email_err:
-                print(f'Expense email failed (non-fatal): {email_err}')
+                    expense_instance=expense_instance,
+                ),
+                daemon=True,
+            ).start()
 
             return JsonResponse({'success': True, 'message': 'Expense data submitted successfully!'})
         except Exception as e:
@@ -1113,7 +1117,7 @@ def get_expense_data(request):
                     "room": expense.room,
                     "resident": expense.resident,
                     "category_id": category.id,
-                    "expenseRaisedEmail": category.expenseRaisedEmail.split('@')[0].replace('"', '').capitalize(),
+                    "expenseRaisedEmail": category.expenseRaisedEmail or "",
                     "category": category.category,
                     "amount": category.amount,
                     "gst": category.gst,
@@ -1197,18 +1201,19 @@ def accounts_form_update(request, id):
 
                 expense_detail = instance.expense_instance
 
-                try:
-                    expense_email(
+                threading.Thread(
+                    target=expense_email,
+                    kwargs=dict(
                         expenseRaisedEmail=instance.expenseRaisedEmail,
                         propertyName=expense_detail.propertyName,
                         headOfExpense=expense_detail.headOfExpense,
                         expenseType=expense_detail.expenseType,
                         categories=instance,
                         email_type='statusUpdate',
-                        expense_instance=expense_detail
-                    )
-                except Exception as email_err:
-                    print(f'Expense status email failed (non-fatal): {email_err}')
+                        expense_instance=expense_detail,
+                    ),
+                    daemon=True,
+                ).start()
 
             return JsonResponse({'success': True, 'message': 'Expense details updated successfully!'})
 
@@ -1283,7 +1288,7 @@ def fixed_expense_form_submit(request):
             fixed_expense_instance = Fixed_Expense_Detail(
                 owner_instance=owner_instance,
                 dashboardUser=request.POST.get('dashboardUser'),
-                expenseRaisedEmail=request.POST.get('expenseRaisedEmail'),
+                expenseRaisedEmail=request.user.email or request.POST.get('expenseRaisedEmail') or '',
                 propertyName=request.POST.get('propertyName'),
                 owner=request.POST.get('owner'),
                 ownerEmail=owner_instance.ownerEmail,
@@ -1514,7 +1519,7 @@ def get_beds_data(request):
                 for room in property.property.all():
                     for bed in room.room.all():
                         for resident in bed.bed_data_instance.all():
-                            if bed.salesStatus == 'Completed' and resident.residentStatus == 'Active':
+                            if resident.residentStatus == 'Inactive':
                                 data.append({
                                     'propertyName': property.propertyName,
                                     'doorBuilding': property.doorBuilding,
@@ -1559,6 +1564,98 @@ def get_beds_data(request):
             return JsonResponse({'success': False, 'message': 'Error fetching data. Please try again later!'})
         
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
+
+@csrf_exempt
+def get_checked_out_residents(request):
+    """Handle GET /accounts/get-checked-out-residents/ — return all checked-out residents with liability data.
+
+    Queries resident_Data directly (bypasses Property→Room→Bed hierarchy) so residents
+    appear regardless of hierarchy gaps. Includes any existing Liability_Detail record.
+
+    Returns:
+        JsonResponse with `residents` list.
+    """
+    if request.method == 'GET':
+        try:
+            today = date.today()
+            all_residents = (
+                resident_Data.objects
+                .select_related('bed_data_instance__room__property')
+                .order_by('-id')
+            )
+            # Include residents explicitly marked Inactive OR whose checkOut date
+            # is today or in the past (covers records from before the status field
+            # was reliably set).
+            residents = []
+            for r in all_residents:
+                if r.residentStatus == 'Inactive':
+                    residents.append(r)
+                elif r.checkOut and r.checkOut.strip():
+                    try:
+                        co_date = datetime.strptime(r.checkOut.strip(), '%Y-%m-%d').date()
+                        if co_date <= today:
+                            residents.append(r)
+                    except (ValueError, AttributeError):
+                        pass
+
+            data = []
+            for r in residents:
+                bed = r.bed_data_instance
+                bed_label = room_no = property_name = ''
+                if bed:
+                    bed_label = bed.bedLabel or ''
+                    if hasattr(bed, 'room') and bed.room:
+                        room_no = bed.room.roomNo or ''
+                        if hasattr(bed.room, 'property') and bed.room.property:
+                            property_name = bed.room.property.propertyName or ''
+
+                payout_date = ''
+                if r.checkOut:
+                    try:
+                        payout_date = (datetime.strptime(r.checkOut.strip(), '%Y-%m-%d').date() + timedelta(days=45)).isoformat()
+                    except (ValueError, AttributeError):
+                        payout_date = ''
+
+                data.append({
+                    'residentId': r.id,
+                    'propertyName': property_name,
+                    'roomNo': room_no,
+                    'bedLabel': bed_label,
+                    'propertyManager': r.propertyManager,
+                    'residentsName': r.residentsName,
+                    'phoneNumber': r.phoneNumber,
+                    'email': r.email,
+                    'permanentAddress': r.permanentAddress,
+                    'kycType': r.kycType,
+                    'aadharNumber': r.aadharNumber,
+                    'aadharFrontCopy': r.aadharFrontCopy.url if r.aadharFrontCopy else None,
+                    'aadharBackCopy': r.aadharBackCopy.url if r.aadharBackCopy else None,
+                    'panNumber': r.panNumber,
+                    'panFrontCopy': r.panFrontCopy.url if r.panFrontCopy else None,
+                    'panBackCopy': r.panBackCopy.url if r.panBackCopy else None,
+                    'checkIn': r.checkIn,
+                    'checkOut': r.checkOut,
+                    'rentPerMonth': r.rentPerMonth,
+                    'totalDepositPaid': r.totalDepositPaid,
+                    'residentDeductions': get_resident_deductions(r.residentsName, room_no),
+                    'payoutDate': payout_date,
+                    # liability record fields
+                    'id': get_resident_amount(r.id, 'id'),
+                    'status': get_resident_amount(r.id, 'status'),
+                    'amount': get_resident_amount(r.id, 'amount'),
+                    'utrNumber': get_resident_amount(r.id, 'utrNumber'),
+                    'transferredDate': get_resident_amount(r.id, 'transferredDate'),
+                    'createdAt': get_resident_amount(r.id, 'createdAt'),
+                    'updatedAt': get_resident_amount(r.id, 'updatedAt'),
+                })
+
+            return JsonResponse({'success': True, 'beds_table': data})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'success': False, 'message': 'Error fetching data. Please try again later!'})
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
+
 
 @api_view(['GET'])
 @permission_classes([IsAdminGroup | IsAccountsTeam])

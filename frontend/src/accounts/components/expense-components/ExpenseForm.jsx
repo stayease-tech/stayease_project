@@ -6,7 +6,8 @@ import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
-function ExpenseForm({ loggedUserEmail }) {
+function ExpenseForm() {
+    const loggedUserEmail = JSON.parse(localStorage.getItem("useremail")) || '';
     const { getExpenseCategories, getOptions } = useDropdowns();
 
     const navigate = useNavigate();

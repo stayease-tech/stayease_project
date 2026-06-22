@@ -7,6 +7,7 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path('get-user-activity-data/', views.get_user_activity_data, name='get_user_activity_data'),
     path("get-beds-data/", views.get_beds_data, name="get_beds_data"),
+    path("get-all-residents/", views.get_all_residents, name="get_all_residents"),
     path("resident-form-submit/", views.resident_form_submit, name="resident_form_submit"),
     path("resident-data-update/<str:id>/", views.resident_data_update, name="resident_data_update"),
     path("rent-data-update/<str:id>/", views.rent_data_update, name="rent_data_update"),

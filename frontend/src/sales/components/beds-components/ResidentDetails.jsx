@@ -22,6 +22,7 @@ function residentDetails() {
     const bedData = location?.state?.bedData || {};
     const bedsData = location?.state?.bedsData || [];
     const flag = location?.state?.flag || false;
+    const fromResidents = location?.state?.fromResidents || false;
     const { id } = useParams();
 
     const [residentDetails, setresidentDetails] = useState({
@@ -200,7 +201,7 @@ function residentDetails() {
 
             if (response.data.success) {
                 toast.success(response.data.message);
-                navigate(`/sales/sales-beds-table`);
+                navigate(fromResidents ? `/sales/sales-residents-list` : `/sales/sales-beds-table`);
             } else {
                 toast.error(response.data.message);
             }
@@ -220,7 +221,7 @@ function residentDetails() {
                 <div className="flex justify-between mb-4">
                     <button
                         className="px-4 py-1.5 bg-[#D4A017] text-white text-xs font-medium rounded cursor-pointer hover:bg-[#B8860B]"
-                        onClick={() => flag ? navigate(`/sales/sales-residents-table/${bedData?.id}`, { state: { bedsData } }) : navigate(`/sales/sales-beds-table`)}
+                        onClick={() => fromResidents ? navigate(`/sales/sales-residents-list`) : flag ? navigate(`/sales/sales-residents-table/${bedData?.id}`, { state: { bedsData } }) : navigate(`/sales/sales-beds-table`)}
                         type="button"
                     >
                         Prev

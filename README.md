@@ -29,8 +29,8 @@ StayEase is a multi-portal property management system for co-living and PG busin
 
 - **Public Website** — property listings, blog, enquiry forms
 - **Supply Portal** — owner/property/room/bed management
-- **Sales Portal** — resident onboarding, rent, leads, e-sign
-- **Accounts Portal** — vendor payments, expenses, liabilities, rawdata
+- **Sales Portal** — resident onboarding, rent tracking, leads, KYC management, checkout with reason, lease agreements, e-sign
+- **Accounts Portal** — vendor payments, expenses, fixed expenses, liabilities (deposit refunds), rawdata
 - **Operations Portal** — checklists, complaints, service requests
 - **Partner Portal** — owner earnings, deductions, portfolio
 - **Resident Portal** — profile, KYC, rent history, complaints, lease

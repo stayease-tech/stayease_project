@@ -91,6 +91,7 @@ const OpsVendorForm = lazy(() => import("./operations/components/expense-compone
 const SalesActivityStats = lazy(() => import("./sales/components/activity-components/ActivityStats"));
 const SalesLoginData = lazy(() => import("./sales/components/activity-components/LoginData"));
 const SalesBedsTable = lazy(() => import("./sales/components/beds-components/BedsTable"));
+const SalesResidentsList = lazy(() => import("./sales/components/beds-components/ResidentsList"));
 const SalesResidentsTable = lazy(() => import("./sales/components/beds-components/ResidentsTable"));
 const SalesResidentForm = lazy(() => import("./sales/components/beds-components/ResidentForm"));
 const SalesResidentDetails = lazy(() => import("./sales/components/beds-components/ResidentDetails"));
@@ -259,6 +260,7 @@ function Routing() {
                     <Route path="/sales/sales-user-activity-data" element={<Protected type="sales"><SalesActivityStats /></Protected>} />
                     <Route path="/sales/sales-login-data/:id" element={<Protected type="sales"><SalesLoginData /></Protected>} />
                     <Route path="/sales/sales-beds-table" element={<Protected type="sales"><SalesBedsTable /></Protected>} />
+                    <Route path="/sales/sales-residents-list" element={<Protected type="sales"><SalesResidentsList /></Protected>} />
                     <Route path="/sales/sales-residents-table/:id" element={<Protected type="sales"><SalesResidentsTable /></Protected>} />
                     <Route path="/sales/sales-resident-form/:id" element={<Protected type="sales"><SalesResidentForm /></Protected>} />
                     <Route path="/sales/sales-resident-details/:id" element={<Protected type="sales"><SalesResidentDetails /></Protected>} />

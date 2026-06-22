@@ -51,6 +51,7 @@ class resident_Data(models.Model):
     pushNotificationToken = models.CharField(max_length=255, blank=True, null=True)
     checkIn = models.CharField(max_length=255, blank=True, null=True)
     checkOut = models.CharField(max_length=255, blank=True, null=True)
+    checkoutReason = models.TextField(blank=True, null=True)
     totalDepositPaid = models.CharField(max_length=255, blank=True, null=True)
     rentPerMonth = models.CharField(max_length=255, blank=True, null=True)
     residentStatus = models.CharField(max_length=255, blank=True, null=True)

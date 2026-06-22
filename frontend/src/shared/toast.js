@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const ALERT_ERROR_PATTERN = /(error|failed|invalid|not found|unable|denied|exception)/i;
+const ALERT_ERROR_PATTERN = /(error|failed|invalid|not found|unable|denied|exception|must|required|please enter|please select|incorrect|wrong|mismatch)/i;
 
 function normalizeMessage(value) {
   if (value === undefined || value === null) return "Something went wrong.";

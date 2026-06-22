@@ -1,6 +1,6 @@
 # StayEase Backend — Django REST API
 
-The backend is a Django 5.1.4 project serving REST APIs for the web frontend, mobile app, and partner portal. It uses Django REST Framework, session-based auth (web), JWT auth (mobile), and PostgreSQL.
+The backend is a Django 6.0.6 project serving REST APIs for the web frontend, mobile app, and partner portal. It uses Django REST Framework, session-based auth (web), JWT auth (mobile), and PostgreSQL.
 
 ---
 
@@ -46,31 +46,18 @@ SessionMiddleware → CsrfViewMiddleware → AuthenticationMiddleware
 DRF (SessionAuth or JWTAuth) → View → Serializer → Model → PostgreSQL
 ```
 
-## Recent Progress (2026-04-24)
+## Recent Changes
 
-- **Fixed beds not showing in sales portal**: Database tables and columns still had old names after the model rename. Single clean migration `0011_rename_tenant_to_resident` renames tables (`stayease_sales_resident_data`, `stayease_sales_resident_rent_data`) and columns (`residentStatus`, `residentUser_id`, `resident_data_instance_id`). Models are clean with no `db_table` or `db_column` overrides.
-- **Owner delete safety**: Backend `owner_form_delete` now checks for existing properties before allowing delete — returns error message with property count instead of cascading.
-- **Owner details UI redesign**: Replaced table layout with card-based design (DetailRow/FileRow components), added tab navigation (Owner Info | KYC & Bank Details), fixed delete button `setIsDeleting` bug.
-- **Duplicate property validation**: Backend prevents creating/updating properties with duplicate names under the same owner.
-- **Properties count in owner table**: Added "Properties" column to OwnerTable showing `noOfProperties`.
-- **Numeric field validation**: Rent, deposit, rentFree, pincode, foundedYear now reject alphabetic input in both PropertyForm (create) and PropertyDetails (edit) views. Added `inputMode="numeric"` to relevant inputs.
-- **Floor numbering fix**: Floors now start from 1 instead of 0. Removed all floor 0 (ground floor) preservation logic from NoOfFloors.jsx. Initial state changed from `[{ floor: 0, rooms: 0 }]` to `[]`.
-- **Mobile app sync**: All above fixes applied to StayEase-Mobile (PropertyFormScreen, OwnersScreen).
-- **Mobile resident refactoring**: Renamed all remaining "tenant" references across 20+ mobile files — API endpoints updated to `/resident-*` URLs, function/variable/screen names renamed (e.g. `submitTenant` → `submitResident`, `TenantDashboardScreen` → `ResidentDashboardScreen`), form fields renamed (`tenantName` → `residentName`), navigation screen names updated, role mapping changed from `tenant` to `resident`.
-
-## Recent Progress (2026-04-23)
-
-- **Completed resident refactoring** across all backend code and database (formerly "tenant"):
-  - App `stayease_resident/` with all views/models/serializers using resident naming
-  - App `resident_details/` with templates/static in `resident/` folders
-  - All API endpoints use `/api/resident-*`, `/resident-portal/`
-  - Migration files in stayease_sales use `resident_data`/`resident_rent_data` naming
-  - Updated django_migrations table to reflect new migration filenames
-  - All model names and field references updated to resident naming
-  - All JWT authentication endpoints now serve resident login at `/api/resident-login/`
-- Date handling validation for resident check-in/check-out continues to enforce strict ISO parsing and valid range (`1900-01-01` to `2099-12-31`)
-- PayU integration ready for resident payment processing
-- All structural changes validated: Django system checks (0 issues), migration chain verified
+- **Django 6.0.6**: Upgraded from Django 5.1.4 to resolve Python 3.14 compatibility (`super.__dict__` AttributeError)
+- **Resident checkout with reason**: Added `checkoutReason` field to `resident_Data` model. The sales portal Residents listing page has a checkout modal with date and reason fields
+- **Residents listing endpoint**: New `GET /sales/get-all-residents/` queries `resident_Data` directly (bypasses Property→Room→Bed hierarchy) returning all resident fields including KYC, manager assignments, and stay details
+- **Liability table fix**: New `GET /accounts/get-checked-out-residents/` endpoint queries checked-out residents directly. Matches on `residentStatus='Inactive'` or past `checkOut` date to handle legacy records
+- **Async expense emails**: Expense submission email sends are now non-blocking via `threading.Thread(daemon=True)`
+- **RBAC groups**: Migration `0035_create_rbac_groups` sets up Admin, Accounts, Operations, Sales, Supply permission groups
+- **Dropdown config**: Centralized `DropdownConfig` model stores property managers, sales managers, comfort classes, meal types, liability statuses
+- **Refund management**: Endpoints for eligible transactions, initiate refund, and refund history under `/sales/refunds/`
+- **Lease agreements**: Upload lease PDFs per resident via `/sales/upload-lease/<resident_id>/`
+- **Resident portal access**: Enable/disable resident portal login via `/sales/enable-portal/<resident_id>/`
 
 ---
 
@@ -183,7 +170,7 @@ Owner_Data (supply)
 | `Room_Data` | supply | Room in property | building level, room number, room type, status |
 | `Bed_Data` | supply | Individual bed | bed label, room details, resident info, check-in/out, rent, deposit, status |
 | `Property_Detail` | supply | Website listing | images (6 slots), description, location, path, iframe link |
-| `resident_Data` | sales | Active resident record | name, phone, email, KYC, check-in/out dates, rent, deposit, status flags (active, kyc_approved, kyc_rejected) |
+| `resident_Data` | sales | Resident record | name, phone, email, KYC (Aadhaar/PAN), check-in/out dates, checkoutReason, rent, deposit, status (Active/Inactive), kycApprovalStatus (Pending/Approved/Rejected), lease agreement |
 | `resident_Rent_Data` | sales | Monthly rent record | month, rent amount, delay charges, payment method, UTR, status |
 | `Leads_Detail` | sales | Sales lead | date, source, contact info, result, reason if not converted |
 | `Vendor_Detail` | accounts | Service vendor | name, contact, category, billing type, bank details |
@@ -262,8 +249,12 @@ All endpoints require session or JWT authentication unless noted.
 | POST | `other-files-upload/` | Upload misc file |
 | DELETE | `other-file-delete/<id>/` | Delete misc file |
 | GET | `get-beds-data/` | Beds with resident + liability info |
+| GET | `get-checked-out-residents/` | Checked-out residents with liability data |
 | GET | `get-owner-data/` | Owners with rent + expense totals |
 | GET | `get-user-activity-data/` | User login/logout activity |
+| GET | `get-dropdown-config/` | Centralized dropdown options |
+| GET | `get-staff-names/` | Staff names for assignments |
+| POST | `employee-form-submit/` | Create employee record |
 
 ### Operations — `/operations/`
 | Method | Endpoint | Description |
@@ -283,8 +274,9 @@ All endpoints require session or JWT authentication unless noted.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `get-beds-data/` | Beds with resident + rent records |
+| GET | `get-all-residents/` | All residents (direct query, bypasses bed hierarchy) |
 | POST | `resident-form-submit/` | Create resident (multipart) |
-| PUT | `resident-data-update/<id>/` | Update resident (multipart) |
+| PUT | `resident-data-update/<id>/` | Update resident (multipart), handles checkout |
 | PUT | `rent-data-update/<id>/` | Update rent record |
 | GET | `get-leads-data/` | List leads |
 | POST | `leads-form-submit/` | Create lead |
@@ -292,6 +284,12 @@ All endpoints require session or JWT authentication unless noted.
 | DELETE | `leads-data-delete/<id>/` | Delete lead |
 | POST | `send/` | Send doc for e-signature |
 | GET | `documents/` | List e-sign documents |
+| GET | `requests/` | List signing requests |
+| POST | `upload-lease/<resident_id>/` | Upload lease agreement PDF |
+| POST | `enable-portal/<resident_id>/` | Enable/disable resident portal |
+| GET | `refunds/eligible/` | List refund-eligible transactions |
+| POST | `refunds/initiate/` | Initiate a payment refund |
+| GET | `refunds/history/` | Refund history |
 
 ### Supply — `/supply/`
 | Method | Endpoint | Description |
@@ -358,7 +356,7 @@ All endpoints require session or JWT authentication unless noted.
 ## Setup
 
 ### Prerequisites
-- Python 3.12+ (tested with 3.14)
+- Python 3.14+ (Django 6.0.6 requires Python 3.14 compatibility)
 - PostgreSQL running
 - `.env` file in project root (see main README)
 

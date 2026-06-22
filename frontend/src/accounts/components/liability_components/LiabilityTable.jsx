@@ -45,22 +45,25 @@ function LiabilityTable() {
         return `${day}-${month}-${year}`;
     }
 
-    const formatter = new Intl.DateTimeFormat('en-IN', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-    });
+    const formatter = { format: (date) => {
+        const d = new Date(date);
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = d.toLocaleString('en-IN', { month: 'short' });
+        const year = d.getFullYear();
+        const hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+        const h12 = String(hours % 12 || 12).padStart(2, '0');
+        return `${day} ${month} ${year}, ${h12}:${minutes}:${seconds} ${ampm}`;
+    }};
 
     useEffect(() => {
         setLoadingData(true);
 
         const fetchData = async () => {
             try {
-                const response = await axios.get(`/accounts/get-beds-data/`);
+                const response = await axios.get(`/accounts/get-checked-out-residents/`);
 
                 setBedsData(
                     (response?.data?.beds_table || [])
@@ -191,14 +194,23 @@ function LiabilityTable() {
                                     <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.payoutDate ? formatDateToDDMonYYYY(bedsData?.payoutDate) : '-'}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800">
                                         <div className="flex items-center gap-2">
-                                            {bedsData?.status && (
-                                                <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700">{bedsData?.status}</span>
+                                            {bedsData?.status ? (
+                                                <>
+                                                    <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 whitespace-nowrap">{bedsData?.status}</span>
+                                                    <Pencil
+                                                        size={14}
+                                                        className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                        onClick={() => updateLiabilityStatus(bedsData)}
+                                                    />
+                                                </>
+                                            ) : (
+                                                <button
+                                                    className="px-2 py-0.5 text-xs bg-[#D4A017] text-white rounded hover:bg-[#B8860B] cursor-pointer whitespace-nowrap"
+                                                    onClick={() => updateLiabilityStatus(bedsData)}
+                                                >
+                                                    Add
+                                                </button>
                                             )}
-                                            <Pencil
-                                                size={14}
-                                                className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
-                                                onClick={() => updateLiabilityStatus(bedsData)}
-                                            />
                                         </div>
                                     </td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800 whitespace-nowrap">{bedsData?.createdAt ? formatter.format(new Date(bedsData?.createdAt)) : "-"}</td>
