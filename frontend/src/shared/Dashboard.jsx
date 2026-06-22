@@ -232,7 +232,7 @@ function SupplyDashboard() {
         Promise.allSettled([
             axios.get("/supply/get-owner-data/"),
             axios.get("/supply/get-property-data/0/"),
-            axios.get("/accounts/get-beds-data/"),
+            axios.get("/sales/get-beds-data/"),
             axios.get("/accounts/get-expense-data/"),
         ]).then(([owners, properties, beds, expenses]) => {
             setStats({

@@ -9,7 +9,7 @@ from django.db.models import Sum, FloatField, Q, OuterRef, Subquery, Prefetch, E
 from django.db.models.functions import Cast
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from stayease_project.permissions import IsAdminGroup
+from stayease_project.permissions import IsAdminGroup, IsAccountsTeam
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
@@ -1482,7 +1482,7 @@ def accounts_fixed_expense_delete(request, id):
     return JsonResponse({'success': False, 'message': 'Invalid request method. DELETE expected!'})
 
 @api_view(['GET'])
-@permission_classes([IsAdminGroup])
+@permission_classes([IsAdminGroup | IsAccountsTeam])
 def get_beds_data(request):
     """Handle GET /accounts/beds/ — return active residents with bed, room, and liability data.
 
@@ -1562,7 +1562,7 @@ def get_beds_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(['GET'])
-@permission_classes([IsAdminGroup])
+@permission_classes([IsAdminGroup | IsAccountsTeam])
 def get_liability_data(request):
     """Handle GET /accounts/liability/ — return all liability records (admin only).
 
