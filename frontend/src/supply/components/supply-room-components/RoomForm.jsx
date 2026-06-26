@@ -8,24 +8,44 @@ import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
-const BHK_BED_LABELS = {
-  '1BHK':    ['A1', 'A2'],
-  '1.5 BHK': ['A1', 'A2', 'B1'],
-  '2BHK':    ['A1', 'A2', 'B1', 'B2'],
-  '2.5 BHK': ['A1', 'A2', 'B1', 'B2', 'C1'],
-  '3BHK':    ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+// Each entry: [groupLetter, bedCountInGroup]
+// Full BHK = 2 beds per room, .5 BHK = 1 bed in that room
+const BHK_GROUPS = {
+  '1BHK':    [['A', 2]],
+  '1.5 BHK': [['A', 2], ['B', 1]],
+  '2BHK':    [['A', 2], ['B', 2]],
+  '2.5 BHK': [['A', 2], ['B', 2], ['C', 1]],
+  '3BHK':    [['A', 2], ['B', 2], ['C', 2]],
 };
 
 const SINGLE_BED_TYPES = ['Bareshell', 'Private Space', 'Work Space', 'Common Area'];
-
 const BED_FIELDS = ['balconyAccess', 'bathAccess', 'roomType', 'energyPlan',
                     'hallAccess', 'kitchenAccess', 'roomSqft', 'tataSkyNo',
                     'wifiNo', 'bescomMeterNo'];
 
-function makeBed(index, label) {
+// Derive bedLabel from group membership:
+//   group with 2 beds → A1, A2
+//   group with 1 bed  → A
+function relabelBeds(beds) {
+  const groupCounts = {};
+  beds.forEach(b => { groupCounts[b.group] = (groupCounts[b.group] || 0) + 1; });
+
+  const groupSeq = {};
+  return beds.map(bed => {
+    const count = groupCounts[bed.group];
+    if (count === 1) {
+      return { ...bed, bedLabel: bed.group };
+    }
+    groupSeq[bed.group] = (groupSeq[bed.group] || 0) + 1;
+    return { ...bed, bedLabel: `${bed.group}${groupSeq[bed.group]}` };
+  });
+}
+
+function emptyBed(id, group) {
   return {
-    id: index + 1,
-    bedLabel: label,
+    id,
+    group,
+    bedLabel: group,
     balconyAccess: "",
     bathAccess: "",
     roomType: "",
@@ -39,6 +59,21 @@ function makeBed(index, label) {
   };
 }
 
+function buildBeds(roomType) {
+  if (BHK_GROUPS[roomType]) {
+    let id = 1;
+    const raw = [];
+    BHK_GROUPS[roomType].forEach(([letter, count]) => {
+      for (let i = 0; i < count; i++) raw.push(emptyBed(id++, letter));
+    });
+    return relabelBeds(raw);
+  }
+  if (SINGLE_BED_TYPES.includes(roomType)) {
+    return [{ ...emptyBed(1, roomType), bedLabel: roomType }];
+  }
+  return [];
+}
+
 function bedHasData(bed) {
   return BED_FIELDS.some(f => bed[f] !== "");
 }
@@ -47,27 +82,19 @@ function DeleteConfirmModal({ bedLabel, hasData, onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4">
-        <h2 className="text-base font-semibold text-gray-800 mb-3">
-          Delete {bedLabel}?
-        </h2>
+        <h2 className="text-base font-semibold text-gray-800 mb-3">Delete Bed {bedLabel}?</h2>
         <p className="text-sm text-gray-600 mb-6">
           {hasData
             ? `Bed ${bedLabel} has data entered. Deleting it will permanently remove all the information filled in for this bed. This cannot be undone.`
             : `Are you sure you want to delete Bed ${bedLabel}? This cannot be undone.`}
         </p>
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 cursor-pointer"
-          >
+          <button type="button" onClick={onCancel}
+            className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded hover:bg-gray-50 cursor-pointer">
             Cancel
           </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="flex-1 py-2 bg-red-500 text-white text-sm font-medium rounded hover:bg-red-600 cursor-pointer"
-          >
+          <button type="button" onClick={onConfirm}
+            className="flex-1 py-2 bg-red-500 text-white text-sm font-medium rounded hover:bg-red-600 cursor-pointer">
             Delete
           </button>
         </div>
@@ -105,16 +132,6 @@ function RoomForm() {
       : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } });
   };
 
-  const buildBeds = (roomType) => {
-    if (BHK_BED_LABELS[roomType]) {
-      return BHK_BED_LABELS[roomType].map((label, i) => makeBed(i, label));
-    }
-    if (SINGLE_BED_TYPES.includes(roomType)) {
-      return [makeBed(0, roomType)];
-    }
-    return [];
-  };
-
   const handleNextStep = () => {
     if (!roomDetails.roomNo || !roomDetails.roomType) return;
     setRoomDetails(prev => ({ ...prev, beds: buildBeds(prev.roomType) }));
@@ -139,15 +156,19 @@ function RoomForm() {
   const handleBedChange = (bedId, fieldName, value) => {
     setRoomDetails(prev => ({
       ...prev,
-      beds: prev.beds.map(bed =>
-        bed.id === bedId ? { ...bed, [fieldName]: value } : bed
-      ),
+      beds: prev.beds.map(bed => bed.id === bedId ? { ...bed, [fieldName]: value } : bed),
     }));
+  };
+
+  // A bed can only be deleted if its group has 2 beds (leaving 1 behind).
+  const canDeleteCurrent = () => {
+    const bed = roomDetails.beds[bedIndex];
+    return bed && roomDetails.beds.filter(b => b.group === bed.group).length > 1;
   };
 
   const confirmDelete = () => {
     const currentId = roomDetails.beds[bedIndex].id;
-    const newBeds   = roomDetails.beds.filter(b => b.id !== currentId);
+    const newBeds = relabelBeds(roomDetails.beds.filter(b => b.id !== currentId));
     setRoomDetails(prev => ({ ...prev, beds: newBeds }));
     setBedIndex(Math.min(bedIndex, newBeds.length - 1));
     setDeleteModal(false);
@@ -184,7 +205,7 @@ function RoomForm() {
   const totalBeds       = roomDetails.beds.length;
 
   const selClass   = "w-full p-2.5 border border-gray-300 rounded text-sm text-black bg-white";
-  const inputClass = "w-full p-2.5 border border-gray-300 rounded text-sm text-black placeholder-gray-400";
+  const inputClass = "w-full p-2.5 border border-gray-300 rounded text-sm text-black bg-white placeholder-gray-400";
   const labelClass = "block text-sm text-stone-500 mb-1";
 
   return (
@@ -198,21 +219,16 @@ function RoomForm() {
         />
       )}
 
-      <form
-        className="h-full flex flex-col overflow-hidden"
-        onSubmit={handleSubmit}
-        method="POST"
-      >
+      <form className="h-full flex flex-col overflow-hidden" onSubmit={handleSubmit} method="POST">
+
         {/* ── Header row ── */}
         <div className="grid grid-cols-3 items-center mb-6 shrink-0">
           <div className="flex justify-start">
             {step === 1 ? (
               <button
                 className="px-4 py-1.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]"
-                onClick={goToRoomTable}
-                type="button"
-              >
-                Prev
+                onClick={goToRoomTable} type="button">
+                Cancel
               </button>
             ) : (
               <span className="text-sm text-stone-500">
@@ -222,18 +238,13 @@ function RoomForm() {
             )}
           </div>
 
-          <h1 className="text-xl font-bold text-[#D4A017] text-center">
-            ADD ROOM DETAILS
-          </h1>
+          <h1 className="text-xl font-bold text-[#D4A017] text-center">ADD ROOM DETAILS</h1>
 
           <div className="flex justify-end">
-            {step === 2 && totalBeds > 1 && (
-              <button
-                type="button"
-                onClick={() => setDeleteModal(true)}
+            {step === 2 && canDeleteCurrent() && (
+              <button type="button" onClick={() => setDeleteModal(true)}
                 className="p-1.5 text-red-400 hover:text-red-600 cursor-pointer transition-colors"
-                title="Remove this bed"
-              >
+                title="Remove this bed">
                 <Trash2 size={16} />
               </button>
             )}
@@ -247,48 +258,32 @@ function RoomForm() {
               <label htmlFor="roomNo" className="text-[#D4A017] text-sm font-semibold">
                 Room Number <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                id="roomNo"
-                value={roomDetails.roomNo}
-                onChange={roomHandleChange}
-                className="mt-1.5 w-full p-2.5 border border-gray-300 rounded text-sm text-black placeholder-gray-400"
-                name="roomNo"
-                placeholder="Enter the Room Number"
-                required
-              />
+              <input type="text" id="roomNo" value={roomDetails.roomNo} onChange={roomHandleChange}
+                className="mt-1.5 w-full p-2.5 border border-gray-300 rounded text-sm text-black bg-white placeholder-gray-400"
+                name="roomNo" placeholder="Enter the Room Number" required />
             </div>
 
             <div>
               <label htmlFor="roomType" className="text-[#D4A017] text-sm font-semibold">
                 Room Type <span className="text-red-500">*</span>
               </label>
-              <select
-                id="roomType"
-                value={roomDetails.roomType}
-                onChange={roomHandleChange}
+              <select id="roomType" value={roomDetails.roomType} onChange={roomHandleChange}
                 className="mt-1.5 w-full p-2.5 border border-gray-300 rounded text-sm text-black bg-white"
-                name="roomType"
-                required
-              >
+                name="roomType" required>
                 <option value="" disabled>Select the Room Type</option>
-                {getOptions('room_types').map((t, i) => (
-                  <option key={i} value={t}>{t}</option>
-                ))}
+                {getOptions('room_types').map((t, i) => <option key={i} value={t}>{t}</option>)}
               </select>
             </div>
 
             <button
               className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]"
-              onClick={handleNextStep}
-              type="button"
-            >
+              onClick={handleNextStep} type="button">
               Next
             </button>
           </div>
         )}
 
-        {/* ── Step 2: Bed details (2-col grid, vertically centered) ── */}
+        {/* ── Step 2: One bed at a time, 2-col grid, vertically centered ── */}
         {step === 2 && currentBed && (
           <div className="flex flex-col flex-1 overflow-hidden">
             <div className="flex-1 flex items-center">
@@ -303,7 +298,6 @@ function RoomForm() {
                       {getOptions('balcony_options').map((t, i) => <option key={i} value={t}>{t}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Bath Access <span className="text-red-500">*</span></label>
                     <select value={currentBed.bathAccess} onChange={(e) => handleBedChange(currentBed.id, "bathAccess", e.target.value)} className={selClass} required>
@@ -311,7 +305,6 @@ function RoomForm() {
                       {getOptions('bathroom_options').map((t, i) => <option key={i} value={t}>{t}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Room Type <span className="text-red-500">*</span></label>
                     <select value={currentBed.roomType} onChange={(e) => handleBedChange(currentBed.id, "roomType", e.target.value)} className={selClass} required>
@@ -319,7 +312,6 @@ function RoomForm() {
                       {getOptions('sharing_types').map((t, i) => <option key={i} value={t}>{t}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Energy Plan <span className="text-red-500">*</span></label>
                     <select value={currentBed.energyPlan} onChange={(e) => handleBedChange(currentBed.id, "energyPlan", e.target.value)} className={selClass} required>
@@ -327,7 +319,6 @@ function RoomForm() {
                       {getOptions('electricity_options').map((t, i) => <option key={i} value={t}>{t}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Hall Access <span className="text-red-500">*</span></label>
                     <select value={currentBed.hallAccess} onChange={(e) => handleBedChange(currentBed.id, "hallAccess", e.target.value)} className={selClass} required>
@@ -346,22 +337,18 @@ function RoomForm() {
                       {getOptions('yes_no_na_options').map((t, i) => <option key={i} value={t}>{t}</option>)}
                     </select>
                   </div>
-
                   <div>
                     <label className={labelClass}>Room Sqft <span className="text-red-500">*</span></label>
                     <input type="text" value={currentBed.roomSqft} onChange={(e) => handleBedChange(currentBed.id, "roomSqft", e.target.value)} className={inputClass} placeholder="Enter sqft" required />
                   </div>
-
                   <div>
                     <label className={labelClass}>DTH Number <span className="text-red-500">*</span></label>
                     <input type="text" value={currentBed.tataSkyNo} onChange={(e) => handleBedChange(currentBed.id, "tataSkyNo", e.target.value)} className={inputClass} placeholder="Enter DTH number" required />
                   </div>
-
                   <div>
                     <label className={labelClass}>Wifi Number <span className="text-red-500">*</span></label>
                     <input type="text" value={currentBed.wifiNo} onChange={(e) => handleBedChange(currentBed.id, "wifiNo", e.target.value)} className={inputClass} placeholder="Enter wifi number" required />
                   </div>
-
                   <div>
                     <label className={labelClass}>Bescom Meter No <span className="text-red-500">*</span></label>
                     <input type="text" value={currentBed.bescomMeterNo} onChange={(e) => handleBedChange(currentBed.id, "bescomMeterNo", e.target.value)} className={inputClass} placeholder="Enter meter number" required />
@@ -372,27 +359,18 @@ function RoomForm() {
 
             {/* ── Footer nav ── */}
             <div className="flex gap-4 mt-4 shrink-0">
-              <button
-                className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]"
-                onClick={handleBedPrev}
-                type="button"
-              >
+              <button className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                onClick={handleBedPrev} type="button">
                 Prev
               </button>
               {isLastBed ? (
-                <button
-                  className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B] disabled:opacity-60"
-                  type="submit"
-                  disabled={isSubmitting}
-                >
+                <button className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B] disabled:opacity-60"
+                  type="submit" disabled={isSubmitting}>
                   {isSubmitting ? "Submitting..." : "Submit"}
                 </button>
               ) : (
-                <button
-                  className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]"
-                  onClick={handleBedNext}
-                  type="button"
-                >
+                <button className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]"
+                  onClick={handleBedNext} type="button">
                   Next
                 </button>
               )}

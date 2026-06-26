@@ -8,511 +8,339 @@ import { toast } from "react-toastify";
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
+const BHK_LABELS = {
+    '1BHK':    ['A1', 'A2'],
+    '1.5 BHK': ['A1', 'A2', 'B'],
+    '2BHK':    ['A1', 'A2', 'B1', 'B2'],
+    '2.5 BHK': ['A1', 'A2', 'B1', 'B2', 'C'],
+    '3BHK':    ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'],
+};
+
+const SINGLE_BED_TYPES = ['Bareshell', 'Private Space', 'Work Space', 'Common Area'];
+
 function RoomDetails() {
     const { getOptionsWithCurrent } = useDropdowns();
     const navigate = useNavigate();
 
-    const oneBhk = ['A1', 'A2'];
-    const onePointFiveBhk = ['A1', 'A2', 'B1'];
-    const twoBhk = ['A1', 'A2', 'B1', 'B2'];
-    const twoPointFiveBhk = ['A1', 'A2', 'B1', 'B2', 'C1'];
-    const threeBhk = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-
-    const [dataEditView, setDataEditView] = useState(false);
-    const location = useLocation();
-    const roomData = location.state?.roomData;
-    const owner_id = location.state?.owner_id;
+    const location   = useLocation();
+    const roomData   = location.state?.roomData;
+    const owner_id   = location.state?.owner_id;
     const propertyId = location.state?.propertyId;
-    const roomId = location.state?.roomId;
-    const { id } = useParams();
-    const [isSaving, setIsSaving] = useState(false);
+    const roomId     = location.state?.roomId;
+    const { id }     = useParams();
 
-    const [isBedDataVisible, setIsBedDataVisible] = useState(true);
-    const [numberOfBedData, setNumberOfBedData] = useState([]);
+    const [step, setStep]           = useState(1);
+    const [bedIndex, setBedIndex]   = useState(0);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isSaving, setIsSaving]   = useState(false);
 
     const [roomDetails, setRoomDetails] = useState({
         propertyId: roomData.property_id,
-        roomNo: roomData?.roomNo || "",
+        roomNo:   roomData?.roomNo   || "",
         roomType: roomData?.roomType || "",
-        beds: roomData?.beds || []
-    })
+        beds:     roomData?.beds     || [],
+    });
 
     const [originalData, setOriginalData] = useState(roomData || {});
 
-    const updateProperties = (bedLabels) => {
-        setRoomDetails(prevState => {
-            const newBedsData = bedLabels.map((bedLabel, index) => {
-                const existingBed = prevState.beds.find(bed => bed.bedLabel === bedLabel);
-
-                return existingBed || {
-                    id: index + 1,
-                    bedLabel: bedLabel,
-                    balconyAccess: "",
-                    bathAccess: "",
-                    roomType: "",
-                    energyPlan: "",
-                    hallAccess: "",
-                    kitchenAccess: "",
-                    roomSqft: "",
-                    tataSkyNo: "",
-                    wifiNo: "",
-                    bescomMeterNo: ""
-                };
-            });
-
-            return {
-                ...prevState,
-                beds: newBedsData
-            };
-        });
+    const goToRoomTable = () => {
+        (roomId === 0)
+            ? navigate(`/supply/supply-room-table`, { state: { owner_id, propertyId } })
+            : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } });
     };
 
-    const editHandle = () => {
-        setDataEditView(!dataEditView)
-    }
+    // Rebuild beds when room type changes; preserve existing bed data where labels match.
+    const rebuildBeds = (newRoomType) => {
+        const labels = BHK_LABELS[newRoomType] || [newRoomType];
+        setRoomDetails(prev => ({
+            ...prev,
+            beds: labels.map((bedLabel, index) => {
+                const existing = prev.beds.find(b => b.bedLabel === bedLabel);
+                return existing || {
+                    id: index + 1,
+                    bedLabel,
+                    balconyAccess: "", bathAccess: "", roomType: "",
+                    energyPlan: "", hallAccess: "", kitchenAccess: "",
+                    roomSqft: "", tataSkyNo: "", wifiNo: "", bescomMeterNo: "",
+                };
+            }),
+        }));
+    };
 
-    const dataHandleToggle = () => {
-        let bedLabels = [];
-
-        switch (roomDetails.roomType) {
-            case '1 BHK':
-                bedLabels = oneBhk;
-                break;
-            case '1.5 BHK':
-                bedLabels = onePointFiveBhk;
-                break;
-            case '2 BHK':
-                bedLabels = twoBhk;
-                break;
-            case '2.5 BHK':
-                bedLabels = twoPointFiveBhk;
-                break;
-            case '3 BHK':
-                bedLabels = threeBhk;
-                break;
-            case 'Bareshell':
-            case 'Private Space':
-            case 'Work Space':
-            case 'Common Area':
-                bedLabels = [roomDetails.roomType];
-                break;
-            default:
-                bedLabels = [];
+    const handleNextStep = () => {
+        if (roomDetails.roomType !== originalData.roomType) {
+            rebuildBeds(roomDetails.roomType);
         }
+        setBedIndex(0);
+        setStep(2);
+    };
 
-        setNumberOfBedData(bedLabels);
-        (roomDetails.roomType !== roomData.roomType) ? updateProperties(bedLabels) : roomDetails.beds = roomData.beds;
-        setIsBedDataVisible(!isBedDataVisible);
+    const handleBedNext = () => {
+        if (bedIndex < roomDetails.beds.length - 1) setBedIndex(i => i + 1);
+    };
+
+    const handleBedPrev = () => {
+        if (bedIndex > 0) setBedIndex(i => i - 1);
+        else setStep(1);
     };
 
     const roomHandleChange = (e) => {
         const { name, value } = e.target;
-
-        setRoomDetails((prevState) => ({
-            ...prevState,
-            [name]: value
-        }));
-    }
+        setRoomDetails(prev => ({ ...prev, [name]: value }));
+    };
 
     const handleBedChange = (bedId, fieldName, value) => {
-        setRoomDetails(prevState => ({
-            ...prevState,
-            beds: prevState.beds.map(bed =>
-                bed.id === bedId
-                    ? { ...bed, [fieldName]: value }
-                    : bed
-            )
+        setRoomDetails(prev => ({
+            ...prev,
+            beds: prev.beds.map(bed => bed.id === bedId ? { ...bed, [fieldName]: value } : bed),
         }));
     };
 
     const getChangedData = () => {
         const changedData = {};
-
-        if (originalData?.property_id) {
-            changedData.property_id = originalData.property_id;
-        }
+        if (originalData?.property_id) changedData.property_id = originalData.property_id;
 
         Object.keys(roomDetails).forEach(key => {
             if (key === 'beds') return;
-            if (roomDetails[key] !== originalData?.[key]) {
-                changedData[key] = roomDetails[key];
-            }
+            if (roomDetails[key] !== originalData?.[key]) changedData[key] = roomDetails[key];
         });
 
         changedData.beds = roomDetails.beds
             .map((currentBed, index) => {
                 const originalBed = originalData?.beds?.[index] || {};
-                const bedChanges = {};
-                let hasChanges = false;
-
+                const bedChanges  = {};
+                let hasChanges    = false;
                 if (currentBed.id) bedChanges.id = currentBed.id;
-
                 Object.keys(currentBed).forEach(key => {
                     if (key === 'id') return;
-                    if (currentBed[key] !== originalBed[key]) {
-                        bedChanges[key] = currentBed[key];
-                        hasChanges = true;
-                    }
+                    if (currentBed[key] !== originalBed[key]) { bedChanges[key] = currentBed[key]; hasChanges = true; }
                 });
-
                 return hasChanges ? bedChanges : null;
             })
-            .filter(bed => bed !== null);
+            .filter(Boolean);
 
-        if (changedData.beds?.length === 0) {
-            delete changedData.beds;
-        }
-
+        if (changedData.beds?.length === 0) delete changedData.beds;
         return changedData;
     };
 
-    const getCSRFToken = () => {
-        return Cookies.get('csrftoken');
-    }
-
-    axios.defaults.headers.common['X-CSRFToken'] = getCSRFToken()
+    axios.defaults.headers.common['X-CSRFToken'] = Cookies.get('csrftoken');
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-
         const changedData = getChangedData();
-
-        if (Object.keys(changedData).length === 0) {
-            toast.info('No data is updated!');
-            return;
-        }
-
+        if (Object.keys(changedData).length === 0) { toast.info('No data is updated!'); return; }
         setIsSaving(true);
-
-        if (roomDetails.roomType !== roomData.roomType) {
-            changedData['beds'] = roomDetails.beds
-        }
-
+        if (roomDetails.roomType !== roomData.roomType) changedData.beds = roomDetails.beds;
         try {
-            const response = await axios.put(`/supply/room-data-update/${id}/`, changedData, {
-                withCredentials: true,
-            });
-
+            const response = await axios.put(`/supply/room-data-update/${id}/`, changedData, { withCredentials: true });
             setOriginalData(prev => ({ ...prev, ...changedData }));
-
             if (response.data.success) {
                 toast.success(response.data.message);
-                (roomId === 0) ? navigate(`/supply/supply-room-table`, { state: { owner_id, propertyId } }) : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } });
-            }
-            else {
+                goToRoomTable();
+            } else {
                 toast.error(response.data.message);
             }
         } catch (err) {
-            console.error('Error submitting form:', err);
-            toast.error('There was an error submitting the form. Please try again!');
+            console.error('Error updating room:', err);
+            toast.error('There was an error updating the room. Please try again!');
         } finally {
             setIsSaving(false);
         }
-    }
+    };
 
-    const thClass = "border-r border-gray-100 px-3 py-1.5 text-xs font-medium text-[#D4A017] text-left whitespace-nowrap w-48";
-    const tdClass = "px-3 py-1.5 text-xs text-gray-800";
+    const isSingleBedType = SINGLE_BED_TYPES.includes(roomDetails.roomType);
+    const currentBed      = roomDetails.beds[bedIndex];
+    const totalBeds       = roomDetails.beds.length;
+    const isLastBed       = bedIndex === totalBeds - 1;
+
+    const selClass   = "w-full p-2.5 border border-gray-300 rounded text-sm text-black bg-white";
+    const inputClass = "w-full p-2.5 border border-gray-300 rounded text-sm text-black bg-white placeholder-gray-400";
+    const labelClass = "block text-sm text-stone-500 mb-1";
+    const valueClass = "text-sm font-medium text-gray-800";
 
     return (
         <DashPage>
-            <form className="w-[100%] lg:w-[98%] mx-auto lg:my-8 py-8 sm:p-8 lg:p-10 lg:rounded-lg lg:bg-white text-slate-800" method="POST" onSubmit={handleUpdate}>
-                <h1 className="text-center sm:text-xl lg:text-2xl font-semibold lg:mt-0 mb-8 text-[#D4A017]">SUPPLY ROOM DETAILS</h1>
+            <form className="h-full flex flex-col overflow-hidden" method="POST" onSubmit={handleUpdate}>
 
-                <div className="sm:flex justify-between">
-                    <button
-                        className="max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => (roomId === 0) ? navigate(`/supply/supply-room-table`, { state: { owner_id, propertyId } }) : navigate(`/supply/supply-room-table/${roomData?.property_id}`, { state: { owner_id, propertyId } })}
-                        type="button">Prev</button>
+                {/* ── Header ── */}
+                <div className="grid grid-cols-3 items-center mb-6 shrink-0">
+                    {/* Left */}
+                    <div className="flex items-center gap-3">
+                        {step === 1 ? (
+                            <button type="button" onClick={goToRoomTable}
+                                className="px-4 py-1.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]">
+                                Cancel
+                            </button>
+                        ) : (
+                            <span className="text-sm text-stone-500">
+                                {isSingleBedType ? currentBed?.bedLabel : `Bed ${currentBed?.bedLabel}`}
+                                {totalBeds > 1 && ` (${bedIndex + 1} of ${totalBeds})`}
+                            </span>
+                        )}
+                    </div>
 
-                    <div className="flex justify-between sm:justify-end mb-5">
-                        <button
-                            className="block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm" onClick={() => editHandle()}
-                            type="button">{!dataEditView ? 'Update Details' : 'View Details'}</button>
+                    {/* Centre */}
+                    <h1 className="text-xl font-bold text-[#D4A017] text-center">SUPPLY ROOM DETAILS</h1>
 
-                        {dataEditView && <button
-                            className="ms-5 block px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] align-left max-sm:text-sm"
-                            type='submit' disabled={isSaving}
-                        >
-                            {isSaving ? "Saving Details..." : "Save Details"}
-                        </button>}
+                    {/* Right */}
+                    <div className="flex justify-end items-center gap-3">
+                        <button type="button" onClick={() => setIsEditMode(v => !v)}
+                            className="px-4 py-1.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]">
+                            {isEditMode ? 'View Details' : 'Update Details'}
+                        </button>
+                        {isEditMode && (
+                            <button type="submit" disabled={isSaving}
+                                className="px-4 py-1.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B] disabled:opacity-60">
+                                {isSaving ? 'Saving...' : 'Save Details'}
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {isBedDataVisible ? <>
-                    <h3 className="font-semibold my-4 text-stone-400 max-sm:text-sm">Room Details</h3>
+                {/* ── Step 1: Room info ── */}
+                {step === 1 && (
+                    <div className="flex flex-col flex-1 justify-center max-w-lg mx-auto w-full gap-5">
+                        <div>
+                            <label className="text-[#D4A017] text-sm font-semibold">Room Number</label>
+                            {isEditMode ? (
+                                <input type="text" name="roomNo" value={roomDetails.roomNo} onChange={roomHandleChange}
+                                    className={`mt-1.5 ${inputClass}`} placeholder="Enter the Room Number" required />
+                            ) : (
+                                <p className={`mt-1.5 ${valueClass}`}>{roomDetails.roomNo}</p>
+                            )}
+                        </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full table-auto text-xs border-collapse">
-                            <tbody className="divide-y divide-gray-100">
-                                <tr className="hover:bg-gray-50 transition-colors">
-                                    <th className={thClass}>Room No</th>
-                                    <td className={tdClass}>
-                                        {!dataEditView ? <>
-                                            {roomDetails.roomNo}
-                                        </> :
-                                            <input
-                                                type="text"
-                                                id="roomNo"
-                                                value={roomDetails.roomNo}
-                                                onChange={roomHandleChange}
-                                                className="text-black w-full p-1.5 text-xs placeholder-gray-400 bg-white rounded border border-gray-300"
-                                                name="roomNo"
-                                                placeholder="Enter the Room Number here"
-                                                required />
-                                        }
-                                    </td>
-                                </tr>
+                        <div>
+                            <label className="text-[#D4A017] text-sm font-semibold">Room Type</label>
+                            {isEditMode ? (
+                                <select name="roomType" value={roomDetails.roomType} onChange={roomHandleChange}
+                                    className={`mt-1.5 ${selClass}`} required>
+                                    <option value="" disabled>Select the Room Type</option>
+                                    {getOptionsWithCurrent('room_types', roomDetails.roomType).map((t, i) => (
+                                        <option key={i} value={t}>{t}</option>
+                                    ))}
+                                </select>
+                            ) : (
+                                <p className={`mt-1.5 ${valueClass}`}>{roomDetails.roomType}</p>
+                            )}
+                        </div>
 
-                                <tr className="hover:bg-gray-50 transition-colors">
-                                    <th className={thClass}>Room Type</th>
-                                    <td className={tdClass}>
-                                        {!dataEditView ? <>
-                                            {roomDetails.roomType}
-                                        </> : <select
-                                            id="roomType"
-                                            value={roomDetails.roomType}
-                                            onChange={roomHandleChange}
-                                            className="text-black w-full p-1.5 text-xs bg-white rounded border border-gray-300"
-                                            name="roomType"
-                                            required
-                                        >
-                                            <option value="" disabled>Select the Room type here</option>
-                                            {getOptionsWithCurrent('room_types', roomDetails.roomType).map((t, i) => (
-                                                <option key={i} value={t}>{t}</option>
-                                            ))}
-                                        </select>
-                                        }
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <button
-                            className="block w-full px-4 py-2 mt-5 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle()}
-                            type="button">Next</button>
+                        <button type="button" onClick={handleNextStep}
+                            className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]">
+                            Next
+                        </button>
                     </div>
-                </> : <>
-                    {roomDetails.beds.map((data, index) => (
-                        <div key={`${data.id}-${data.beds}`} className="my-5">
+                )}
 
-                            <label htmlFor={`bed${data}`} className="text-stone-400 max-sm:text-sm block mb-5"><strong>{(numberOfBedData.length === 1) ? numberOfBedData[index] : `Bed ${numberOfBedData[index]}`}</strong></label>
+                {/* ── Step 2: One bed at a time, 2-col grid, vertically centered ── */}
+                {step === 2 && currentBed && (
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                        <div className="flex-1 flex items-center">
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-4 w-full">
 
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full table-auto text-xs border-collapse">
-                                    <tbody className="divide-y divide-gray-100">
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Balcony Access</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.balconyAccess}
-                                                </> : <select
-                                                    id={`balconyAccess_${data.id}`}
-                                                    value={data.balconyAccess}
-                                                    onChange={(e) => handleBedChange(data.id, "balconyAccess", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
-                                                    name={`balconyAccess_${data.id}`}
-                                                    required
-                                                >
-                                                    <option value="" disabled>Select the Balcony Access here</option>
-                                                    {getOptionsWithCurrent('balcony_options', data.balconyAccess).map((t, i) => (
-                                                        <option key={i} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                                }
-                                            </td>
-                                        </tr>
+                                {/* Col 1 */}
+                                <div className="flex flex-col gap-4">
+                                    <div>
+                                        <p className={labelClass}>Balcony Access {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <select value={currentBed.balconyAccess} onChange={(e) => handleBedChange(currentBed.id, "balconyAccess", e.target.value)} className={selClass} required>
+                                                <option value="" disabled>Select</option>
+                                                {getOptionsWithCurrent('balcony_options', currentBed.balconyAccess).map((t, i) => <option key={i} value={t}>{t}</option>)}
+                                            </select>
+                                        ) : <p className={valueClass}>{currentBed.balconyAccess || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Bath Access {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <select value={currentBed.bathAccess} onChange={(e) => handleBedChange(currentBed.id, "bathAccess", e.target.value)} className={selClass} required>
+                                                <option value="" disabled>Select</option>
+                                                {getOptionsWithCurrent('bathroom_options', currentBed.bathAccess).map((t, i) => <option key={i} value={t}>{t}</option>)}
+                                            </select>
+                                        ) : <p className={valueClass}>{currentBed.bathAccess || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Room Type {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <select value={currentBed.roomType} onChange={(e) => handleBedChange(currentBed.id, "roomType", e.target.value)} className={selClass} required>
+                                                <option value="" disabled>Select</option>
+                                                {getOptionsWithCurrent('sharing_types', currentBed.roomType).map((t, i) => <option key={i} value={t}>{t}</option>)}
+                                            </select>
+                                        ) : <p className={valueClass}>{currentBed.roomType || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Energy Plan {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <select value={currentBed.energyPlan} onChange={(e) => handleBedChange(currentBed.id, "energyPlan", e.target.value)} className={selClass} required>
+                                                <option value="" disabled>Select</option>
+                                                {getOptionsWithCurrent('electricity_options', currentBed.energyPlan).map((t, i) => <option key={i} value={t}>{t}</option>)}
+                                            </select>
+                                        ) : <p className={valueClass}>{currentBed.energyPlan || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Hall Access {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <select value={currentBed.hallAccess} onChange={(e) => handleBedChange(currentBed.id, "hallAccess", e.target.value)} className={selClass} required>
+                                                <option value="" disabled>Select</option>
+                                                {getOptionsWithCurrent('yes_no_options', currentBed.hallAccess).map((t, i) => <option key={i} value={t}>{t}</option>)}
+                                            </select>
+                                        ) : <p className={valueClass}>{currentBed.hallAccess || '—'}</p>}
+                                    </div>
+                                </div>
 
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Bath Access</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.bathAccess}
-                                                </> : <select
-                                                    id={`bathAccess_${data.id}`}
-                                                    value={data.bathAccess}
-                                                    onChange={(e) => handleBedChange(data.id, "bathAccess", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
-                                                    name={`bathAccess_${data.id}`}
-                                                    required
-                                                >
-                                                    <option value="" disabled>Select the Bath Access here</option>
-                                                    {getOptionsWithCurrent('bathroom_options', data.bathAccess).map((t, i) => (
-                                                        <option key={i} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Room Type</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.roomType}
-                                                </> : <select
-                                                    id={`roomType_${data.id}`}
-                                                    value={data.roomType}
-                                                    onChange={(e) => handleBedChange(data.id, "roomType", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
-                                                    name={`roomType_${data.id}`}
-                                                    required
-                                                >
-                                                    <option value="" disabled>Select the Room Type here</option>
-                                                    {getOptionsWithCurrent('sharing_types', data.roomType).map((t, i) => (
-                                                        <option key={i} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Energy Plan</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.energyPlan}
-                                                </> : <select
-                                                    id={`energyPlan_${data.id}`}
-                                                    value={data.energyPlan}
-                                                    onChange={(e) => handleBedChange(data.id, "energyPlan", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
-                                                    name={`energyPlan_${data.id}`}
-                                                    required
-                                                >
-                                                    <option value="" disabled>Select the Energy Plan here</option>
-                                                    {getOptionsWithCurrent('electricity_options', data.energyPlan).map((t, i) => (
-                                                        <option key={i} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Hall Access</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.hallAccess}
-                                                </> : <select
-                                                    id={`hallAccess_${data.id}`}
-                                                    value={data.hallAccess}
-                                                    onChange={(e) => handleBedChange(data.id, "hallAccess", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
-                                                    name={`hallAccess_${data.id}`}
-                                                    required
-                                                >
-                                                    <option value="" disabled>Select the Hall Access here</option>
-                                                    {getOptionsWithCurrent('yes_no_na_options', data.hallAccess).map((t, i) => (
-                                                        <option key={i} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Kitchen Access</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.kitchenAccess}
-                                                </> : <select
-                                                    id={`kitchenAccess_${data.id}`}
-                                                    value={data.kitchenAccess}
-                                                    onChange={(e) => handleBedChange(data.id, "kitchenAccess", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300"
-                                                    name={`kitchenAccess_${data.id}`}
-                                                    required
-                                                >
-                                                    <option value="" disabled>Select the Kitchen Access here</option>
-                                                    {getOptionsWithCurrent('yes_no_na_options', data.kitchenAccess).map((t, i) => (
-                                                        <option key={i} value={t}>{t}</option>
-                                                    ))}
-                                                </select>
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Room Sqft</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.roomSqft}
-                                                </> : <input
-                                                    type="text"
-                                                    id={`roomSqft_${data.id}`}
-                                                    value={data.roomSqft}
-                                                    onChange={(e) => handleBedChange(data.id, "roomSqft", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
-                                                    name={`roomSqft_${data.id}`}
-                                                    placeholder="Enter the Room Sqft here"
-                                                    required />
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>DTH Number</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.tataSkyNo}
-                                                </> : <input
-                                                    type="text"
-                                                    id={`tataSkyNo_${data.id}`}
-                                                    value={data.tataSkyNo}
-                                                    onChange={(e) => handleBedChange(data.id, "tataSkyNo", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
-                                                    name={`tataSkyNo_${data.id}`}
-                                                    placeholder="Enter the Tata Sky Number here"
-                                                    required />
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Wifi Number</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.wifiNo}
-                                                </> : <input
-                                                    type="text"
-                                                    id={`wifiNo_${data.id}`}
-                                                    value={data.wifiNo}
-                                                    onChange={(e) => handleBedChange(data.id, "wifiNo", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
-                                                    name={`wifiNo_${data.id}`}
-                                                    placeholder="Enter the Wifi Number here"
-                                                    required />
-                                                }
-                                            </td>
-                                        </tr>
-
-                                        <tr className="hover:bg-gray-50 transition-colors">
-                                            <th className={thClass}>Bescom Meter Number</th>
-                                            <td className={tdClass}>
-                                                {!dataEditView ? <>
-                                                    {data.bescomMeterNo}
-                                                </> : <input
-                                                    type="text"
-                                                    id={`bescomMeterNo_${data.id}`}
-                                                    value={data.bescomMeterNo}
-                                                    onChange={(e) => handleBedChange(data.id, "bescomMeterNo", e.target.value)}
-                                                    className="text-black w-full p-1.5 text-xs rounded border border-gray-300 placeholder-gray-400"
-                                                    name={`bescomMeterNo_${data.id}`}
-                                                    placeholder="Enter the Bescom Meter Number here"
-                                                    required />
-                                                }
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                {/* Col 2 */}
+                                <div className="flex flex-col gap-4">
+                                    <div>
+                                        <p className={labelClass}>Kitchen Access {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <select value={currentBed.kitchenAccess} onChange={(e) => handleBedChange(currentBed.id, "kitchenAccess", e.target.value)} className={selClass} required>
+                                                <option value="" disabled>Select</option>
+                                                {getOptionsWithCurrent('yes_no_na_options', currentBed.kitchenAccess).map((t, i) => <option key={i} value={t}>{t}</option>)}
+                                            </select>
+                                        ) : <p className={valueClass}>{currentBed.kitchenAccess || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Room Sqft {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <input type="text" value={currentBed.roomSqft} onChange={(e) => handleBedChange(currentBed.id, "roomSqft", e.target.value)} className={inputClass} placeholder="Enter sqft" required />
+                                        ) : <p className={valueClass}>{currentBed.roomSqft || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>DTH Number {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <input type="text" value={currentBed.tataSkyNo} onChange={(e) => handleBedChange(currentBed.id, "tataSkyNo", e.target.value)} className={inputClass} placeholder="Enter DTH number" required />
+                                        ) : <p className={valueClass}>{currentBed.tataSkyNo || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Wifi Number {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <input type="text" value={currentBed.wifiNo} onChange={(e) => handleBedChange(currentBed.id, "wifiNo", e.target.value)} className={inputClass} placeholder="Enter wifi number" required />
+                                        ) : <p className={valueClass}>{currentBed.wifiNo || '—'}</p>}
+                                    </div>
+                                    <div>
+                                        <p className={labelClass}>Bescom Meter No {isEditMode && <span className="text-red-500">*</span>}</p>
+                                        {isEditMode ? (
+                                            <input type="text" value={currentBed.bescomMeterNo} onChange={(e) => handleBedChange(currentBed.id, "bescomMeterNo", e.target.value)} className={inputClass} placeholder="Enter meter number" required />
+                                        ) : <p className={valueClass}>{currentBed.bescomMeterNo || '—'}</p>}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    ))}
 
-                    <button
-                        className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle()}
-                        type="button">Prev</button>
-                </>
-                }
+                        {/* ── Footer nav ── */}
+                        <div className="flex gap-4 mt-4 shrink-0">
+                            <button type="button" onClick={handleBedPrev}
+                                className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]">
+                                Prev
+                            </button>
+                            {!isLastBed && (
+                                <button type="button" onClick={handleBedNext}
+                                    className="w-full py-2.5 bg-[#D4A017] text-white text-sm font-medium rounded cursor-pointer hover:bg-[#B8860B]">
+                                    Next
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </form>
         </DashPage>
     );
