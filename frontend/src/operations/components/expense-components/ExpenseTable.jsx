@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Pencil } from "lucide-react";
+
 import axios from 'axios';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
@@ -77,43 +77,6 @@ function ExpenseTable() {
         ));
     };
 
-    const handleEdit = (row) => {
-        // Gather all categories belonging to the same expense_instance_id
-        const siblings = data.filter(e => e.expense_instance_id === row.expense_instance_id);
-        const selectedCategories = siblings.map(e => ({
-            category: e.category || '',
-            amount: e.amount || '',
-            gst: e.gst || '',
-            remarks: e.remarks || '',
-            paymentType: e.paymentType || '',
-            vendorType: e.vendorType || '',
-            vendor: e.vendor || '',
-            accountId: e.accountId || '',
-            amountTransferredDate: e.amountTransferredDate || '',
-            priority: e.priority || '',
-            deadline: e.deadline || '',
-            comments: e.comments || '',
-            receipt: null,
-        }));
-
-        navigate('/operations/operations-expense-form', {
-            state: {
-                expenseData: {
-                    expenseRaisedEmail: row.expenseRaisedEmail,
-                    propertyName: row.propertyName,
-                    headOfExpense: row.headOfExpense,
-                    expenseType: row.expenseType,
-                    owner: row.owner || '',
-                    room: row.room || '',
-                    resident: row.resident || '',
-                    selectedCategories,
-                },
-                editMode: true,
-                expenseId: row.expense_instance_id,
-                ownerId: row.owner_instance_id,
-            }
-        });
-    };
 
     return (
         <DashPage>
@@ -189,15 +152,6 @@ function ExpenseTable() {
                                     <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{formatter.format(new Date(expenseData?.createdAt))}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{formatter.format(new Date(expenseData?.updatedAt))}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.status}</td>
-                                    <td className="px-3 py-1.5 text-xs text-gray-800">
-                                        {expenseData?.isOwnExpense && expenseData?.status === 'Pending' && (
-                                            <Pencil
-                                                size={14}
-                                                className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
-                                                onClick={() => handleEdit(expenseData)}
-                                            />
-                                        )}
-                                    </td>
                                 </tr>
                             )) : (
                                 <tr>

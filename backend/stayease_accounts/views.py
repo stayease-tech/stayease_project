@@ -1230,10 +1230,8 @@ def get_expense_data(request):
                         break
 
                 if portal == 'accounts':
-                    # Accounts — see every portal except their own
-                    expenses = Expense_Detail.objects.exclude(
-                        dashboardUser='accounts'
-                    ).prefetch_related('expense_categories')
+                    # Accounts — see all expenses from every portal including their own
+                    expenses = Expense_Detail.objects.prefetch_related('expense_categories').all()
                 elif portal:
                     # Operations / Supply / Sales — own expenses only
                     expenses = Expense_Detail.objects.filter(
@@ -1494,7 +1492,7 @@ def get_fixed_expense_data(request):
     return JsonResponse({'success': False, 'message': 'Invalid request method. GET expected!'})
 
 @api_view(['PUT'])
-@permission_classes([IsAdminGroup])
+@permission_classes([IsAccountsTeam])
 def accounts_fixed_expense_update(request, id):
     """Handle PUT /accounts/fixed-expense/<id>/update/ — update a fixed expense record.
 
