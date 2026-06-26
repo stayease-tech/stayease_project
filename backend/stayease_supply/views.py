@@ -678,9 +678,9 @@ def get_room_data(request, id):
     if request.method == 'GET':
         try:
             if int(id) == 0:
-                rooms = Room_Data.objects.prefetch_related('room').all()
+                rooms = Room_Data.objects.select_related('property').prefetch_related('room').all()
             else:
-                rooms = Room_Data.objects.filter(property_id=id).prefetch_related('room')
+                rooms = Room_Data.objects.filter(property_id=id).select_related('property').prefetch_related('room')
 
             data = []
 
@@ -693,6 +693,7 @@ def get_room_data(request, id):
                     'status': room.status,
                     'is_basement': room.is_basement,
                     'property_id': room.property_id,
+                    'propertyName': room.property.propertyName if room.property else '',
                     'beds': []
                 }
                 

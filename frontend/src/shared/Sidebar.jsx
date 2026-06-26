@@ -63,7 +63,9 @@ export default function Sidebar({ menuItems }) {
                     {menuItems.map((item, index) => {
                         const isActive = item.link.includes('?')
                             ? (location.pathname + location.search) === item.link
-                            : location.pathname === item.link;
+                            : item.state?.activeOption
+                                ? location.pathname === item.link && location.state?.activeOption === item.state.activeOption
+                                : location.pathname === item.link && !location.state?.activeOption;
                         const isDisabled = item.disabled;
                         return (
                             <li key={index}>

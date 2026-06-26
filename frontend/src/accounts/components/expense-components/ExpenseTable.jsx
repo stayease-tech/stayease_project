@@ -65,25 +65,23 @@ function ExpenseTable() {
             try {
                 const response = (activeOption === 'Expense') ? await axios.get('/accounts/get-expense-data/') : await axios.get('/accounts/get-fixed-expense-data/');
 
+                const allExpenses = response?.data?.expense_table || [];
+
                 setData(
                     type === 'vendor'
-                        ?
-                        (response?.data?.expense_table || []).filter(expense => Number(expense.vendor_instance_id) === Number(id))
-                        :
-                        (response?.data?.expense_table || [])
-                )
+                        ? allExpenses.filter(expense => Number(expense.vendor_instance_id) === Number(id))
+                        : allExpenses
+                );
 
                 setExpenseData(
                     type === 'vendor'
-                        ?
-                        (response?.data?.expense_table || []).filter(expense =>
+                        ? allExpenses.filter(expense =>
                             Number(expense.vendor_instance_id) === Number(id) &&
                             (status === 'All' || expense.status === status)
-                        )
-                        :
-                        (response?.data?.expense_table || []).filter(expense =>
-                            status === 'All' ? true : expense.status === status
-                        )
+                          )
+                        : allExpenses.filter(expense =>
+                            status === 'All' || expense.status === status
+                          )
                 );
             } catch (error) {
                 console.log(error.message || 'Error fetching data');

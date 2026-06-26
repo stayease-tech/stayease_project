@@ -14,6 +14,7 @@ urlpatterns = [
     path('get-owner-rooms/<str:id>/', views.get_owner_rooms, name='get_owner_rooms'),
     path('get-resident-data/<str:property_name>/<str:room>/', views.get_resident_data, name='get_resident_data'),
     path('expense-form-submit/', views.expense_form_submit, name='expense_form_submit'),
+    path('expense-form-edit/<str:id>/', views.expense_form_edit, name='expense_form_edit'),
     path('get-expense-data/', views.get_expense_data, name='get_expense_data'),
     path('accounts-form-update/<str:id>/', views.accounts_form_update, name='accounts_form_update'),
     path('accounts-form-delete/<str:id>/', views.accounts_form_delete, name='accounts_form_delete'),

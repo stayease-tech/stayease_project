@@ -12,7 +12,7 @@ const menuItems = [
     { name: "Agreements", icon: <FaFileContract />, link: "/operations/operations-agreement-pdf", disabled: true },
     { name: "Complaints", icon: <GiTicket />, link: "/operations/operations-propertycomplaint-table" },
     { name: "KYC Management", icon: <GoChecklist />, link: "/operations/operations-kyc-management" },
-    { name: "Raise Expense", icon: <TbReportMoney />, link: "/operations/operations-expense-form" },
+    { name: "Expenses", icon: <TbReportMoney />, link: "/operations/operations-expense-table" },
     { name: "Move-In", icon: <MdMoveToInbox />, link: "/operations/operations-checklistfeedback-table?type=movein" },
     { name: "Move-Out", icon: <MdOutlineExitToApp />, link: "/operations/operations-checklistfeedback-table?type=moveout" },
 ];

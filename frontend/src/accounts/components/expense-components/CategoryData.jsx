@@ -523,7 +523,7 @@ function CategoryData() {
                                     </tr>
 
                                     <tr className="hover:bg-gray-50 transition-colors">
-                                        <th className={thClass}>Date of Transfer</th>
+                                        <th className={thClass}>Date of Transfer {dataEditView && <span className="text-red-500">*</span>}</th>
                                         {!dataEditView ? <>
                                             <td className={tdClass}>{data?.dateOfTransfer}</td>
                                         </> : <>
@@ -541,7 +541,7 @@ function CategoryData() {
                                     </tr>
 
                                     <tr className="hover:bg-gray-50 transition-colors">
-                                        <th className={thClass}>Email Body Note</th>
+                                        <th className={thClass}>Email Body Note {dataEditView && <span className="text-red-500">*</span>}</th>
                                         {!dataEditView ? <>
                                             <td className={tdClass}>{data?.emailNote}</td>
                                         </> : <>

@@ -54,13 +54,9 @@ function ExpenseTable() {
             try {
                 const response = await axios.get('/accounts/get-expense-data/');
 
-                setData((response?.data?.expense_table || []).filter(expense =>
-                    expense?.dashboardUser === 'supply'
-                ) || []);
-
-                setExpenseData((response?.data?.expense_table || []).filter(expense =>
-                    expense?.dashboardUser === 'supply'
-                ).filter(expense => status === 'All' ? true : expense.status === status));
+                const allExpenses = response?.data?.expense_table || [];
+                setData(allExpenses);
+                setExpenseData(allExpenses.filter(expense => status === 'All' || expense.status === status));
             } catch (error) {
                 console.log(error.message || 'Error fetching data');
             } finally {

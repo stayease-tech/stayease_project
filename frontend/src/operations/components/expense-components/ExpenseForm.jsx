@@ -6,14 +6,17 @@ import Cookies from 'js-cookie';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
 
-function ExpenseForm({ loggedUserEmail }) {
+function ExpenseForm() {
     const { getExpenseCategories, getOptions } = useDropdowns();
+    const loggedUserEmail = JSON.parse(localStorage.getItem("useremail")) || '';
 
     const navigate = useNavigate();
     const location = useLocation();
 
     const expenseDetails = location?.state?.expenseData;
     const owner_id = location.state?.ownerId;
+    const editMode = location.state?.editMode || false;
+    const expenseId = location.state?.expenseId || null;
 
     const [expenseCategory, setExpenseCategory] = useState([]);
     const [currentComponent, setCurrentComponent] = useState(expenseDetails?.currentComponent || 'expenseForm');
@@ -362,7 +365,11 @@ function ExpenseForm({ loggedUserEmail }) {
         formData.append('vendorIds', JSON.stringify(filteredIds));
 
         try {
-            const response = await axios.post(`/accounts/expense-form-submit/`, formData, {
+            const url = editMode
+                ? `/accounts/expense-form-edit/${expenseId}/`
+                : `/accounts/expense-form-submit/`;
+
+            const response = await axios.post(url, formData, {
                 withCredentials: true,
             });
 
@@ -392,6 +399,15 @@ function ExpenseForm({ loggedUserEmail }) {
     return (
         <DashPage>
                     <form className="max-w-3xl mx-auto lg:my-8 py-6 sm:p-8 lg:p-10 lg:rounded-lg md:bg-white text-slate-800" onSubmit={expenseHandleSubmit} method='POST'>
+                        {editMode && (
+                            <button
+                                type="button"
+                                onClick={() => navigate('/operations/operations-expense-table')}
+                                className="mb-4 text-xs text-gray-500 hover:text-[#D4A017] flex items-center gap-1 cursor-pointer"
+                            >
+                                ← Back to Expenses
+                            </button>
+                        )}
                         <h1 className="text-center sm:text-xl lg:text-2xl font-semibold mb-4 sm:mb-8 lg:mt-0 text-[#D4A017]">PROPERTY-WISE EXPENSE FORM</h1>
 
                         {currentComponent === 'expenseForm' && <>
@@ -724,7 +740,7 @@ function ExpenseForm({ loggedUserEmail }) {
                             <div className="flex gap-5 mt-5">
                                 <button className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" onClick={() => dataHandleToggle('expenseType')} type="button">Prev</button>
 
-                                <button className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit"}</button>
+                                <button className="block w-full px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm" type="submit" disabled={isSubmitting}>{isSubmitting ? (editMode ? "Updating..." : "Submitting...") : (editMode ? "Update Expense" : "Submit")}</button>
                             </div>
                         </>
                         }

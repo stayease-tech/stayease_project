@@ -92,6 +92,7 @@ function RoomTable() {
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200">
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">No.</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Property Name</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Building Level</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Add / Update</th>
@@ -100,11 +101,12 @@ function RoomTable() {
                         <tbody className="divide-y divide-gray-100">
                             {loadingData ? (
                                 <tr>
-                                    <td colSpan="4" className="px-3 py-1.5 text-xs text-gray-800 text-center">Loading...</td>
+                                    <td colSpan="5" className="px-3 py-1.5 text-xs text-gray-800 text-center">Loading...</td>
                                 </tr>
                             ) : paginatedData.length > 0 ? paginatedData.map((room, i) => (
                                 <tr key={room.pk} className="hover:bg-gray-50 transition-colors">
                                     <td className="px-3 py-1.5 text-xs text-gray-800">{startIndex + i + 1}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{room.propertyName}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800">{room.buildingLevel}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800">{room.status}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800">
@@ -125,7 +127,7 @@ function RoomTable() {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="4" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
+                                    <td colSpan="5" className="px-3 py-1.5 text-xs text-gray-800 text-center">No data available</td>
                                 </tr>
                             )}
                         </tbody>

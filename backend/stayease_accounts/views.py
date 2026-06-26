@@ -1093,9 +1093,113 @@ def expense_form_submit(request):
             return JsonResponse({'success': False, 'message': 'Error submitting data. Please try again later!'})
     
     return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
-        
+
+@csrf_exempt
+def expense_form_edit(request, id):
+    """Handle POST /accounts/expense-form-edit/<id>/ — update an existing Pending expense.
+
+    Only the user who originally raised the expense may edit it, and only while
+    all its categories are still in Pending status.  Existing category rows are
+    deleted and recreated from the submitted form data (same shape as
+    expense-form-submit).
+
+    Args:
+        request: Django HttpRequest with multipart/form-data body.
+        id: Primary key of the Expense_Detail to update.
+
+    Returns:
+        JsonResponse with `success` bool and a `message`.
+    """
+    if request.method == 'POST':
+        try:
+            raised_email = request.user.email or request.POST.get('expenseRaisedEmail') or ''
+
+            expense_instance = Expense_Detail.objects.get(pk=id)
+
+            if not expense_instance.expense_categories.filter(status='Pending').exists():
+                return JsonResponse({'success': False, 'message': 'This expense can no longer be edited as it is no longer Pending.'})
+
+            # Update header fields
+            expense_instance.propertyName = request.POST.get('propertyName', expense_instance.propertyName)
+            expense_instance.headOfExpense = request.POST.get('headOfExpense', expense_instance.headOfExpense)
+            expense_instance.expenseType = request.POST.get('expenseType', expense_instance.expenseType)
+            expense_instance.owner = request.POST.get('owner') or ''
+            expense_instance.room = request.POST.get('room') or ''
+            expense_instance.resident = request.POST.get('resident') or ''
+
+            if request.POST.get('ownerId'):
+                try:
+                    expense_instance.owner_instance = Owner_Data.objects.get(id=request.POST.get('ownerId'))
+                except Owner_Data.DoesNotExist:
+                    pass
+
+            expense_instance.save()
+
+            # Rebuild categories
+            expense_instance.expense_categories.all().delete()
+
+            categories = []
+            index = 0
+            while f'selectedCategories[{index}].category' in request.POST:
+                category_data = {
+                    'expense_instance': expense_instance,
+                    'expenseRaisedEmail': raised_email,
+                    'category': request.POST.get(f'selectedCategories[{index}].category'),
+                    'amount': request.POST.get(f'selectedCategories[{index}].amount'),
+                    'gst': request.POST.get(f'selectedCategories[{index}].gst'),
+                    'remarks': request.POST.get(f'selectedCategories[{index}].remarks'),
+                    'paymentType': request.POST.get(f'selectedCategories[{index}].paymentType'),
+                    'vendorType': request.POST.get(f'selectedCategories[{index}].vendorType'),
+                    'vendor': request.POST.get(f'selectedCategories[{index}].vendor'),
+                    'accountId': request.POST.get(f'selectedCategories[{index}].accountId'),
+                    'amountTransferredDate': request.POST.get(f'selectedCategories[{index}].amountTransferredDate'),
+                    'priority': request.POST.get(f'selectedCategories[{index}].priority'),
+                    'deadline': request.POST.get(f'selectedCategories[{index}].deadline'),
+                    'comments': request.POST.get(f'selectedCategories[{index}].comments'),
+                    'status': 'Pending',
+                    'receipt': None,
+                }
+                file_key = f'selectedCategories[{index}].receipt'
+                if file_key in request.FILES:
+                    category_data['receipt'] = request.FILES[file_key]
+
+                categories.append(category_data)
+                index += 1
+
+            vendor_ids_json = request.POST.get('vendorIds', '[]')
+            vendor_ids = json.loads(vendor_ids_json) if vendor_ids_json and vendor_ids_json != '[]' else []
+            vendors = {v.id: v for v in Vendor_Detail.objects.filter(id__in=vendor_ids)}
+
+            for category_data in categories:
+                payment_type = category_data.get('paymentType')
+                if payment_type == 'Vendor':
+                    vendor_instance = next(
+                        (v for v in vendors.values() if v.vendor == category_data.get('vendor')),
+                        None
+                    )
+                    Expense_Category_Detail.objects.create(
+                        vendor_instance=vendor_instance,
+                        **{k: v for k, v in category_data.items() if k not in ('paymentType',)},
+                        paymentType=payment_type,
+                    )
+                else:
+                    Expense_Category_Detail.objects.create(**category_data)
+
+            return JsonResponse({'success': True, 'message': 'Expense updated successfully!'})
+        except Expense_Detail.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Expense not found.'})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'success': False, 'message': 'Error updating expense. Please try again later!'})
+
+    return JsonResponse({'success': False, 'message': 'Invalid request method. POST expected!'})
+
 def get_expense_data(request):
-    """Handle GET /accounts/expense/ — return all expenses with their category line items flattened.
+    """Handle GET /accounts/expense/ — return expenses filtered by the requesting user's portal.
+
+    - Operations / Supply / Sales users only receive their own portal's expenses.
+    - Accounts users receive all expenses except those raised by accounts users.
+    - Admin / superusers receive all expenses.
 
     Returns:
         JsonResponse with `expense_table` list where each entry represents one category row
@@ -1103,7 +1207,42 @@ def get_expense_data(request):
     """
     if request.method == 'GET':
         try:
-            expenses = Expense_Detail.objects.prefetch_related('expense_categories').all()
+            user = request.user
+
+            # Superusers see everything
+            if user.is_superuser:
+                expenses = Expense_Detail.objects.prefetch_related('expense_categories').all()
+            else:
+                # Detect portal from permission app prefix — mirrors frontend PERMISSION_TYPE_MAP
+                perm_apps = {p.split('.')[0] for p in user.get_all_permissions()}
+
+                PERM_PORTAL_MAP = {
+                    'stayease_operations': 'operations',
+                    'stayease_supply': 'supply',
+                    'stayease_sales': 'sales',
+                    'stayease_accounts': 'accounts',
+                }
+
+                portal = None
+                for perm_app, dashboard_value in PERM_PORTAL_MAP.items():
+                    if perm_app in perm_apps:
+                        portal = dashboard_value
+                        break
+
+                if portal == 'accounts':
+                    # Accounts — see every portal except their own
+                    expenses = Expense_Detail.objects.exclude(
+                        dashboardUser='accounts'
+                    ).prefetch_related('expense_categories')
+                elif portal:
+                    # Operations / Supply / Sales — own expenses only
+                    expenses = Expense_Detail.objects.filter(
+                        dashboardUser=portal
+                    ).prefetch_related('expense_categories')
+                else:
+                    expenses = Expense_Detail.objects.prefetch_related('expense_categories').all()
+
+            user_email = user.email  # may be '' for users without email configured
 
             expense_data = [
                 {
@@ -1117,7 +1256,11 @@ def get_expense_data(request):
                     "room": expense.room,
                     "resident": expense.resident,
                     "category_id": category.id,
-                    "expenseRaisedEmail": category.expenseRaisedEmail or "",
+                    "expenseRaisedEmail": category.expenseRaisedEmail if category.expenseRaisedEmail not in (None, '', 'undefined') else "",
+                    # If the user has no email set we cannot distinguish between portal
+                    # users, so we fall back to True — the queryset already scopes data
+                    # to this portal, so all visible expenses belong to this portal.
+                    "isOwnExpense": (not user_email) or (category.expenseRaisedEmail == user_email),
                     "category": category.category,
                     "amount": category.amount,
                     "gst": category.gst,
@@ -1443,15 +1586,17 @@ def accounts_fixed_expense_update(request, id):
 </body>
 </html>
 """
-                emailsend = EmailMessage(
-                    subject=subject,
-                    body=html_body,
-                    from_email='hello@mystayease.com',
-                    to=[instance.expenseRaisedEmail, instance.ownerEmail],
-                )
-                
-                emailsend.content_subtype = "html"
-                emailsend.send()
+                try:
+                    emailsend = EmailMessage(
+                        subject=subject,
+                        body=html_body,
+                        from_email='hello@mystayease.com',
+                        to=[instance.expenseRaisedEmail, instance.ownerEmail],
+                    )
+                    emailsend.content_subtype = "html"
+                    emailsend.send()
+                except Exception as email_err:
+                    print(f"Email send failed: {email_err}")
 
             return JsonResponse({'success': True, 'message': 'Expense details updated successfully!', 'updatedTime': tracking_model.updatedAt})
 

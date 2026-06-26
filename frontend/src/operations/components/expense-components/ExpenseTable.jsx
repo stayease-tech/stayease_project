@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 import axios from 'axios';
 import { useDropdowns } from "../../../shared/DropdownContext";
 import { DashPage } from "../../../shared/Dashboard";
@@ -36,14 +37,13 @@ function ExpenseTable() {
         setCurrentPage(1);
     };
 
-    const formatter = new Intl.DateTimeFormat('en-US', {
+    const formatter = new Intl.DateTimeFormat('en-IN', {
         year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+        month: 'short',
+        day: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
-        second: '2-digit',
-        timeZoneName: 'short'
+        hour12: true,
     });
 
     useEffect(() => {
@@ -54,13 +54,9 @@ function ExpenseTable() {
             try {
                 const response = await axios.get('/accounts/get-expense-data/');
 
-                setData((response?.data?.expense_table || []).filter(expense =>
-                    expense?.dashboardUser === 'operations'
-                ) || []);
-
-                setExpenseData((response?.data?.expense_table || []).filter(expense =>
-                    expense?.dashboardUser === 'operations'
-                ).filter(expense => status === 'All' ? true : expense.status === status));
+                const allExpenses = response?.data?.expense_table || [];
+                setData(allExpenses);
+                setExpenseData(allExpenses.filter(expense => status === 'All' || expense.status === status));
             } catch (error) {
                 console.log(error.message || 'Error fetching data');
             } finally {
@@ -81,6 +77,44 @@ function ExpenseTable() {
         ));
     };
 
+    const handleEdit = (row) => {
+        // Gather all categories belonging to the same expense_instance_id
+        const siblings = data.filter(e => e.expense_instance_id === row.expense_instance_id);
+        const selectedCategories = siblings.map(e => ({
+            category: e.category || '',
+            amount: e.amount || '',
+            gst: e.gst || '',
+            remarks: e.remarks || '',
+            paymentType: e.paymentType || '',
+            vendorType: e.vendorType || '',
+            vendor: e.vendor || '',
+            accountId: e.accountId || '',
+            amountTransferredDate: e.amountTransferredDate || '',
+            priority: e.priority || '',
+            deadline: e.deadline || '',
+            comments: e.comments || '',
+            receipt: null,
+        }));
+
+        navigate('/operations/operations-expense-form', {
+            state: {
+                expenseData: {
+                    expenseRaisedEmail: row.expenseRaisedEmail,
+                    propertyName: row.propertyName,
+                    headOfExpense: row.headOfExpense,
+                    expenseType: row.expenseType,
+                    owner: row.owner || '',
+                    room: row.room || '',
+                    resident: row.resident || '',
+                    selectedCategories,
+                },
+                editMode: true,
+                expenseId: row.expense_instance_id,
+                ownerId: row.owner_instance_id,
+            }
+        });
+    };
+
     return (
         <DashPage>
             <div className="page-header">
@@ -91,7 +125,7 @@ function ExpenseTable() {
                         onClick={() => navigate('/operations/operations-expense-form')}
                         type="button"
                     >
-                        Add Expense
+                        Raise Expense
                     </button>
                     <select
                         id="status"
@@ -117,7 +151,7 @@ function ExpenseTable() {
             </div>
 
             <div className="card">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto pb-3">
                     <table className="min-w-full table-auto text-xs border-collapse">
                         <thead>
                             <tr className="bg-gray-50 border-b border-gray-200">
@@ -134,6 +168,7 @@ function ExpenseTable() {
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Submitted At</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Last Updated</th>
                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Status</th>
+                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Edit</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -154,10 +189,19 @@ function ExpenseTable() {
                                     <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{formatter.format(new Date(expenseData?.createdAt))}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800 max-w-[180px] truncate">{formatter.format(new Date(expenseData?.updatedAt))}</td>
                                     <td className="px-3 py-1.5 text-xs text-gray-800">{expenseData?.status}</td>
+                                    <td className="px-3 py-1.5 text-xs text-gray-800">
+                                        {expenseData?.isOwnExpense && expenseData?.status === 'Pending' && (
+                                            <Pencil
+                                                size={14}
+                                                className="text-gray-400 hover:text-[#D4A017] cursor-pointer transition-colors"
+                                                onClick={() => handleEdit(expenseData)}
+                                            />
+                                        )}
+                                    </td>
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="13" className="px-3 py-1.5 text-xs text-gray-800 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
+                                    <td colSpan="14" className="px-3 py-1.5 text-xs text-gray-800 text-center">{loadingData ? 'Loading Data...' : 'No data available'}</td>
                                 </tr>
                             )}
                         </tbody>
