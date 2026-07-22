@@ -40,7 +40,7 @@ const modules = ['/accounts', '/operations', '/sales', '/supply', '/partners', '
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, path.resolve(__dirname, '..'), '');
-  const djangoPort = env.DJANGO_PORT || '8001';
+  const djangoPort = env.DJANGO_PORT || '8000';
   const djangoTarget = `http://127.0.0.1:${djangoPort}`;
 
   const proxy = {};
