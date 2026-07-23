@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
-import stayeaseLogo from 'static/img/brand-logo/stayEase-Logo.webp'
+import stayeaseLogo from '/static/img/brand-logo/stayEase-Logo.webp'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useLocation } from 'react-router-dom'
 import { Link } from 'react-router-dom'
