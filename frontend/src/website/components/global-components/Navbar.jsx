@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react'
-import stayeaseLogo from 'static/img/brand-logo/stayEase-Logo.webp'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
 import { useLocation } from 'react-router-dom'
 import { Link } from 'react-router-dom'
@@ -94,7 +93,7 @@ export default function Navbar() {
                     {/* Logo with explicit dimensions to prevent layout shift */}
                     <img
                         alt="StayEase_Logo"
-                        src={stayeaseLogo}
+                        src="static/img/brand-logo/stayEase-Logo.webp"
                         width="72"
                         height="72"
                         className="h-18 w-auto object-cover"
