@@ -55,11 +55,28 @@ function OwnerTable() {
     const fetchData = async () => {
       setLoadingData(true);
       try {
-        const response = await axios.get('/supply/get-owner-data/');
+        console.log('🔍 Fetching owner data...');
+        const response = await axios.get('/supply/get-owner-data/', {
+          withCredentials: true,
+        });
 
-        setOwnerData(response.data.supply_table);
+        console.log('📦 Full response:', response);
+        console.log('📊 Response data:', response.data);
+        console.log('📋 supply_table:', response.data.supply_table);
+        console.log('✅ Success:', response.data.success);
+
+        if (response.data.success) {
+          setOwnerData(response.data.supply_table || []);
+        } else {
+          console.error('❌ API returned error:', response.data.message);
+        }
       } catch (err) {
-        console.log(err.message || 'Error fetching data');
+        console.error('❌ Error fetching data:', err);
+        console.error('❌ Error message:', err.message);
+        if (err.response) {
+          console.error('❌ Response status:', err.response.status);
+          console.error('❌ Response data:', err.response.data);
+        }
       } finally {
         setLoadingData(false);
       }
