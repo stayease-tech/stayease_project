@@ -15,6 +15,14 @@ function OwnerTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
+  console.log('ownerData:', ownerData);
+  console.log('ownerData type:', typeof ownerData);
+  console.log('Is array?', Array.isArray(ownerData));
+  console.log(
+    'First item:',
+    ownerData && ownerData[0] ? ownerData[0] : 'No data'
+  );
+
   const filteredData = (ownerData || []).filter((item) =>
     Object.values(item).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
