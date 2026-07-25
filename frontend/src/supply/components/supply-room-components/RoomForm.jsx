@@ -219,7 +219,7 @@ function RoomForm() {
         />
       )}
 
-      <form className="h-full flex flex-col overflow-hidden" onSubmit={handleSubmit} method="POST">
+      <form className="flex flex-col overflow-hidden" onSubmit={handleSubmit} method="POST">
 
         {/* ── Header row ── */}
         <div className="grid grid-cols-3 items-center mb-6 shrink-0">
