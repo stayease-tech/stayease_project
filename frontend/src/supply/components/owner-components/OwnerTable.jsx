@@ -15,14 +15,6 @@ function OwnerTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
-  console.log('ownerData:', ownerData);
-  console.log('ownerData type:', typeof ownerData);
-  console.log('Is array?', Array.isArray(ownerData));
-  console.log(
-    'First item:',
-    ownerData && ownerData[0] ? ownerData[0] : 'No data'
-  );
-
   const filteredData = (ownerData || []).filter((item) =>
     Object.values(item).some((value) =>
       String(value).toLowerCase().includes(searchTerm.toLowerCase())
@@ -55,28 +47,11 @@ function OwnerTable() {
     const fetchData = async () => {
       setLoadingData(true);
       try {
-        console.log('🔍 Fetching owner data...');
-        const response = await axios.get('/supply/get-owner-data/', {
-          withCredentials: true,
-        });
+        const response = await axios.get('/supply/get-owner-data/');
 
-        console.log('📦 Full response:', response);
-        console.log('📊 Response data:', response.data);
-        console.log('📋 supply_table:', response.data.supply_table);
-        console.log('✅ Success:', response.data.success);
-
-        if (response.data.success) {
-          setOwnerData(response.data.supply_table || []);
-        } else {
-          console.error('❌ API returned error:', response.data.message);
-        }
+        setOwnerData(response.data.supply_table);
       } catch (err) {
-        console.error('❌ Error fetching data:', err);
-        console.error('❌ Error message:', err.message);
-        if (err.response) {
-          console.error('❌ Response status:', err.response.status);
-          console.error('❌ Response data:', err.response.data);
-        }
+        console.log(err.message || 'Error fetching data');
       } finally {
         setLoadingData(false);
       }
