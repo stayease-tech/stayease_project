@@ -35,52 +35,50 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      // Create a clone of the element
-      const clone = element.cloneNode(true);
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      clone.style.top = '0';
-      clone.style.width = '210mm';
-      clone.style.padding = '20px';
-      clone.style.backgroundColor = '#ffffff';
-      document.body.appendChild(clone);
-
-      // Replace any oklch colors in the clone
-      const allElements = clone.querySelectorAll('*');
+      // Force all elements to have proper colors
+      const allElements = element.querySelectorAll('*');
       allElements.forEach((el) => {
-        const computedStyle = window.getComputedStyle(el);
-
-        // Check and fix text color
-        const color = computedStyle.color;
-        if (color && color.includes('oklch')) {
+        // Ensure text is black
+        if (el.style.color && el.style.color.includes('oklch')) {
           el.style.color = '#000000';
         }
-
-        // Check and fix background color
-        const bgColor = computedStyle.backgroundColor;
-        if (bgColor && bgColor.includes('oklch')) {
-          el.style.backgroundColor = 'transparent';
+        if (el.style.color === '' || !el.style.color) {
+          el.style.color = '#000000';
         }
-
-        // Check and fix border color
-        const borderColor = computedStyle.borderColor;
-        if (borderColor && borderColor.includes('oklch')) {
-          el.style.borderColor = '#000000';
+        // Ensure background is white
+        if (
+          el.style.backgroundColor &&
+          el.style.backgroundColor.includes('oklch')
+        ) {
+          el.style.backgroundColor = '#ffffff';
         }
       });
+      // Set the container background to white
+      element.style.backgroundColor = '#ffffff';
+      element.style.color = '#000000';
 
-      // Use html2canvas on the clone
-      const canvas = await html2canvas(clone, {
+      // Wait a moment for styles to apply
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
-        logging: false,
+        logging: true,
         allowTaint: true,
-        foreignObjectRendering: true,
+        foreignObjectRendering: false,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        onclone: (doc) => {
+          const clonedElement = doc.getElementById('content');
+          if (clonedElement) {
+            clonedElement.style.backgroundColor = '#ffffff';
+            clonedElement.style.color = '#000000';
+          }
+        },
       });
-
-      // Remove the clone
-      document.body.removeChild(clone);
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -109,6 +107,9 @@ function AgreementPdf() {
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
+      // Reset styles
+      element.style.backgroundColor = '';
+      element.style.color = '';
     }
   };
 
