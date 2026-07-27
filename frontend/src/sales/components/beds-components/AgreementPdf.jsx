@@ -1,56 +1,79 @@
-/* global html2pdf */
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import { toast } from 'react-toastify';
 import { DashPage } from '../../../shared/Dashboard';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 function AgreementPdf() {
   const navigate = useNavigate();
   const location = useLocation();
-  const bedsData = location?.state?.bedsData || [];
-  const bedData = location?.state?.bedData || {};
-  const flag = location?.state?.flag || false;
-  const bedsDetailsFlag = location?.state?.bedsDetailsFlag || false;
-  const pdfRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pdfDetails, setPdfDetails] = useState({
-    title: `${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`,
-    recipientEmail: bedData?.resident_data?.email,
-    recipientName: bedData?.resident_data?.residentsName,
-    pdfFile: null,
-  });
+  const bedsData = location.state?.bedsData || [];
+  const bedData = location.state?.bedData || {};
+  const flag = location.state?.flag || false;
+  const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
+  const contentRef = useRef(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  function getMonthsBetweenDates(startDateStr, endDateStr) {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
-
-    const startYear = startDate.getFullYear();
-    const startMonth = startDate.getMonth();
-    const endYear = endDate.getFullYear();
-    const endMonth = endDate.getMonth();
-
-    return (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
-  }
+  const monthDiff = (date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+      (d2.getFullYear() - d1.getFullYear()) * 12 +
+      (d2.getMonth() - d1.getMonth()) +
+      1
+    );
+  };
 
   const handleDownload = async () => {
-    const content = document.getElementById('content');
+    const element = document.getElementById('content');
+    if (!element) {
+      alert('PDF content not found!');
+      return;
+    }
 
-    const options = {
-      margin: 0,
-      filename: `${bedData?.resident_data?.residentsName.replace(/\s+/g, '')}_Contract.pdf`,
-      image: { type: 'jpeg', quality: 1 },
-      html2canvas: {
+    setIsGenerating(true);
+
+    try {
+      const canvas = await html2canvas(element, {
         scale: 2,
+        useCORS: true,
         scrollX: 0,
         scrollY: 0,
-        useCORS: true,
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    };
+        backgroundColor: '#ffffff',
+        logging: false,
+        allowTaint: true,
+      });
 
-    html2pdf().set(options).from(content).save();
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const residentName =
+        bedData?.resident_data?.residentsName?.replace(/\s+/g, '') ||
+        'Contract';
+      pdf.save(`${residentName}_Contract.pdf`);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -60,25 +83,11 @@ function AgreementPdf() {
       </h1>
 
       <div className="sm:flex justify-between">
-        <button
-          className="btn btn-primary mb-5"
-          onClick={() =>
-            bedsDetailsFlag
-              ? navigate(
-                  `/sales/sales-resident-details/${bedData?.resident_data?.id}`,
-                  { state: { bedsData, bedData, flag } }
-                )
-              : navigate(`/sales/sales-beds-table`)
-          }
-          type="button"
-        >
-          Prev
-        </button>
-
         <div className="flex gap-3">
           <button
             className="btn btn-primary mb-5"
             onClick={handleDownload}
+            disabled={isGenerating}
             type="button"
           >
             Download PDF
