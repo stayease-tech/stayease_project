@@ -35,18 +35,18 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      // Create a hidden iframe
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'fixed';
-      iframe.style.left = '-9999px';
-      iframe.style.top = '0';
-      iframe.style.width = '210mm';
-      iframe.style.height = '297mm';
-      iframe.style.border = 'none';
-      iframe.style.backgroundColor = '#ffffff';
-      document.body.appendChild(iframe);
+      // Create a hidden container with proper styles
+      const container = document.createElement('div');
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.top = '0';
+      container.style.width = '210mm';
+      container.style.backgroundColor = '#ffffff';
+      container.style.padding = '20px';
+      container.style.zIndex = '-9999';
+      document.body.appendChild(container);
 
-      // Clone the content
+      // Clone the content and fix colors
       const clone = element.cloneNode(true);
 
       // Remove all oklch colors
@@ -64,68 +64,39 @@ function AgreementPdf() {
         if (el.style.borderColor && el.style.borderColor.includes('oklch')) {
           el.style.borderColor = '#000000';
         }
+        // Force text color to black
+        el.style.color = '#000000';
       });
 
       clone.style.backgroundColor = '#ffffff';
       clone.style.color = '#000000';
+      container.appendChild(clone);
 
-      const styles = document.querySelector('style')?.innerHTML || '';
-      const cleanStyles = styles.replace(/oklch\([^)]*\)/g, '#000000');
+      // Wait for rendering
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const doc = iframe.contentDocument || iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { 
-                            background: white !important; 
-                            color: black !important; 
-                            padding: 20px; 
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                        }
-                        * { 
-                            color: black !important; 
-                        }
-                        .text-\\[\\#D4A017\\] { 
-                            color: #D4A017 !important; 
-                        }
-                        .border-black, .border, .border-gray-400 {
-                            border-color: black !important;
-                        }
-                        .bg-white { 
-                            background: white !important; 
-                        }
-                        table, td, tr, th {
-                            border-color: black !important;
-                        }
-                        ${cleanStyles}
-                    </style>
-                </head>
-                <body>
-                    ${clone.innerHTML}
-                </body>
-                </html>
-            `);
-      doc.close();
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const canvas = await html2canvas(iframe, {
+      // Capture the entire content
+      const canvas = await html2canvas(container, {
         scale: 2,
         useCORS: true,
         backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
-        width: iframe.scrollWidth,
-        height: iframe.scrollHeight,
-        foreignObjectRendering: true,
+        width: container.scrollWidth,
+        height: container.scrollHeight,
+        onclone: (doc) => {
+          const clonedContainer = doc.querySelector('div');
+          if (clonedContainer) {
+            clonedContainer.style.backgroundColor = '#ffffff';
+            clonedContainer.style.color = '#000000';
+          }
+        },
       });
 
-      document.body.removeChild(iframe);
+      // Remove container
+      document.body.removeChild(container);
 
+      // Create PDF
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
@@ -134,9 +105,11 @@ function AgreementPdf() {
       let heightLeft = imgHeight;
       let position = 0;
 
+      // Add first page
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
+      // Add remaining pages
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
