@@ -25,7 +25,7 @@ function AgreementPdf() {
     );
   };
 
-  const handleDownload = async () => {
+  const generatePDF = async () => {
     const element = document.getElementById('content');
     if (!element) {
       alert('PDF content not found!');
@@ -35,21 +35,69 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      // Set background to white
-      element.style.backgroundColor = '#ffffff';
-      element.style.color = '#000000';
+      // Create a hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.left = '-9999px';
+      iframe.style.top = '0';
+      iframe.style.width = '210mm';
+      iframe.style.height = '297mm';
+      iframe.style.border = 'none';
+      iframe.style.backgroundColor = '#ffffff';
+      document.body.appendChild(iframe);
 
-      // Use html2canvas
-      const canvas = await html2canvas(element, {
+      // Get the content
+      const contentHTML = element.outerHTML;
+      const styles = document.querySelector('style')?.innerHTML || '';
+
+      // Write to iframe
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { 
+                            background: white; 
+                            color: black; 
+                            padding: 20px; 
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                        }
+                        * { color: black !important; }
+                        .text-\\[\\#D4A017\\] { color: #D4A017 !important; }
+                        .border-black { border-color: black !important; }
+                        .bg-white { background: white !important; }
+                    </style>
+                    ${styles}
+                </head>
+                <body>
+                    ${element.innerHTML}
+                </body>
+                </html>
+            `);
+      doc.close();
+
+      // Wait for render
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Capture the iframe
+      const canvas = await html2canvas(iframe, {
         scale: 2,
-        backgroundColor: '#ffffff',
         useCORS: true,
+        backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
+        width: iframe.scrollWidth,
+        height: iframe.scrollHeight,
+        foreignObjectRendering: true,
       });
 
+      // Remove iframe
+      document.body.removeChild(iframe);
+
+      // Create PDF
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
@@ -77,9 +125,6 @@ function AgreementPdf() {
       alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsGenerating(false);
-      // Reset styles
-      element.style.backgroundColor = '';
-      element.style.color = '';
     }
   };
 
@@ -100,7 +145,7 @@ function AgreementPdf() {
 
         <button
           className="block mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm max-sm:w-full"
-          onClick={handleDownload}
+          onClick={generatePDF}
           disabled={isGenerating}
           type="button"
         >
