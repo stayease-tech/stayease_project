@@ -221,7 +221,7 @@ function PropertyComplaintForm() {
 
     return (
         <div className="lg:pb-2 pt-[5rem] lg:pt-[6rem]">
-            <nav className={`bg-slate-800 shadow-md text-white fixed w-full top-0 z-[100] transition-opacity duration-300 ${isScrolledUp ? 'opacity-100' : 'opacity-0'}`}>
+            <nav className={`bg-[#0A0A0A] shadow-md text-white fixed w-full top-0 z-[100] transition-opacity duration-300 ${isScrolledUp ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
                         <div className="flex items-center">
