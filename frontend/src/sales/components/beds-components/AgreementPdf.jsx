@@ -84,16 +84,22 @@ function AgreementPdf() {
       </h1>
 
       <div className="sm:flex justify-between">
-        <div className="flex gap-3">
-          <button
-            className="btn btn-primary mb-5"
-            onClick={handleDownload}
-            disabled={isGenerating}
-            type="button"
-          >
-            Download PDF
-          </button>
-        </div>
+        <button
+          className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
+          onClick={() => navigate(`/operations/operations-beds-table`)}
+          type="button"
+        >
+          Prev
+        </button>
+
+        <button
+          className="btn btn-primary mb-5"
+          onClick={handleDownload}
+          disabled={isGenerating}
+          type="button"
+        >
+          Download PDF
+        </button>
       </div>
 
       <div className="flex justify-center items-center">
