@@ -17,7 +17,7 @@ const STATUS_BADGE = {
 export default function KycManagement() {
     const navigate = useNavigate();
     const { getOptions } = useDropdowns();
-    const TABS = getOptions('kyc_approval_statuses');
+    const TABS = ['Pending', 'Approved', 'Rejected'];
     const [residents, setResidents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("Pending");
