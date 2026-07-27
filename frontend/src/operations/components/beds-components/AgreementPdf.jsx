@@ -12,6 +12,7 @@ function AgreementPdf() {
   const flag = location.state?.flag || false;
   const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
   const contentRef = useRef(null);
+  const pdfRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
   const monthDiff = (date1, date2) => {
