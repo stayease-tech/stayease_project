@@ -45,6 +45,22 @@ function AgreementPdf() {
         backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
+        // Add these options to handle color issues
+        onclone: function (doc) {
+          // Replace oklch colors with hex or rgb
+          const allElements = doc.querySelectorAll('*');
+          allElements.forEach((el) => {
+            const computedStyle = window.getComputedStyle(el);
+            const color = computedStyle.color;
+            if (color && color.includes('oklch')) {
+              el.style.color = '#000000'; // Fallback color
+            }
+            const bgColor = computedStyle.backgroundColor;
+            if (bgColor && bgColor.includes('oklch')) {
+              el.style.backgroundColor = '#ffffff'; // Fallback
+            }
+          });
+        },
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
