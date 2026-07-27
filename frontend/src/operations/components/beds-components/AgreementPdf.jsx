@@ -1,4 +1,5 @@
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import React, { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashPage } from '../../../shared/Dashboard';
@@ -27,27 +28,62 @@ function AgreementPdf() {
 
     if (!content) {
       console.error('Content element not found');
+      alert('Content not found. Please try again.');
       return;
     }
 
-    const options = {
-      margin: 0,
-      filename: `${bedsData?.resident_data?.residentsName?.replace(/\s+/g, '') || 'Contract'}_Contract.pdf`,
-      image: { type: 'jpeg', quality: 1 },
-      html2canvas: {
+    try {
+      // Show loading state
+      const button = document.querySelector('.pdf-download-btn');
+      if (button) {
+        button.textContent = 'Generating PDF...';
+        button.disabled = true;
+      }
+
+      // Capture the content as canvas
+      const canvas = await html2canvas(content, {
         scale: 2,
+        useCORS: true,
         scrollX: 0,
         scrollY: 0,
-        useCORS: true,
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    };
+        backgroundColor: '#ffffff',
+        logging: false,
+        allowTaint: true,
+      });
 
-    try {
-      await html2pdf().set(options).from(content).save();
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Save the PDF
+      const filename = `${bedsData?.resident_data?.residentsName?.replace(/\s+/g, '') || 'Contract'}_Contract.pdf`;
+      pdf.save(filename);
     } catch (error) {
       console.error('PDF generation error:', error);
       alert('Failed to generate PDF. Please try again.');
+    } finally {
+      // Reset button state
+      const button = document.querySelector('.pdf-download-btn');
+      if (button) {
+        button.textContent = 'Download PDF';
+        button.disabled = false;
+      }
     }
   };
 
