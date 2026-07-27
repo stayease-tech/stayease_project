@@ -1,47 +1,42 @@
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import React, { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashPage } from '../../../shared/Dashboard';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 function AgreementPdf() {
-  let publicUrl = process.env.PUBLIC_URL + '/';
   const navigate = useNavigate();
   const location = useLocation();
-  const bedsData = location?.state?.bedsData;
-  const pdfRef = useRef(null);
+  const bedsData = location.state?.bedsData || [];
+  const bedData = location.state?.bedData || {};
+  const flag = location.state?.flag || false;
+  const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
+  const contentRef = useRef(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  function getMonthsBetweenDates(startDateStr, endDateStr) {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
-
-    const startYear = startDate.getFullYear();
-    const startMonth = startDate.getMonth();
-    const endYear = endDate.getFullYear();
-    const endMonth = endDate.getMonth();
-
-    return (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
-  }
+  // Month difference calculator
+  const monthDiff = (date1, date2) => {
+    const d1 = new Date(date1);
+    const d2 = new Date(date2);
+    return (
+      (d2.getFullYear() - d1.getFullYear()) * 12 +
+      (d2.getMonth() - d1.getMonth()) +
+      1
+    );
+  };
 
   const handleDownload = async () => {
-    const content = document.getElementById('content');
-
-    if (!content) {
-      console.error('Content element not found');
-      alert('Content not found. Please try again.');
+    const element = document.getElementById('content');
+    if (!element) {
+      alert('PDF content not found!');
       return;
     }
 
-    try {
-      // Show loading state
-      const button = document.querySelector('.pdf-download-btn');
-      if (button) {
-        button.textContent = 'Generating PDF...';
-        button.disabled = true;
-      }
+    setIsGenerating(true);
 
+    try {
       // Capture the content as canvas
-      const canvas = await html2canvas(content, {
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         scrollX: 0,
@@ -72,18 +67,15 @@ function AgreementPdf() {
       }
 
       // Save the PDF
-      const filename = `${bedsData?.resident_data?.residentsName?.replace(/\s+/g, '') || 'Contract'}_Contract.pdf`;
-      pdf.save(filename);
+      const residentName =
+        bedData?.resident_data?.residentsName?.replace(/\s+/g, '') ||
+        'Contract';
+      pdf.save(`${residentName}_Contract.pdf`);
     } catch (error) {
       console.error('PDF generation error:', error);
       alert('Failed to generate PDF. Please try again.');
     } finally {
-      // Reset button state
-      const button = document.querySelector('.pdf-download-btn');
-      if (button) {
-        button.textContent = 'Download PDF';
-        button.disabled = false;
-      }
+      setIsGenerating(false);
     }
   };
 
@@ -105,6 +97,7 @@ function AgreementPdf() {
         <button
           className="block mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm max-sm:w-full"
           onClick={handleDownload}
+          disabled={isGenerating}
           type="button"
         >
           Download PDF
