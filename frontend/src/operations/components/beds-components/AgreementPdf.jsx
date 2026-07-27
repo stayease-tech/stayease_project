@@ -35,49 +35,19 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      // Force all elements to have proper colors
-      const allElements = element.querySelectorAll('*');
-      allElements.forEach((el) => {
-        // Ensure text is black
-        if (el.style.color && el.style.color.includes('oklch')) {
-          el.style.color = '#000000';
-        }
-        if (el.style.color === '' || !el.style.color) {
-          el.style.color = '#000000';
-        }
-        // Ensure background is white
-        if (
-          el.style.backgroundColor &&
-          el.style.backgroundColor.includes('oklch')
-        ) {
-          el.style.backgroundColor = '#ffffff';
-        }
-      });
-      // Set the container background to white
+      // Set background to white
       element.style.backgroundColor = '#ffffff';
       element.style.color = '#000000';
 
-      // Wait a moment for styles to apply
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
+      // Use html2canvas
       const canvas = await html2canvas(element, {
         scale: 2,
-        useCORS: true,
         backgroundColor: '#ffffff',
-        logging: true,
+        useCORS: true,
+        logging: false,
         allowTaint: true,
-        foreignObjectRendering: false,
         width: element.scrollWidth,
         height: element.scrollHeight,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        onclone: (doc) => {
-          const clonedElement = doc.getElementById('content');
-          if (clonedElement) {
-            clonedElement.style.backgroundColor = '#ffffff';
-            clonedElement.style.color = '#000000';
-          }
-        },
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
