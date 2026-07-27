@@ -102,7 +102,7 @@ function AgreementPdf() {
       <div className="sm:flex justify-between">
         <button
           className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
-          onClick={() => navigate(`/operations/operations-beds-table`)}
+          onClick={() => navigate(`/sales/sales-beds-table`)}
           type="button"
         >
           Prev
