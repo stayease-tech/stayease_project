@@ -97,7 +97,7 @@ function AgreementPdf() {
             <div className="flex justify-end">
               <img
                 alt="CompanyLogo"
-                src="/static/img/brand_logo/stayEase-Logo.webp"
+                src="static/img/stayEase_icon.ico"
                 className="h-[12rem] w-auto object-cover"
                 loading="lazy"
               />
