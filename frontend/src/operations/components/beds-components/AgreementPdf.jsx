@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { DashPage } from '../../../shared/Dashboard';
 import html2canvas from 'html2canvas';
@@ -14,7 +14,6 @@ function AgreementPdf() {
   const contentRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Month difference calculator
   const monthDiff = (date1, date2) => {
     const d1 = new Date(date1);
     const d2 = new Date(date2);
@@ -35,7 +34,6 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      // Capture the content as canvas
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -54,11 +52,9 @@ function AgreementPdf() {
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add first page
       pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
 
-      // Add additional pages if needed
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -66,7 +62,6 @@ function AgreementPdf() {
         heightLeft -= pageHeight;
       }
 
-      // Save the PDF
       const residentName =
         bedData?.resident_data?.residentsName?.replace(/\s+/g, '') ||
         'Contract';
