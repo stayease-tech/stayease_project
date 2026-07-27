@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 import { DashPage } from '../../../shared/Dashboard';
 
 function AgreementPdf() {
-  let publicUrl = process.env.PUBLIC_URL + '/';
   const navigate = useNavigate();
   const location = useLocation();
   const bedsData = location?.state?.bedsData || [];
@@ -97,7 +96,7 @@ function AgreementPdf() {
             <div className="flex justify-end">
               <img
                 alt="CompanyLogo"
-                src="static/img/stayEase_icon.ico"
+                src="static/img/stayEase_icon.webp"
                 className="h-[12rem] w-auto object-cover"
                 loading="lazy"
               />
