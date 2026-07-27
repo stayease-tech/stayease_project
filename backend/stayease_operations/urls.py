@@ -8,7 +8,6 @@ urlpatterns = [
     path('get-user-activity-data/', views.get_user_activity_data, name='get_user_activity_data'),
     path('moveinchecklist-form-submit/', views.moveinchecklist_form_submit, name='moveinchecklist_form_submit'),
     path('get-checklistfeedback-data/', views.get_checklistfeedback_data, name='get_checklistfeedback_data'),
-    path('moveinchecklist-form-submit/', views.moveinchecklist_form_submit, name='moveinchecklist_form_submit'),
     path('moveinfeedback-form-submit/', views.moveinfeedback_form_submit, name='moveinfeedback_form_submit'),
     path('moveoutchecklist-form-submit/', views.moveoutchecklist_form_submit, name='moveoutchecklist_form_submit'),
     path('moveoutfeedback-form-submit/', views.moveoutfeedback_form_submit, name='moveoutfeedback_form_submit'),

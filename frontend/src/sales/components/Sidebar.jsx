@@ -9,9 +9,9 @@ import SharedSidebar from "../../shared/Sidebar";
 const menuItems = [
     { name: "View Beds", icon: <LiaBedSolid />, link: "/sales/sales-beds-table" },
     { name: "Residents", icon: <MdPeople />, link: "/sales/sales-residents-list" },
-    { name: "Agreements", icon: <FaFileContract />, link: "/sales/sales-agreement-pdf", disabled: true },
-    { name: "Download PDF", icon: <FaFilePdf />, link: "/sales/sales-download-pdf", disabled: true },
-    { name: "Track Rent", icon: <TbReportMoney />, link: "/sales/sales-track-rent", disabled: true },
+    // { name: "Agreements", icon: <FaFileContract />, link: "/sales/sales-agreement-pdf", disabled: true },
+    // { name: "Download PDF", icon: <FaFilePdf />, link: "/sales/sales-download-pdf", disabled: true },
+    // { name: "Track Rent", icon: <TbReportMoney />, link: "/sales/sales-track-rent", disabled: true },
     { name: "Leads", icon: <MdLeaderboard />, link: "/sales/sales-leads-table" },
     { name: "KYC Management", icon: <HiShieldCheck />, link: "/sales/sales-kyc-management" },
     { name: "Raise Expense", icon: <TbReportMoney />, link: "/sales/sales-expense-form" },
