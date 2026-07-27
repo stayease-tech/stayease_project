@@ -35,15 +35,55 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      const canvas = await html2canvas(element, {
+      // Create a clone of the element
+      const clone = element.cloneNode(true);
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = '210mm';
+      clone.style.padding = '20px';
+      clone.style.backgroundColor = '#ffffff';
+      document.body.appendChild(clone);
+
+      // Replace any oklch colors in the clone
+      const allElements = clone.querySelectorAll('*');
+      allElements.forEach((el) => {
+        const computedStyle = window.getComputedStyle(el);
+
+        // Check and fix text color
+        const color = computedStyle.color;
+        if (color && color.includes('oklch')) {
+          el.style.color = '#000000';
+        }
+
+        // Check and fix background color
+        const bgColor = computedStyle.backgroundColor;
+        if (bgColor && bgColor.includes('oklch')) {
+          el.style.backgroundColor = 'transparent';
+        }
+
+        // Check and fix border color
+        const borderColor = computedStyle.borderColor;
+        if (borderColor && borderColor.includes('oklch')) {
+          el.style.borderColor = '#000000';
+        }
+      });
+
+      // Use html2canvas on the clone
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
         backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
+        // Use foreignObject rendering which handles colors better
+        useCORS: true,
+        allowTaint: true,
+        foreignObjectRendering: true,
       });
+
+      // Remove the clone
+      document.body.removeChild(clone);
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -110,7 +150,7 @@ function AgreementPdf() {
             <div className="flex justify-end">
               <img
                 alt="CompanyLogo"
-                src='/static/img/stayEase_icon.ico'
+                src="/static/img/stayEase_icon.ico"
                 className="h-[12rem] w-auto object-cover"
                 loading="lazy"
               />
