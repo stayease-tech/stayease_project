@@ -76,9 +76,6 @@ function AgreementPdf() {
         backgroundColor: '#ffffff',
         logging: false,
         allowTaint: true,
-        // Use foreignObject rendering which handles colors better
-        useCORS: true,
-        allowTaint: true,
         foreignObjectRendering: true,
       });
 
