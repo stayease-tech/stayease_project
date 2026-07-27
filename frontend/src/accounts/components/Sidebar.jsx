@@ -10,9 +10,9 @@ const menuItems = [
     { name: "Vendors", icon: <IoIosPerson />, link: "/accounts/accounts-vendor-table" },
     { name: "Approve Expense", icon: <MdCheckCircle />, link: "/accounts/accounts-expense-table" },
     { name: "Upload Data", icon: <MdUploadFile />, link: "/accounts/accounts-rawdatafile-upload" },
-    { name: "Update Status", icon: <MdUpdate />, link: "/accounts/accounts-update-status", disabled: true },
+    // { name: "Update Status", icon: <MdUpdate />, link: "/accounts/accounts-update-status", disabled: true },
     { name: "Liability", icon: <PiHandDepositBold />, link: "/accounts/accounts-liability-table" },
-    { name: "Add Employee", icon: <MdPersonAdd />, link: "/accounts/accounts-employee-form" },
+    // { name: "Add Employee", icon: <MdPersonAdd />, link: "/accounts/accounts-employee-form" },
 ];
 
 export default function Sidebar() {
