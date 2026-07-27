@@ -26,20 +26,14 @@ export default function KycManagement() {
   const fetchResidents = (status) => {
     setLoading(true);
     setCurrentPage(1);
-    console.log('🔍 Fetching residents with status:', status);
 
     axios
       .get(`/operations/kyc-pending/?status=${status}`, {
         withCredentials: true,
       })
       .then((res) => {
-        console.log('📦 Full response:', res);
-        console.log('📊 Response data:', res.data);
-        console.log('📋 Residents:', res.data.residents);
-        console.log('✅ Success:', res.data.success);
 
         if (res.data.success) {
-          console.log('✅ Setting residents:', res.data.residents.length);
           setResidents(res.data.residents);
         } else {
           console.error('❌ API returned success: false');
