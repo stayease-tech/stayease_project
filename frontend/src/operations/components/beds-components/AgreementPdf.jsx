@@ -35,86 +35,68 @@ function AgreementPdf() {
     setIsGenerating(true);
 
     try {
-      // Create a hidden container with proper styles
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '210mm';
-      container.style.backgroundColor = '#ffffff';
-      container.style.padding = '20px';
-      container.style.zIndex = '-9999';
-      document.body.appendChild(container);
-
-      // Clone the content and fix colors
-      const clone = element.cloneNode(true);
-
-      // Remove all oklch colors
-      const allElements = clone.querySelectorAll('*');
-      allElements.forEach((el) => {
-        if (el.style.color && el.style.color.includes('oklch')) {
-          el.style.color = '#000000';
-        }
-        if (
-          el.style.backgroundColor &&
-          el.style.backgroundColor.includes('oklch')
-        ) {
-          el.style.backgroundColor = '#ffffff';
-        }
-        if (el.style.borderColor && el.style.borderColor.includes('oklch')) {
-          el.style.borderColor = '#000000';
-        }
-        // Force text color to black
-        el.style.color = '#000000';
-      });
-
-      clone.style.backgroundColor = '#ffffff';
-      clone.style.color = '#000000';
-      container.appendChild(clone);
-
-      // Wait for rendering
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // Capture the entire content
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        allowTaint: true,
-        width: container.scrollWidth,
-        height: container.scrollHeight,
-        onclone: (doc) => {
-          const clonedContainer = doc.querySelector('div');
-          if (clonedContainer) {
-            clonedContainer.style.backgroundColor = '#ffffff';
-            clonedContainer.style.color = '#000000';
-          }
-        },
-      });
-
-      // Remove container
-      document.body.removeChild(container);
-
-      // Create PDF
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
       const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
 
-      // Add first page
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      // Get all sections (pages) within the content
+      const sections = element.querySelectorAll('section');
 
-      // Add remaining pages
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
+
+        // Create a temporary container for this section
+        const container = document.createElement('div');
+        container.style.position = 'fixed';
+        container.style.left = '-9999px';
+        container.style.top = '0';
+        container.style.width = '210mm';
+        container.style.backgroundColor = '#ffffff';
+        container.style.padding = '20px';
+        container.style.zIndex = '-9999';
+        document.body.appendChild(container);
+
+        // Clone the section and fix colors
+        const clone = section.cloneNode(true);
+        clone.style.backgroundColor = '#ffffff';
+        clone.style.color = '#000000';
+
+        // Force all text to black
+        const allElements = clone.querySelectorAll('*');
+        allElements.forEach((el) => {
+          el.style.color = '#000000';
+          if (
+            el.style.backgroundColor &&
+            el.style.backgroundColor.includes('oklch')
+          ) {
+            el.style.backgroundColor = '#ffffff';
+          }
+        });
+
+        container.appendChild(clone);
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // Capture this section
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          allowTaint: true,
+          width: container.scrollWidth,
+          height: container.scrollHeight,
+        });
+
+        document.body.removeChild(container);
+
+        // Add to PDF
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        if (i > 0) {
+          pdf.addPage();
+        }
+        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
       }
 
       const residentName =
