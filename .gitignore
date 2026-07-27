@@ -56,3 +56,7 @@ Prompts/
 *_Prompt.md
 *_Orchestration.md
 mcp.json
+backend/stayease/
+backend/venv/
+static/
+frontend/.env.production
