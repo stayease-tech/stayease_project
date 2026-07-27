@@ -225,7 +225,7 @@ function PropertyComplaintForm() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between h-20 items-center">
                         <div className="flex items-center">
-                            <img alt="CompanyLogo" src="static/img/brand_logo/stayEase-Logo.webp" className="h-18 w-auto object-cover"
+                            <img alt="CompanyLogo" src="/static/img/brand_logo/stayEase-Logo.webp" className="h-18 w-auto object-cover"
                                 loading="lazy" />
                         </div>
                     </div>
