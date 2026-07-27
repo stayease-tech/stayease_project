@@ -15,7 +15,7 @@ function AgreementPdf() {
   const pdfRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const monthDiff = (date1, date2) => {
+  const getMonthsBetweenDates = (date1, date2) => {
     const d1 = new Date(date1);
     const d2 = new Date(date2);
     return (
@@ -46,11 +46,32 @@ function AgreementPdf() {
       iframe.style.backgroundColor = '#ffffff';
       document.body.appendChild(iframe);
 
-      // Get the content
-      const contentHTML = element.outerHTML;
-      const styles = document.querySelector('style')?.innerHTML || '';
+      // Clone the content
+      const clone = element.cloneNode(true);
 
-      // Write to iframe
+      // Remove all oklch colors
+      const allElements = clone.querySelectorAll('*');
+      allElements.forEach((el) => {
+        if (el.style.color && el.style.color.includes('oklch')) {
+          el.style.color = '#000000';
+        }
+        if (
+          el.style.backgroundColor &&
+          el.style.backgroundColor.includes('oklch')
+        ) {
+          el.style.backgroundColor = '#ffffff';
+        }
+        if (el.style.borderColor && el.style.borderColor.includes('oklch')) {
+          el.style.borderColor = '#000000';
+        }
+      });
+
+      clone.style.backgroundColor = '#ffffff';
+      clone.style.color = '#000000';
+
+      const styles = document.querySelector('style')?.innerHTML || '';
+      const cleanStyles = styles.replace(/oklch\([^)]*\)/g, '#000000');
+
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
       doc.write(`
@@ -59,30 +80,39 @@ function AgreementPdf() {
                 <head>
                     <style>
                         body { 
-                            background: white; 
-                            color: black; 
+                            background: white !important; 
+                            color: black !important; 
                             padding: 20px; 
                             font-family: Arial, sans-serif;
                             margin: 0;
                         }
-                        * { color: black !important; }
-                        .text-\\[\\#D4A017\\] { color: #D4A017 !important; }
-                        .border-black { border-color: black !important; }
-                        .bg-white { background: white !important; }
+                        * { 
+                            color: black !important; 
+                        }
+                        .text-\\[\\#D4A017\\] { 
+                            color: #D4A017 !important; 
+                        }
+                        .border-black, .border, .border-gray-400 {
+                            border-color: black !important;
+                        }
+                        .bg-white { 
+                            background: white !important; 
+                        }
+                        table, td, tr, th {
+                            border-color: black !important;
+                        }
+                        ${cleanStyles}
                     </style>
-                    ${styles}
                 </head>
                 <body>
-                    ${element.innerHTML}
+                    ${clone.innerHTML}
                 </body>
                 </html>
             `);
       doc.close();
 
-      // Wait for render
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Capture the iframe
       const canvas = await html2canvas(iframe, {
         scale: 2,
         useCORS: true,
@@ -94,10 +124,8 @@ function AgreementPdf() {
         foreignObjectRendering: true,
       });
 
-      // Remove iframe
       document.body.removeChild(iframe);
 
-      // Create PDF
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
