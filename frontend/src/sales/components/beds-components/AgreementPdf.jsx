@@ -1,4 +1,3 @@
-// src/operations/components/beds-components/AgreementPdf.jsx
 import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';

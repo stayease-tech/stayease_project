@@ -1,4 +1,3 @@
-// src/operations/components/beds-components/AgreementPdfDocument.jsx
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
@@ -12,7 +11,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 10,
-    color: '#D4A017',
     fontWeight: 'bold',
   },
   bold: {
@@ -149,6 +147,8 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
     <Document>
       {/* PAGE 1 */}
       <Page size="A4" style={styles.page}>
+        <Image style={styles.logo} src="/static/img/stayEase_icon.webp" />
+
         <Text style={styles.title}>AGREEMENT</Text>
 
         <View style={styles.table}>
