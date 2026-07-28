@@ -1,8 +1,8 @@
-import React, { useRef, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { pdf } from '@react-pdf/renderer';
 import { DashPage } from '../../../shared/Dashboard';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import AgreementPdfDocument from './AgreementPdfDocument';
 
 function AgreementPdf() {
   const navigate = useNavigate();
@@ -11,11 +11,11 @@ function AgreementPdf() {
   const bedData = location.state?.bedData || {};
   const flag = location.state?.flag || false;
   const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
-  const contentRef = useRef(null);
-  const pdfRef = useRef(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const contentRef = useRef(null);
 
   const getMonthsBetweenDates = (date1, date2) => {
+    if (!date1 || !date2) return '-';
     const d1 = new Date(date1);
     const d2 = new Date(date2);
     return (
@@ -26,83 +26,20 @@ function AgreementPdf() {
   };
 
   const generatePDF = async () => {
-    const element = document.getElementById('content');
-    if (!element) {
-      alert('PDF content not found!');
-      return;
-    }
-
     setIsGenerating(true);
-
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 297;
+      const blob = await pdf(
+        <AgreementPdfDocument data={bedData} bedsData={bedsData} />
+      ).toBlob();
 
-      // Get all sections (pages) within the content
-      const sections = element.querySelectorAll('section');
-
-      for (let i = 0; i < sections.length; i++) {
-        const section = sections[i];
-
-        // Create a temporary container for this section
-        const container = document.createElement('div');
-        container.style.position = 'fixed';
-        container.style.left = '-9999px';
-        container.style.top = '0';
-        container.style.width = '210mm';
-        container.style.backgroundColor = '#ffffff';
-        container.style.padding = '20px';
-        container.style.zIndex = '-9999';
-        document.body.appendChild(container);
-
-        // Clone the section and fix colors
-        const clone = section.cloneNode(true);
-        clone.style.backgroundColor = '#ffffff';
-        clone.style.color = '#000000';
-
-        // Force all text to black
-        const allElements = clone.querySelectorAll('*');
-        allElements.forEach((el) => {
-          el.style.color = '#000000';
-          if (
-            el.style.backgroundColor &&
-            el.style.backgroundColor.includes('oklch')
-          ) {
-            el.style.backgroundColor = '#ffffff';
-          }
-        });
-
-        container.appendChild(clone);
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
-        // Capture this section
-        const canvas = await html2canvas(container, {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          allowTaint: true,
-          width: container.scrollWidth,
-          height: container.scrollHeight,
-        });
-
-        document.body.removeChild(container);
-
-        // Add to PDF
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        if (i > 0) {
-          pdf.addPage();
-        }
-        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-      }
-
-      const residentName =
-        bedData?.resident_data?.residentsName?.replace(/\s+/g, '') ||
-        'Contract';
-      pdf.save(`${residentName}_Contract.pdf`);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${bedData?.resident_data?.residentsName?.replace(/\s+/g, '') || 'Contract'}_Contract.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('PDF generation error:', error);
       alert('Failed to generate PDF. Please try again.');
@@ -120,7 +57,18 @@ function AgreementPdf() {
       <div className="sm:flex justify-between">
         <button
           className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
-          onClick={() => navigate(`/operations/operations-beds-table`)}
+          onClick={() => {
+            if (bedsDetailsFlag) {
+              navigate(
+                `/operations/operations-resident-details/${bedData?.resident_data?.id}`,
+                {
+                  state: { bedsData, bedData, flag },
+                }
+              );
+            } else {
+              navigate('/operations/operations-beds-table');
+            }
+          }}
           type="button"
         >
           Prev
@@ -132,21 +80,24 @@ function AgreementPdf() {
           disabled={isGenerating}
           type="button"
         >
-          Download PDF
+          {isGenerating ? 'Generating...' : 'Download PDF'}
         </button>
       </div>
 
+      {/* ====== COMPLETE AGREEMENT PREVIEW ====== */}
       <div className="flex justify-center items-center">
         <div
-          ref={pdfRef}
+          ref={contentRef}
           id="content"
           className="overflow-y-auto h-auto flex flex-col bg-white text-black"
+          style={{ maxWidth: '210mm', margin: '0 auto' }}
         >
+          {/* ============ PAGE 1 ============ */}
           <section className="relative px-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="flex justify-end">
               <img
                 alt="CompanyLogo"
-                src="/static/img/stayEase_icon.ico"
+                src="/static/img/stayEase_icon.webp"
                 className="h-[12rem] w-auto object-cover"
                 loading="lazy"
               />
@@ -160,58 +111,53 @@ function AgreementPdf() {
                       <b>Community Manager</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedsData?.resident_data?.propertyManager}</b>
+                      <b>{bedData?.resident_data?.propertyManager}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Room No.</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedsData?.roomNo}</b>
+                      <b>{bedData?.roomNo}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Type of Accommodation for use as residence</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedsData?.roomType} Room`}</b>
+                      <b>{`${bedData?.roomType} Room`}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Monthly User Fee</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`₹${bedsData?.resident_data?.rentPerMonth}`}</b>
+                      <b>{`₹${bedData?.resident_data?.rentPerMonth}`}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Duration of Stay (“Term”)</b>
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedsData?.resident_data?.checkOut
-                          ? `${getMonthsBetweenDates(bedsData?.resident_data?.checkIn, bedsData?.resident_data?.checkOut)} Months`
+                        {bedData?.resident_data?.checkOut
+                          ? `${getMonthsBetweenDates(bedData?.resident_data?.checkIn, bedData?.resident_data?.checkOut)} Months`
                           : '-'}
                       </b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Agreement Start Date</b>
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedsData?.resident_data?.checkIn
-                          ? new Date(bedsData.resident_data.checkIn)
+                        {bedData?.resident_data?.checkIn
+                          ? new Date(bedData.resident_data?.checkIn)
                               .toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'long',
@@ -222,15 +168,14 @@ function AgreementPdf() {
                       </b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Agreement End Date</b>
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedsData?.resident_data?.checkOut
-                          ? new Date(bedsData.resident_data.checkOut)
+                        {bedData?.resident_data?.checkOut
+                          ? new Date(bedData.resident_data?.checkOut)
                               .toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'long',
@@ -241,7 +186,6 @@ function AgreementPdf() {
                       </b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Move Out Time</b>
@@ -250,16 +194,14 @@ function AgreementPdf() {
                       <b>12.00 PM</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Security Deposit</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`₹${bedsData?.resident_data?.totalDepositPaid}`}</b>
+                      <b>{`₹${bedData?.resident_data?.totalDepositPaid}`}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>User Fee Due Date</b>
@@ -268,14 +210,13 @@ function AgreementPdf() {
                       <b>1st of every month</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Stayease Property (“Premise”) name and address</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedsData?.propertyName}`}</b> -{' '}
-                      {`${bedsData?.doorBuilding}, ${bedsData?.streetAddress}, ${bedsData?.streetAddress}, ${bedsData?.area}, ${bedsData?.city}, ${bedsData?.state} - ${bedsData?.pincode}`}
+                      <b>{`${bedData?.propertyName}`}</b> -{' '}
+                      {`${bedData?.doorBuilding}, ${bedData?.streetAddress}, ${bedData?.streetAddress}, ${bedData?.area}, ${bedData?.city}, ${bedData?.state} - ${bedData?.pincode}`}
                     </td>
                   </tr>
                 </tbody>
@@ -294,57 +235,50 @@ function AgreementPdf() {
                       <b>Name of User</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedsData?.resident_data?.residentsName}</b>
+                      <b>{bedData?.resident_data?.residentsName}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Permanent Address</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedsData?.resident_data?.permanentAddress}</b>
+                      <b>{bedData?.resident_data?.permanentAddress}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
-                      <b>
-                        Phone Number (To be used for communication and notices)
-                      </b>
+                      <b>Phone Number</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedsData?.resident_data?.phoneNumber}</b>
+                      <b>{bedData?.resident_data?.phoneNumber}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
-                      <b>Email (To be used for communication and notices)</b>
+                      <b>Email</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedsData?.resident_data?.email}</b>
+                      <b>{bedData?.resident_data?.email}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Resident Identity Type</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedsData?.resident_data?.kycType} Card`}</b>
+                      <b>{`${bedData?.resident_data?.kycType} Card`}</b>
                     </td>
                   </tr>
-
                   <tr className="border-b border-black">
                     <td className="border-r border-black py-1 px-2">
                       <b>Resident Identity Number</b>
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedsData?.resident_data?.kycType === 'Aadhar'
-                          ? bedsData?.resident_data?.aadharNumber
-                          : bedsData?.resident_data?.panNumber}
+                        {bedData?.resident_data?.kycType === 'Aadhar'
+                          ? bedData?.resident_data?.aadharNumber
+                          : bedData?.resident_data?.panNumber}
                       </b>
                     </td>
                   </tr>
@@ -358,13 +292,14 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 2 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <h3 className="text-center font-bold pb-5">
               USER SUBSCRIPTION AGREEMENT
             </h3>
 
             <p className="pb-5">
-              This User Subscription Agreement (“Agreement”) is executed
+              This User Subscription Agreement ("Agreement") is executed
               between:
             </p>
 
@@ -382,7 +317,7 @@ function AgreementPdf() {
             <p>
               A. Stayease is engaged in the business of providing fully
               furnished and operational hospitality services, for use for aimed
-              accommodation of a ‘residential’ nature.
+              accommodation of a 'residential' nature.
             </p>
 
             <p className="pb-5">
@@ -399,11 +334,9 @@ function AgreementPdf() {
             <p className="pb-5">
               <b>1. TERM:</b> As per Annexure A.
             </p>
-
             <p className="pb-5">
               <b>2. PREMISES:</b> As per Annexure A.
             </p>
-
             <p className="pb-5">
               <b>3. USER CHARGES/ FEE:</b> As per Annexure A. The User Charges
               for each month for the Premises used for residential accommodation
@@ -446,7 +379,12 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 3 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
+            <h3 className="text-center font-bold pb-5">
+              USER SUBSCRIPTION AGREEMENT
+            </h3>
+
             <p className="pb-5">
               <b>5. MANNER OF PAYMENT:</b> The User Fee, and all other sums
               payable by the User to Stayease under this Agreement, shall be
@@ -472,7 +410,6 @@ function AgreementPdf() {
               a) for each cheque provided by the User under this Agreement that
               is bounced for lack of sufficient funds or incorrect signature.
             </p>
-
             <p className="pb-5">
               b) for incorrect details of the cheque deposit is submitted.
               Stayease shall intimate the User on the registered email ID about
@@ -535,9 +472,14 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 4 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
+            <h3 className="text-center font-bold pb-5">
+              USER SUBSCRIPTION AGREEMENT
+            </h3>
+
             <p className="pb-5">
-              and licence, or create any right, title, interest,or tenancy in
+              and licence, or create any right, title, interest, or tenancy in
               property, shall be only for the purpose of personal use for
               residential use
             </p>
@@ -569,13 +511,13 @@ function AgreementPdf() {
               any of the covenants of this Agreement, the User shall be in
               default or breach of this Agreement. Then, in any one or more of
               such events (or other than default as captured in Clause 12), and
-              upon Stayease serving a written/email seven (7) days’ notice upon
+              upon Stayease serving a written/email seven (7) days' notice upon
               the User specifying the nature of said default and upon the
               expiration of said seven (7) days, if the User does not cure a
               default of which he has been notified, to the satisfaction of
               Stayease, or if the default cannot be completely cured or remedied
-              in seven (7) days, Stayease may at Stayease’s option: (i) cure
-              such default and add the cost of such cure to the User’s financial
+              in seven (7) days, Stayease may at Stayease's option: (i) cure
+              such default and add the cost of such cure to the User's financial
               obligations under this Agreement; or (ii) declare that the User is
               in default and terminate the Agreement immediately and other
               consequences in the Agreement shall follow.
@@ -595,9 +537,9 @@ function AgreementPdf() {
 
             <p className="pb-5">
               In case, the Agreement is terminated by the User within the
-              lock-in period, Stayease shall be entitled to deduct one month’s
+              lock-in period, Stayease shall be entitled to deduct one month's
               User Fee which shall be deducted from the Deposit at the time of
-              moving out (“Contract Termination Charges”). If the User
+              moving out ("Contract Termination Charges"). If the User
               terminates the Agreement during the lock-in period/ after the
               expiry of the lock-in period without prior intimation of one month
               to Stayease, the User Fee of one month shall be levied on the User
@@ -606,7 +548,7 @@ function AgreementPdf() {
             </p>
 
             <p>
-              Hereinafter referred to as “Notice Period Charges”. Such
+              Hereinafter referred to as "Notice Period Charges". Such
               intimation should be given through an email on
               hello@mystayease.com. If this Agreement is terminated/ expires
               prior to the expiry of a calendar month, Stayease shall charge
@@ -621,9 +563,14 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 5 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
+            <h3 className="text-center font-bold pb-5">
+              USER SUBSCRIPTION AGREEMENT
+            </h3>
+
             <p className="pb-5">
-              Agreement within the lock in period and without one month’s notice
+              Agreement within the lock in period and without one month's notice
               to Stayease, both the Contract Termination and Notice Period
               Charges shall be levied on the User as penalty and the same shall
               be recovered from the Deposit.
@@ -673,7 +620,7 @@ function AgreementPdf() {
               <b>13. PHYSICAL REMEDIES:</b> In case of termination under Clauses
               12, the User shall hand over the possession of the Premises to
               Stayease within two (2) days from the date of termination. In the
-              event, the User fails to hand overthe Premises, Stayease shall be
+              event, the User fails to hand over the Premises, Stayease shall be
               entitled to take possession of the Premises upon completion of the
               said timeline.
             </p>
@@ -685,7 +632,7 @@ function AgreementPdf() {
             </p>
 
             <p className="pb-5">
-              15.In the event of a water scarcity situation arising from the
+              15. In the event of a water scarcity situation arising from the
               depletion of borewells or the unavailability of water sources,
               resulting in the necessity of relying on water tankers for water
               supply, the associated charges shall be distributed equitably
@@ -697,7 +644,7 @@ function AgreementPdf() {
               cooperation and solidarity during challenging circumstances
             </p>
 
-            <p className="pb-5">
+            <p>
               <b>16. RENEWAL:</b> This Agreement is valid for the duration of
               the Term only. If agreeable to the Parties, an additional
               agreement extending the duration of the Term, for the duration as
@@ -711,7 +658,12 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 6 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
+            <h3 className="text-center font-bold pb-5">
+              USER SUBSCRIPTION AGREEMENT
+            </h3>
+
             <p className="pb-5">
               <b>17. NOTICES:</b> All other notices, including a notice to
               arbitrate, may be served through an email at hello@mystayease.com
@@ -751,8 +703,8 @@ function AgreementPdf() {
             </p>
 
             <p className="pb-5">
-              If Parties are unable to resolve their disputes within thirty
-              (30)days of written intimation, the disputes will be referred to
+              If Parties are unable to resolve their disputes within thirty (30)
+              days of written intimation, the disputes will be referred to
               arbitration under the Arbitration and Conciliation Act, 1996 and
               its amendments from time to time. The arbitration will be
               conducted by a sole arbitrator appointed by mutual consent within
@@ -761,7 +713,7 @@ function AgreementPdf() {
 
             <p className="pb-5">
               If Parties are unable to mutually agree, the Stayease shall have
-              the right to appoint a sole arbitrator within three (3)days. The
+              the right to appoint a sole arbitrator within three (3) days. The
               process of arbitration shall be decided by the arbitrator in
               accordance with the provisions of the Arbitration Act. The cost of
               arbitration (including all legal costs) will be borne by the
@@ -795,20 +747,23 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 7 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
+            <h3 className="text-center font-bold pb-5">
+              USER SUBSCRIPTION AGREEMENT
+            </h3>
+
             <p className="pb-5">
               <b>24. Other terms and conditions:</b>
             </p>
 
             <div className="p-1 border-t border-r border-l border-black border-b-0">
               <p className="p-[5px]">Late Payment Fee</p>
-
               <p className="p-[5px]">
                 If any amounts due under this Agreement are not paid within the
                 due date, the User agrees to pay a late fee to the Stayease as
                 mentioned below:
               </p>
-
               <ol className="px-10 list-decimal">
                 <li>
                   &nbsp;&nbsp;&nbsp; SLAB-I: Between 6th to 10th day of the
@@ -827,12 +782,10 @@ function AgreementPdf() {
 
             <div className="p-1 border-t border-r border-l border-black border-b-0">
               <p className="p-[5px]">Move-out charges</p>
-
               <p className="p-[5px]">
                 An estimate of the Maintenance Expenses is given below, which
                 will attract a 10% escalation on a yearly basis for inflation.
               </p>
-
               <table className="border-collapse border border-black w-full">
                 <tbody>
                   <tr className="border-b border-black">
@@ -873,7 +826,6 @@ function AgreementPdf() {
                   </tr>
                 </tbody>
               </table>
-
               <p className="pt-5">
                 Please note, that in case the actual costs are above the amounts
                 mentioned, the higher amount would be deducted
@@ -882,7 +834,6 @@ function AgreementPdf() {
 
             <div className="p-1 border-t-0 border-r border-l border-black border-b">
               <p className="p-[5px]">Incidental Charges borne by Stayease</p>
-
               <ol className="px-10 pb-[5px] list-decimal">
                 <li className="pb-5 ps-[15px]">
                   The above comprises electricity with power back-up including
@@ -903,12 +854,12 @@ function AgreementPdf() {
                   </ul>
                 </li>
                 <li className="ps-[15px]">
-                  The User Subscription agreement will be sent for E- signature
+                  The User Subscription agreement will be sent for E-signature
                   on the registered email. The agreement will expire after 72
                   hours or on contract start date whichever is earlier. In case
-                  of contract extensions,property shifts and room shifts, if the
-                  contract request date is less than a month from contract start
-                  date, the agreement will expire after 24 hours. If an
+                  of contract extensions, property shifts and room shifts, if
+                  the contract request date is less than a month from contract
+                  start date, the agreement will expire after 24 hours. If an
                   agreement is expired, Rs. 100 inclusive of GST will be
                   applicable as an Agreement charge for every resend.
                 </li>
@@ -921,6 +872,7 @@ function AgreementPdf() {
             </div>
           </section>
 
+          {/* ============ PAGE 8 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="p-1 border border-black">
               <p className="p-[5px]">House Rules</p>
@@ -970,7 +922,6 @@ function AgreementPdf() {
                     </li>
                   </ul>
                 </li>
-
                 <li className="ps-[15px]">
                   The User shall not cause any damage to the Premises or
                   Building. In case of any such damages caused by the User to
@@ -1004,34 +955,32 @@ function AgreementPdf() {
                 </li>
               </ol>
             </div>
-
             <div className="absolute top-[95%] left-[10%] right-[10%] flex justify-between font-bold px-4 text-sm">
               <div className="underline">For User</div>
               <div className="underline">For Stayease</div>
             </div>
           </section>
 
+          {/* ============ PAGE 9 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="p-1 border border-black">
               <ol start="8" className="px-10 pb-[5px] list-decimal">
                 <li className="ps-[15px] pb-5">
-                  Cleanliness : Kindly keep the Premises clean and tidy and
+                  Cleanliness: Kindly keep the Premises clean and tidy and
                   ensure your belongings are kept within your designated area.
                   Keep the common area clean after you for others to enjoy the
                   common facilities of the Premises.
                 </li>
-
                 <li className="ps-[15px]">
-                  Housekeeping : Housekeeping would be provided to the
-                  Sub-Lessee by the Sub-lessor. Further on request from the
-                  User, Stayease may provide a Housekeeping facility subject to
-                  availability. The User shall pay an amount of Rs. 250/- per
-                  request. The Housekeeping services will be provided on Monday
-                  to Saturday (a week) except on public holidays. The scope of
-                  Housekeeping shall be as follows:
+                  Housekeeping: Housekeeping would be provided to the Sub-Lessee
+                  by the Sub-lessor. Further on request from the User, Stayease
+                  may provide a Housekeeping facility subject to availability.
+                  The User shall pay an amount of Rs. 250/- per request. The
+                  Housekeeping services will be provided on Monday to Saturday
+                  (a week) except on public holidays. The scope of Housekeeping
+                  shall be as follows:
                 </li>
               </ol>
-
               <ul className="list-disc ps-[6rem] pb-5">
                 <li>Dishwashing (6 days a week)</li>
                 <li>Cleaning the bathroom (3 times a week)</li>
@@ -1042,19 +991,17 @@ function AgreementPdf() {
                 <li>Dusting the furniture (3 times a week)</li>
                 <li>Cleaning the fridge (on request)</li>
               </ul>
-
               <p className="ps-[3rem] pb-5">
-                It is clarified that Pet’s cleanliness is not part of the House
-                Keeping.Further on any additional request from the User,
+                It is clarified that Pet's cleanliness is not part of the House
+                Keeping. Further on any additional request from the User,
                 Stayease may provide Housekeeping facility subject to
                 availability. The User shall pay an amount of Rs. 250/- per
                 request.
               </p>
-
               <ol start="10" className="px-10 pb-[5px] list-decimal">
                 <li className="ps-[15px]">
                   <p className="pb-[1rem]">
-                    Pet Policy : If the User occupies the whole Premises, the
+                    Pet Policy: If the User occupies the whole Premises, the
                     User shall be entitled to keep pets in the Premises (not
                     applicable if the Premises is shared with other occupants).
                   </p>
@@ -1081,7 +1028,7 @@ function AgreementPdf() {
                   <p className="pb-[1rem]">
                     In the event, the User wishes to have his/her pet/s in the
                     Premises, the User shall ensure to provide a copy of the
-                    pet’s medical records.
+                    pet's medical records.
                   </p>
                   <p className="pb-[1rem]">
                     Cleaning of the pet inside or outside the Premises is the
@@ -1091,13 +1038,13 @@ function AgreementPdf() {
                 </li>
               </ol>
             </div>
-
             <div className="absolute top-[95%] left-[10%] right-[10%] flex justify-between font-bold px-4 text-sm">
               <div className="underline">For User</div>
               <div className="underline">For Stayease</div>
             </div>
           </section>
 
+          {/* ============ PAGE 10 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="p-1 border border-black">
               <ol start="11" className="px-10 pb-[5px] list-decimal">
@@ -1105,26 +1052,22 @@ function AgreementPdf() {
                   All gatherings, parties or discussions shall be held in the
                   common area with prior permission from the manager.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   DTH service is in compliance with TRAI regulations and all
                   channels which are included in the Network Capacity Fee shall
                   be provided.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   Pest control services will be conducted once every three
                   months of the stay and the amount charged for the same is Rs.
                   300 per room inclusive of GST
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   The User shall raise any concerns/issues/complaints pertaining
                   to the scheduled property on the mobile application of the
                   User. If the same is not addressed within a reasonable time,
                   the same shall be escalated to the community manager.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   In the event of a water scarcity situation arising from the
                   depletion of borewells or the unavailability of water sources,
@@ -1138,10 +1081,9 @@ function AgreementPdf() {
                   involved, fostering cooperation and solidarity during
                   challenging circumstances
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   If Users who are of opposite genders and not married stay in
-                  the Premises the same shall be at User’s own risk and the
+                  the Premises the same shall be at User's own risk and the
                   Users shall indemnify Stayease for all the consequences
                   including but not limited to any action taken by any third
                   party. In this regard, it is specifically agreed by the User
@@ -1150,7 +1092,6 @@ function AgreementPdf() {
                   User shall be solely liable for the same to the total
                   exclusion of Stayease
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   <b>Shared Room Belongings Policy:</b> Personal Belongings
                   Placement: In shared rooms, users must keep their personal
@@ -1158,14 +1099,12 @@ function AgreementPdf() {
                   If belongings are misplaced or missing, the management will
                   not be held responsible.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   <b>Belongings in Common Areas:</b> Users are permitted to
                   leave their belongings in the common areas, but they do so at
                   their own risk. The management will not be responsible for any
                   loss or damage to items left in these areas.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   <b>Room Cleaning Procedure:</b> Presence of Users: Room
                   cleaning will be conducted in the presence of the users to
@@ -1173,13 +1112,13 @@ function AgreementPdf() {
                 </li>
               </ol>
             </div>
-
             <div className="absolute top-[95%] left-[10%] right-[10%] flex justify-between font-bold px-4 text-sm">
               <div className="underline">For User</div>
               <div className="underline">For Stayease</div>
             </div>
           </section>
 
+          {/* ============ PAGE 11 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="p-1 border border-black">
               <ol start="20" className="px-10 pb-[5px] list-decimal">
@@ -1196,7 +1135,6 @@ function AgreementPdf() {
                   responsible for any inconvenience caused during these
                   sessions.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   <b>Room Upgradation Policy</b>
                   <br />
@@ -1222,18 +1160,15 @@ function AgreementPdf() {
                   not available at the desired time, the resident may need to
                   wait until one becomes available.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   <b>Timing of Requests:</b> Upgradation or downgradiation
                   requests must be made at the beginning of the month and cannot
                   be facilitated in the middle of the month.
                 </li>
-
                 <li className="ps-[15px] pb-5">
                   <b>Notice Period Policy:</b>
                   <br />
                   <br />
-
                   <ul className="list-disc ps-[1rem]">
                     <li className="pb-5">
                       <b>Timing of Notice Period:</b> Users are required to
@@ -1241,14 +1176,12 @@ function AgreementPdf() {
                       Notice served in the middle of the month will not be
                       accepted.
                     </li>
-
                     <li className="pb-5">
                       <b>Penalty for Mid-Month Notice:</b> If a user requests to
                       serve the notice period in the middle of the month, they
                       will be required to pay the differential amount for the
                       remaining days of the month.
                     </li>
-
                     <li className="pb-5">
                       <b>Advance Notice Requirement:</b> Users must provide
                       advance notice as per the terms of the rental agreement
@@ -1259,13 +1192,13 @@ function AgreementPdf() {
                 </li>
               </ol>
             </div>
-
             <div className="absolute top-[95%] left-[10%] right-[10%] flex justify-between font-bold px-4 text-sm">
               <div className="underline">For User</div>
               <div className="underline">For Stayease</div>
             </div>
           </section>
 
+          {/* ============ PAGE 12 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="p-1 border border-black">
               <ul className="list-disc px-[4rem]">
@@ -1275,18 +1208,15 @@ function AgreementPdf() {
                   rental agreement. Any deviations may result in financial
                   consequences.
                 </li>
-
                 <p className="pb-5">
                   Please ensure to adhere to the notice period policy to
                   facilitate a smooth transition and avoid any unnecessary
                   financial liabilities.
                 </p>
               </ul>
-
               <ol start="24" className="px-10 pb-[5px] list-decimal">
                 <li className="ps-[15px]">
                   <b>Guests Policy:</b>
-
                   <div className="pb-[5px] pt-5">
                     <p className="pb-[1rem]">
                       The User may accommodate guests for a maximum of 2 days in
@@ -1296,14 +1226,12 @@ function AgreementPdf() {
                       Guest Fee, irrespective of whether such guest
                       accommodation is continuous or at intervals in a month.
                     </p>
-
                     <p className="pb-[1rem]">
                       Guest accommodation is permitted only for users staying in
                       Double Private rooms. For Single Sharing and Double
                       Sharing rooms, guest accommodation is strictly not
                       permitted under any circumstances.
                     </p>
-
                     <p className="pb-[1rem]">
                       The number of guests allowed to stay in the Premises is
                       limited to 2 persons per day. Such admission of the
@@ -1311,7 +1239,6 @@ function AgreementPdf() {
                       occupants of the same Premises in which the User is
                       staying.
                     </p>
-
                     <p className="pb-[1rem]">
                       Further, the admission of guest/s by Stayease is subject
                       to availability of rooms. The Guest Fee and other
@@ -1319,14 +1246,12 @@ function AgreementPdf() {
                       single occupant who is sharing the room/taking a portion
                       of the room.
                     </p>
-
                     <p className="pb-[1rem]">
                       The User shall ensure that the guests of such User do not
                       disturb other residents of the accommodation at any time
                       of their visit/stay and are polite and courteous in their
                       behaviour to the residents.
                     </p>
-
                     <p className="pb-[1rem]">
                       The Guest Fee is only for accommodation of the guests and
                       excludes meals and beverages provided at Stayease which
@@ -1334,7 +1259,6 @@ function AgreementPdf() {
                       the responsibility of the User to keep the management
                       informed about any guests who are staying at Stayease.
                     </p>
-
                     <p className="pb-[1rem]">
                       An additional charge of Rs. 2000 (Rupees Two Thousand
                       Only) per night per guest shall be levied on the User for
@@ -1343,13 +1267,11 @@ function AgreementPdf() {
                       Premises, the User shall indemnify Stayease for any of the
                       consequences of such stay in the Premises.
                     </p>
-
                     <p className="pb-[1rem]">
                       Day visits are restricted only till 8 PM for all guests.
                       Overnight stay must be informed to the manager by 8 PM via
                       email to hello@mystayease.com.
                     </p>
-
                     <p className="pb-[1rem]">
                       The User is fully responsible for the actions of their
                       guests. The guest should not disturb other residents
@@ -1359,22 +1281,23 @@ function AgreementPdf() {
                 </li>
               </ol>
             </div>
-
             <div className="absolute top-[95%] left-[10%] right-[10%] flex justify-between font-bold px-4 text-sm">
               <div className="underline">For User</div>
               <div className="underline">For Stayease</div>
             </div>
           </section>
 
+          {/* ============ PAGE 13 ============ */}
           <section className="relative p-24 w-[210mm] h-[297mm] border border-gray-400 text-sm">
             <div className="px-10">
               <div className="pt-5">
-                <b className="pb-5">Declaration:</b> <br /> <br />
+                <b className="pb-5">Declaration:</b> <br />
+                <br />
                 <p className="pb-5">
                   We, the undersigned, hereby acknowledge that we have carefully
                   read and understood all the terms and conditions outlined in
                   the rental agreement provided by ESTANZIA EASE Private Limited
-                  ( StayEase )
+                  (StayEase)
                 </p>
                 <p className="pb-5">
                   As the resident, I agree to abide by these terms throughout
@@ -1384,7 +1307,7 @@ function AgreementPdf() {
                   terms and conditions and agree to adhere to them accordingly.
                 </p>
                 <p className="pb-5">
-                  As the service provider, we “Stayease” , confirm that we have
+                  As the service provider, we "Stayease", confirm that we have
                   provided the resident, [resident's Full Name], with a copy of
                   the rental agreement containing all terms and conditions
                   applicable to their tenancy. We declare that we have explained
@@ -1397,7 +1320,6 @@ function AgreementPdf() {
                 </p>
                 <b>Signatures:</b>
               </div>
-
               <div className="absolute top-[95%] left-[10%] right-[10%] flex justify-between font-bold px-4 text-sm">
                 <div className="underline">For User</div>
                 <div className="underline">For Stayease</div>
