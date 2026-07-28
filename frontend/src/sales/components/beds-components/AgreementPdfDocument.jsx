@@ -7,6 +7,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
   },
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 10,
+    alignSelf: 'flex-end',
+  },
   title: {
     fontSize: 18,
     textAlign: 'center',
