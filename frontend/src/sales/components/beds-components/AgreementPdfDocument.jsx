@@ -7,13 +7,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     fontFamily: 'Helvetica',
   },
-  logoContainer: {
-    alignItems: 'flex-end',
-    marginBottom: 10,
-  },
   logo: {
     width: 60,
     height: 60,
+    marginBottom: 10,
+    alignSelf: 'flex-end',
   },
   title: {
     fontSize: 18,
@@ -128,7 +126,6 @@ const styles = StyleSheet.create({
 const AgreementPdfDocument = ({ data, bedsData }) => {
   const resident = data?.resident_data || bedsData?.resident_data || {};
   const property = data || bedsData || {};
-  const logoUrl = 'http://187.127.160.6/static/img/stayEase_icon.webp';
 
   const getMonthsBetweenDates = (date1, date2) => {
     if (!date1 || !date2) return '-';
@@ -156,8 +153,11 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
     <Document>
       {/* PAGE 1 */}
       <Page size="A4" style={styles.page}>
-        <View style={styles.logoContainer}>
-          <Image style={styles.logo} src={logoUrl} />
+        <View style={{ alignItems: 'flex-end', marginBottom: 10 }}>
+          <Image
+            style={{ width: 60, height: 60 }}
+            src="/static/img/stayEase_icon.webp"
+          />
         </View>
 
         <Text style={styles.title}>AGREEMENT</Text>
