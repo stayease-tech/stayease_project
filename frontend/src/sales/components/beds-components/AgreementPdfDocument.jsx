@@ -148,10 +148,7 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
       {/* PAGE 1 */}
       <Page size="A4" style={styles.page}>
         <View style={{ alignItems: 'flex-end', marginBottom: 10 }}>
-          <Image
-            style={{ width: 60, height: 60 }}
-            src="http://187.127.160.6/static/img/stayEase_icon.webp"
-          />
+          <Text style={styles.logoText}>StayEase</Text>
         </View>
 
         <Text style={styles.title}>AGREEMENT</Text>
