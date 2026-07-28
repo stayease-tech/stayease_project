@@ -58,6 +58,8 @@ function AgreementPdf() {
           {isGenerating ? 'Generating...' : 'Download PDF'}
         </button>
       </div>
+
+      <AgreementPdfDocument />
     </DashPage>
   );
 }
