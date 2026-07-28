@@ -1,3 +1,4 @@
+// src/operations/components/beds-components/AgreementPdfDocument.jsx
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
@@ -14,17 +15,6 @@ const styles = StyleSheet.create({
     color: '#D4A017',
     fontWeight: 'bold',
   },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginVertical: 8,
-    fontWeight: 'bold',
-  },
-  sectionTitle: {
-    fontSize: 12,
-    marginVertical: 6,
-    fontWeight: 'bold',
-  },
   bold: {
     fontWeight: 'bold',
   },
@@ -37,19 +27,6 @@ const styles = StyleSheet.create({
     fontSize: 7,
     marginBottom: 2,
     lineHeight: 1.3,
-  },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 2,
-  },
-  label: {
-    width: '35%',
-    fontWeight: 'bold',
-    fontSize: 8,
-  },
-  value: {
-    width: '65%',
-    fontSize: 8,
   },
   table: {
     marginVertical: 4,
@@ -134,13 +111,19 @@ const styles = StyleSheet.create({
   marginTop: {
     marginTop: 4,
   },
+  pageTitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
 });
 
 const AgreementPdfDocument = ({ data, bedsData }) => {
   const resident = data?.resident_data || bedsData?.resident_data || {};
   const property = data || bedsData || {};
 
-  const monthDiff = (date1, date2) => {
+  const getMonthsBetweenDates = (date1, date2) => {
     if (!date1 || !date2) return '-';
     const d1 = new Date(date1);
     const d2 = new Date(date2);
@@ -164,7 +147,7 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
 
   return (
     <Document>
-      {/* PAGE 1 - Main Agreement */}
+      {/* PAGE 1 */}
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>AGREEMENT</Text>
 
@@ -207,7 +190,7 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
             </Text>
             <Text style={[styles.tableCell, { width: '50%' }]}>
               {resident.checkOut
-                ? `${monthDiff(resident.checkIn, resident.checkOut)} Months`
+                ? `${getMonthsBetweenDates(resident.checkIn, resident.checkOut)} Months`
                 : '-'}
             </Text>
           </View>
@@ -320,20 +303,20 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 2 - Agreement Text */}
+      {/* PAGE 2 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <Text style={styles.text}>
           This User Subscription Agreement ("Agreement") is executed between:
         </Text>
 
         <Text style={styles.text}>
-          ESTANZIA EASE Private Limited ("STAYEASE"), a company incorporated
+          ESTANZIA EASE Private Limited ("STAYEASE")., a company incorporated
           under the provisions of the Companies Act, 1956 bearing CIN
           U55200KA2024PTC185682, having its registered office at No, represented
           herein by its Community Manager AND the User (as named in Annexure A).
-          The User and Stayease are together referred to as "Parties" and
+          The User and Stayease are together referred to as "Parties' ' and
           individually as "Party".
         </Text>
 
@@ -404,9 +387,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 3 - Continued */}
+      {/* PAGE 3 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <Text style={styles.text}>
           <Text style={styles.bold}>5. MANNER OF PAYMENT:</Text> The User Fee,
@@ -486,9 +469,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 4 - Continued */}
+      {/* PAGE 4 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <Text style={styles.text}>
           and licence, or create any right, title, interest, or tenancy in
@@ -574,9 +557,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 5 - Continued */}
+      {/* PAGE 5 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <Text style={styles.text}>
           Agreement within the lock in period and without one month's notice to
@@ -667,9 +650,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 6 - Continued */}
+      {/* PAGE 6 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <Text style={styles.text}>
           <Text style={styles.bold}>17. NOTICES:</Text> All other notices,
@@ -759,9 +742,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 7 - Other Terms */}
+      {/* PAGE 7 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <Text style={[styles.text, styles.bold]}>
           24. Other terms and conditions:
@@ -792,7 +775,6 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
             An estimate of the Maintenance Expenses is given below, which will
             attract a 10% escalation on a yearly basis for inflation.
           </Text>
-
           <View style={styles.table}>
             <View style={styles.tableRow}>
               <Text
@@ -884,9 +866,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 8 - House Rules */}
+      {/* PAGE 8 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <View style={styles.borderBox}>
           <Text style={[styles.text, styles.bold]}>House Rules</Text>
@@ -974,9 +956,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 9 - House Rules Continued */}
+      {/* PAGE 9 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <View style={styles.borderBox}>
           <Text style={styles.listItem}>
@@ -1063,9 +1045,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 10 - Continued Rules */}
+      {/* PAGE 10 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <View style={styles.borderBox}>
           <Text style={styles.listItem}>
@@ -1137,9 +1119,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 11 - Continued Rules */}
+      {/* PAGE 11 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <View style={styles.borderBox}>
           <Text style={styles.listItem}>
@@ -1220,9 +1202,9 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
         </View>
       </Page>
 
-      {/* PAGE 12 - Guests Policy */}
+      {/* PAGE 12 */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>USER SUBSCRIPTION AGREEMENT</Text>
+        <Text style={styles.pageTitle}>USER SUBSCRIPTION AGREEMENT</Text>
 
         <View style={styles.borderBox}>
           <Text style={styles.listItem}>
@@ -1291,7 +1273,7 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
 
       {/* PAGE 13 - Declaration */}
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>DECLARATION</Text>
+        <Text style={styles.pageTitle}>DECLARATION</Text>
 
         <Text style={[styles.declarationText, styles.marginTop]}>
           We, the undersigned, hereby acknowledge that we have carefully read
