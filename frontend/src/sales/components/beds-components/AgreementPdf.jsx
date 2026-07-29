@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import { DashPage } from '../../../shared/Dashboard';
-import AgreementPdfDocument from './AgreementPdfDocument';
+import AgreementPdfDocument from '../../../shared/AgreementPdfDocument';
 
 function AgreementPdf() {
   const navigate = useNavigate();
@@ -267,7 +267,7 @@ function AgreementPdf() {
                       <b>Resident Identity Type</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedData?.resident_data?.kycType} Card`}</b>
+                      <b>{`${bedData?.resident_data?.kycType ? `${bedData?.resident_data?.kycType} Card` : '-'}`}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -278,7 +278,7 @@ function AgreementPdf() {
                       <b>
                         {bedData?.resident_data?.kycType === 'Aadhar'
                           ? bedData?.resident_data?.aadharNumber
-                          : bedData?.resident_data?.panNumber}
+                          : bedData?.resident_data?.panNumber || '-'}
                       </b>
                     </td>
                   </tr>

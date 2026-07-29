@@ -2,13 +2,12 @@ import React, { useState, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { pdf } from '@react-pdf/renderer';
 import { DashPage } from '../../../shared/Dashboard';
-import AgreementPdfDocument from './AgreementPdfDocument';
+import AgreementPdfDocument from '../../../shared/AgreementPdfDocument';
 
 function AgreementPdf() {
   const navigate = useNavigate();
   const location = useLocation();
   const bedsData = location.state?.bedsData || [];
-  console.log(bedsData);
   const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
   const [isGenerating, setIsGenerating] = useState(false);
   const contentRef = useRef(null);

@@ -284,7 +284,7 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
               <Text style={styles.bold}>Resident Identity Type</Text>
             </Text>
             <Text style={[styles.tableCell, { width: '50%' }]}>
-              {`${resident.kycType || ''} Card`}
+              {`${resident.kycType ? `${resident.kycType} Card` : '-'}`}
             </Text>
           </View>
           <View style={styles.tableRow}>
@@ -294,7 +294,7 @@ const AgreementPdfDocument = ({ data, bedsData }) => {
             <Text style={[styles.tableCell, { width: '50%' }]}>
               {resident.kycType === 'Aadhar'
                 ? resident.aadharNumber
-                : resident.panNumber || 'N/A'}
+                : resident.panNumber || '-'}
             </Text>
           </View>
         </View>
