@@ -255,7 +255,7 @@ function AgreementPdf() {
                       <b>Resident Identity Type</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedsData?.resident_data?.kycType} Card`}</b>
+                      <b>{`${bedsData?.resident_data?.kycType ? `${bedsData?.resident_data?.kycType} Card` : '-'}`}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -266,7 +266,7 @@ function AgreementPdf() {
                       <b>
                         {bedsData?.resident_data?.kycType === 'Aadhar'
                           ? bedsData?.resident_data?.aadharNumber
-                          : bedsData?.resident_data?.panNumber}
+                          : bedsData?.resident_data?.panNumber || '-'}
                       </b>
                     </td>
                   </tr>
