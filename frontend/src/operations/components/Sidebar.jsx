@@ -9,7 +9,7 @@ import SharedSidebar from "../../shared/Sidebar";
 
 const menuItems = [
     { name: "View Beds", icon: <LiaBedSolid />, link: "/operations/operations-beds-table" },
-    { name: "Agreements", icon: <FaFileContract />, link: "/operations/operations-agreement-pdf", disabled: true },
+    // { name: "Agreements", icon: <FaFileContract />, link: "/operations/operations-agreement-pdf", disabled: true },
     { name: "Complaints", icon: <GiTicket />, link: "/operations/operations-propertycomplaint-table" },
     { name: "KYC Management", icon: <GoChecklist />, link: "/operations/operations-kyc-management" },
     { name: "Expenses", icon: <TbReportMoney />, link: "/operations/operations-expense-table" },

@@ -9,7 +9,6 @@ function AgreementPdf() {
   const location = useLocation();
   const bedsData = location.state?.bedsData || [];
   const bedData = location.state?.bedData || {};
-  console.log(bedsData, bedData);
   const flag = location.state?.flag || false;
   const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
   const [isGenerating, setIsGenerating] = useState(false);
