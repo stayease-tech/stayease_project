@@ -8,8 +8,7 @@ function AgreementPdf() {
   const navigate = useNavigate();
   const location = useLocation();
   const bedsData = location.state?.bedsData || [];
-  const bedData = location.state?.bedData || {};
-  const flag = location.state?.flag || false;
+  console.log(bedsData);
   const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
   const [isGenerating, setIsGenerating] = useState(false);
   const contentRef = useRef(null);
@@ -29,13 +28,13 @@ function AgreementPdf() {
     setIsGenerating(true);
     try {
       const blob = await pdf(
-        <AgreementPdfDocument data={bedData} bedsData={bedsData} />
+        <AgreementPdfDocument bedsData={bedsData} />
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${bedData?.resident_data?.residentsName?.replace(/\s+/g, '') || 'Contract'}_Contract.pdf`;
+      link.download = `${bedsData?.resident_data?.residentsName?.replace(/\s+/g, '') || 'Contract'}_Contract.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -57,18 +56,7 @@ function AgreementPdf() {
       <div className="sm:flex justify-between">
         <button
           className="block max-sm:w-full mb-5 px-4 py-2 bg-[#D4A017] text-white text-base font-medium rounded cursor-pointer hover:bg-[#B8860B] max-sm:text-sm"
-          onClick={() => {
-            if (bedsDetailsFlag) {
-              navigate(
-                `/operations/operations-resident-details/${bedData?.resident_data?.id}`,
-                {
-                  state: { bedsData, bedData, flag },
-                }
-              );
-            } else {
-              navigate('/operations/operations-beds-table');
-            }
-          }}
+          onClick={() => navigate('/operations/operations-beds-table')}
           type="button"
         >
           Prev

@@ -66,7 +66,6 @@ function BedsTable() {
   }, []);
 
   const viewAgreementHandle = (bedsData) => {
-    console.log(bedsData);
     navigate(
       `/operations/operations-agreement-pdf/${bedsData?.resident_data?.id}`,
       { state: { bedsData } }

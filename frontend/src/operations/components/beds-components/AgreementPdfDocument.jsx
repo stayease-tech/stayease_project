@@ -117,9 +117,9 @@ const styles = StyleSheet.create({
   },
 });
 
-const AgreementPdfDocument = ({ data, bedsData }) => {
-  const resident = data?.resident_data || bedsData?.resident_data || {};
-  const property = data || bedsData || {};
+const AgreementPdfDocument = ({ bedsData }) => {
+  const resident = bedsData?.resident_data || {};
+  const property = bedsData || {};
 
   const getMonthsBetweenDates = (date1, date2) => {
     if (!date1 || !date2) return '-';
