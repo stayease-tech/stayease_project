@@ -9,7 +9,6 @@ function AgreementPdf() {
   const location = useLocation();
   const bedsData = location.state?.bedsData || [];
   const bedData = location.state?.bedData || {};
-  console.log(bedsData, bedData);
   const flag = location.state?.flag || false;
   const bedsDetailsFlag = location.state?.bedsDetailsFlag || false;
   const [isGenerating, setIsGenerating] = useState(false);
@@ -112,7 +111,7 @@ function AgreementPdf() {
                       <b>Community Manager</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedData?.resident_data?.propertyManager}</b>
+                      <b>{bedsData?.resident_data?.propertyManager}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -120,7 +119,7 @@ function AgreementPdf() {
                       <b>Room No.</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedData?.roomNo}</b>
+                      <b>{bedsData?.roomNo}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -128,7 +127,7 @@ function AgreementPdf() {
                       <b>Type of Accommodation for use as residence</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedData?.roomType} Room`}</b>
+                      <b>{`${bedsData?.roomType} Room`}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -136,7 +135,7 @@ function AgreementPdf() {
                       <b>Monthly User Fee</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`₹${bedData?.resident_data?.rentPerMonth}`}</b>
+                      <b>{`₹${bedsData?.resident_data?.rentPerMonth}`}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -145,8 +144,8 @@ function AgreementPdf() {
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedData?.resident_data?.checkOut
-                          ? `${getMonthsBetweenDates(bedData?.resident_data?.checkIn, bedData?.resident_data?.checkOut)} Months`
+                        {bedsData?.resident_data?.checkOut
+                          ? `${getMonthsBetweenDates(bedsData?.resident_data?.checkIn, bedsData?.resident_data?.checkOut)} Months`
                           : '-'}
                       </b>
                     </td>
@@ -157,8 +156,8 @@ function AgreementPdf() {
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedData?.resident_data?.checkIn
-                          ? new Date(bedData.resident_data?.checkIn)
+                        {bedsData?.resident_data?.checkIn
+                          ? new Date(bedsData.resident_data?.checkIn)
                               .toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'long',
@@ -175,8 +174,8 @@ function AgreementPdf() {
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedData?.resident_data?.checkOut
-                          ? new Date(bedData.resident_data?.checkOut)
+                        {bedsData?.resident_data?.checkOut
+                          ? new Date(bedsData.resident_data?.checkOut)
                               .toLocaleDateString('en-US', {
                                 day: 'numeric',
                                 month: 'long',
@@ -200,7 +199,7 @@ function AgreementPdf() {
                       <b>Security Deposit</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`₹${bedData?.resident_data?.totalDepositPaid}`}</b>
+                      <b>{`₹${bedsData?.resident_data?.totalDepositPaid}`}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -216,8 +215,8 @@ function AgreementPdf() {
                       <b>Stayease Property (“Premise”) name and address</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedData?.propertyName}`}</b> -{' '}
-                      {`${bedData?.doorBuilding}, ${bedData?.streetAddress}, ${bedData?.streetAddress}, ${bedData?.area}, ${bedData?.city}, ${bedData?.state} - ${bedData?.pincode}`}
+                      <b>{`${bedsData?.propertyName}`}</b> -{' '}
+                      {`${bedsData?.doorBuilding}, ${bedsData?.streetAddress}, ${bedsData?.streetAddress}, ${bedsData?.area}, ${bedsData?.city}, ${bedsData?.state} - ${bedsData?.pincode}`}
                     </td>
                   </tr>
                 </tbody>
@@ -236,7 +235,7 @@ function AgreementPdf() {
                       <b>Name of User</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedData?.resident_data?.residentsName}</b>
+                      <b>{bedsData?.resident_data?.residentsName}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -244,7 +243,7 @@ function AgreementPdf() {
                       <b>Permanent Address</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedData?.resident_data?.permanentAddress}</b>
+                      <b>{bedsData?.resident_data?.permanentAddress}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -252,7 +251,7 @@ function AgreementPdf() {
                       <b>Phone Number</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedData?.resident_data?.phoneNumber}</b>
+                      <b>{bedsData?.resident_data?.phoneNumber}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -260,7 +259,7 @@ function AgreementPdf() {
                       <b>Email</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{bedData?.resident_data?.email}</b>
+                      <b>{bedsData?.resident_data?.email}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -268,7 +267,7 @@ function AgreementPdf() {
                       <b>Resident Identity Type</b>
                     </td>
                     <td className="py-1 px-2">
-                      <b>{`${bedData?.resident_data?.kycType} Card`}</b>
+                      <b>{`${bedsData?.resident_data?.kycType} Card`}</b>
                     </td>
                   </tr>
                   <tr className="border-b border-black">
@@ -277,9 +276,9 @@ function AgreementPdf() {
                     </td>
                     <td className="py-1 px-2">
                       <b>
-                        {bedData?.resident_data?.kycType === 'Aadhar'
-                          ? bedData?.resident_data?.aadharNumber
-                          : bedData?.resident_data?.panNumber}
+                        {bedsData?.resident_data?.kycType === 'Aadhar'
+                          ? bedsData?.resident_data?.aadharNumber
+                          : bedsData?.resident_data?.panNumber}
                       </b>
                     </td>
                   </tr>
