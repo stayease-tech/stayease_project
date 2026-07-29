@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
 const AgreementPdfDocument = ({ data, bedsData }) => {
   const resident = data?.resident_data || bedsData?.resident_data || {};
   const property = data || bedsData || {};
-  console.log(resident, property);
 
   const getMonthsBetweenDates = (date1, date2) => {
     if (!date1 || !date2) return '-';
