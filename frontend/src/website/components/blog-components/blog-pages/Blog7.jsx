@@ -7,7 +7,7 @@ const BLOG_DATA = {
     author: "Uma Ghosh",
     date: "Feb 22, 2025",
     readTime: "3 min read",
-    mainImage: "static/img/blog/blog_img8.webp",
+    mainImage: "/static/img/blog/blog_img8.webp",
     mainImageAlt: "Rental agreement document for EMI loan approval and financial benefits"
 }
 

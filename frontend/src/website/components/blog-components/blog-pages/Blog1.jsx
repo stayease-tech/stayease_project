@@ -7,7 +7,7 @@ const BLOG_DATA = {
     author: "Rithan Gowda C",
     date: "Sep 8",
     readTime: "3 min read",
-    mainImage: "static/img/blog/blog_img2.webp",
+    mainImage: "/static/img/blog/blog_img2.webp",
     mainImageAlt: "Co-living space in Bangalore - Modern shared accommodation"
 }
 

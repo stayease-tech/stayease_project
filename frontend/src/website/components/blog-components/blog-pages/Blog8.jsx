@@ -7,7 +7,7 @@ const BLOG_DATA = {
     author: "Uma Ghosh",
     date: "Mar 11, 2025",
     readTime: "3 min read",
-    mainImage: "static/img/blog/blog_img9.webp",
+    mainImage: "/static/img/blog/blog_img9.webp",
     mainImageAlt: "Students sharing living space - Roommates building community and life skills"
 }
 

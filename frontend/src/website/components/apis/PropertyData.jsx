@@ -7,21 +7,21 @@ const PROPERTIES = [
         address: "No 215, 216, 3rd Cross Road, off Neeladri Road, Neeladri Nagar, Electronics City Phase 1, Electronic City, Bengaluru, Karnataka 560100",
         mapURL: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12280.678872647694!2d77.6887!3d12.8485!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae14f5e9ee26d5%3A0x1c911e3ffdcab229!2s216%2C%203rd%20Cross%20Road%2C%20off%20Neeladri%20Road%2C%20Neeladri%20Nagar%2C%20Electronics%20City%20Phase%201%2C%20Electronic%20City%2C%20Bengaluru%2C%20Karnataka%20560100!5e0!3m2!1sen!2sin!4v1615391734658!5m2!1sen!2sin",
         price: "12000",
-        image: "static/img/product/property-img1.webp",
-        link: "/stayease-harmonia",
+        image: "/static/img/product/property-img1.webp",
+        link: "/properties/stayease-harmonia",
         hasPrice: true,
         propertyImages: [
-            { id: 1, src: "static/img/enquiry/stayease-harmonia/enquiry_img1.webp", alt: 'Hall' },
-            { id: 2, src: "static/img/enquiry/stayease-harmonia/enquiry_img2.webp", alt: 'Dining' },
-            { id: 3, src: "static/img/enquiry/stayease-harmonia/enquiry_img3.webp", alt: 'Kitchen' },
-            { id: 4, src: "static/img/enquiry/stayease-harmonia/enquiry_img4.webp", alt: 'Bedroom' },
-            { id: 5, src: "static/img/enquiry/stayease-harmonia/enquiry_img5.webp", alt: 'Sitout' },
+            { id: 1, src: "/static/img/enquiry/stayease-harmonia/enquiry_img1.webp", alt: 'Hall' },
+            { id: 2, src: "/static/img/enquiry/stayease-harmonia/enquiry_img2.webp", alt: 'Dining' },
+            { id: 3, src: "/static/img/enquiry/stayease-harmonia/enquiry_img3.webp", alt: 'Kitchen' },
+            { id: 4, src: "/static/img/enquiry/stayease-harmonia/enquiry_img4.webp", alt: 'Bedroom' },
+            { id: 5, src: "/static/img/enquiry/stayease-harmonia/enquiry_img5.webp", alt: 'Sitout' },
         ],
         neighbourhoodImages: [
-            ["static/img/neighbourhood/stayease-harmonia/neighbourhood_img1.webp", "static/img/neighbourhood/stayease-harmonia/neighbourhood_img7.webp"],
-            ["static/img/neighbourhood/stayease-harmonia/neighbourhood_img6.webp", "static/img/neighbourhood/stayease-harmonia/neighbourhood_img4.webp"],
-            ["static/img/neighbourhood/stayease-harmonia/neighbourhood_img2.webp", "static/img/neighbourhood/stayease-harmonia/neighbourhood_img8.webp"],
-            ["static/img/neighbourhood/stayease-harmonia/neighbourhood_img5.webp", "static/img/neighbourhood/stayease-harmonia/neighbourhood_img3.webp"]
+            ["/static/img/neighbourhood/stayease-harmonia/neighbourhood_img1.webp", "/static/img/neighbourhood/stayease-harmonia/neighbourhood_img7.webp"],
+            ["/static/img/neighbourhood/stayease-harmonia/neighbourhood_img6.webp", "/static/img/neighbourhood/stayease-harmonia/neighbourhood_img4.webp"],
+            ["/static/img/neighbourhood/stayease-harmonia/neighbourhood_img2.webp", "/static/img/neighbourhood/stayease-harmonia/neighbourhood_img8.webp"],
+            ["/static/img/neighbourhood/stayease-harmonia/neighbourhood_img5.webp", "/static/img/neighbourhood/stayease-harmonia/neighbourhood_img3.webp"]
         ],
         priceBoardData: [
             { id: 1, type: 'Single Private', price: '15000' },
@@ -39,19 +39,19 @@ const PROPERTIES = [
         address: "Sunitha Apartments, 26, 12th Cross Rd, near JAGGESH STUDIO, Maruthi Extension, Malleshwaram, Bengaluru, Karnataka 560003",
         mapURL: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3001.6851308153937!2d77.5635846!3d13.003081099999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae170010d7527f%3A0x2351e2eddf7389ee!2sCelestia%20by%20STAYEASE!5e1!3m2!1sen!2sin!4v1772029117408!5m2!1sen!2sin",
         price: "12999",
-        image: "static/img/product/property-img2.webp",
-        link: "/stayease-celestia",
+        image: "/static/img/product/property-img2.webp",
+        link: "/properties/stayease-celestia",
         hasPrice: true,
         propertyImages: [
-            { id: 1, src: "static/img/enquiry/stayease-celestia/enquiry_img1.webp", alt: 'Hall' },
-            { id: 2, src: "static/img/enquiry/stayease-celestia/enquiry_img2.webp", alt: 'Dining' },
-            { id: 3, src: "static/img/enquiry/stayease-celestia/enquiry_img3.webp", alt: 'Kitchen' },
-            { id: 4, src: "static/img/enquiry/stayease-celestia/enquiry_img4.webp", alt: 'Bedroom' },
-            { id: 5, src: "static/img/enquiry/stayease-celestia/enquiry_img5.webp", alt: 'Sitout' },
+            { id: 1, src: "/static/img/enquiry/stayease-celestia/enquiry_img1.webp", alt: 'Hall' },
+            { id: 2, src: "/static/img/enquiry/stayease-celestia/enquiry_img2.webp", alt: 'Dining' },
+            { id: 3, src: "/static/img/enquiry/stayease-celestia/enquiry_img3.webp", alt: 'Kitchen' },
+            { id: 4, src: "/static/img/enquiry/stayease-celestia/enquiry_img4.webp", alt: 'Bedroom' },
+            { id: 5, src: "/static/img/enquiry/stayease-celestia/enquiry_img5.webp", alt: 'Sitout' },
         ],
         neighbourhoodImages: [
-            ["static/img/neighbourhood/stayease-celestia/neighbourhood_img1.webp", "static/img/neighbourhood/stayease-celestia/neighbourhood_img2.webp"],
-            ["static/img/neighbourhood/stayease-celestia/neighbourhood_img3.webp", "static/img/neighbourhood/stayease-celestia/neighbourhood_img4.webp"]
+            ["/static/img/neighbourhood/stayease-celestia/neighbourhood_img1.webp", "/static/img/neighbourhood/stayease-celestia/neighbourhood_img2.webp"],
+            ["/static/img/neighbourhood/stayease-celestia/neighbourhood_img3.webp", "/static/img/neighbourhood/stayease-celestia/neighbourhood_img4.webp"]
         ],
         priceBoardData: [
             { id: 1, type: 'Private Room', price: '25999' },
@@ -65,7 +65,7 @@ const PROPERTIES = [
         name: "Koramangala - Sony Signal",
         location: "Koramangala, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     },
@@ -74,7 +74,7 @@ const PROPERTIES = [
         name: "Koramangala - Water Tank",
         location: "Koramangala, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     },
@@ -83,7 +83,7 @@ const PROPERTIES = [
         name: "HSR - Sector 1",
         location: "HSR Sector, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     },
@@ -92,7 +92,7 @@ const PROPERTIES = [
         name: "HSR - Sector 4",
         location: "HSR Sector, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     },
@@ -101,7 +101,7 @@ const PROPERTIES = [
         name: "HSR - Sector 6",
         location: "HSR Sector, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     },
@@ -110,7 +110,7 @@ const PROPERTIES = [
         name: "Whitefield - Nallurhalli",
         location: "Whitefield, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     },
@@ -119,7 +119,7 @@ const PROPERTIES = [
         name: "Whitefield - Channasandra",
         location: "Whitefield, Bangalore",
         price: "N/A",
-        image: "static/img/product/property-img-sample.webp",
+        image: "/static/img/product/property-img-sample.webp",
         link: "",
         hasPrice: false
     }

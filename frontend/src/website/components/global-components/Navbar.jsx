@@ -93,7 +93,7 @@ export default function Navbar() {
                     {/* Logo with explicit dimensions to prevent layout shift */}
                     <img
                         alt="StayEase_Logo"
-                        src="static/img/brand-logo/stayEase-Logo.webp"
+                        src="/static/img/brand-logo/stayEase-Logo.webp"
                         width="72"
                         height="72"
                         className="h-18 w-auto object-cover"

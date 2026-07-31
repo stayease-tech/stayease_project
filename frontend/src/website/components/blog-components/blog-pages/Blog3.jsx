@@ -7,7 +7,7 @@ const BLOG_DATA = {
     author: "Uma Ghosh",
     date: "Feb 11, 2025",
     readTime: "3 min read",
-    mainImage: "static/img/blog/blog_img4.webp",
+    mainImage: "/static/img/blog/blog_img4.webp",
     mainImageAlt: "Pet-friendly coliving space - Happy dog with owner in modern shared accommodation"
 }
 

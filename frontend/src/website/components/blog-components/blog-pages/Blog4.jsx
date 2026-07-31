@@ -7,7 +7,7 @@ const BLOG_DATA = {
     author: "Uma Ghosh",
     date: "Feb 11, 2025",
     readTime: "3 min read",
-    mainImage: "static/img/blog/blog_img5.webp",
+    mainImage: "/static/img/blog/blog_img5.webp",
     mainImageAlt: "Modern coliving space vs traditional PG - Comparison for young professionals"
 }
 

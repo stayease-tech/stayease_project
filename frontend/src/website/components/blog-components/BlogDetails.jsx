@@ -5,64 +5,64 @@ import { Link } from 'react-router-dom'
 const BLOG_POSTS = [
     {
         id: 1,
-        to: '/top-benefits-of-co-living-or-sharing-accommodation-for-millennials-in-bangalore',
-        image: "static/img/blog/blog_img2.webp",
+        to: '/blog/top-benefits-of-co-living-or-sharing-accommodation-for-millennials-in-bangalore',
+        image: "/static/img/blog/blog_img2.webp",
         date: "Sep 8, 2024",
         title: "Top Benefits of Co-Living or Sharing Accommodation for Millennials in Bangalore",
         alt: "Co-living benefits for millennials"
     },
     {
         id: 2,
-        to: '/red-flags-to-watch-out-for-before-shifting-to-a-coliving-space-in-bangalore',
-        image: "static/img/blog/blog_img3.webp",
+        to: '/blog/red-flags-to-watch-out-for-before-shifting-to-a-coliving-space-in-bangalore',
+        image: "/static/img/blog/blog_img3.webp",
         date: "Feb 11, 2025",
         title: "Red Flags to Watch Out for Before Shifting to a Co-Living Space in Bangalore",
         alt: "Co-living red flags"
     },
     {
         id: 3,
-        to: '/pet-friendly-coliving-spaces',
-        image: "static/img/blog/blog_img4.webp",
+        to: '/blog/pet-friendly-coliving-spaces',
+        image: "/static/img/blog/blog_img4.webp",
         date: "Feb 11, 2025",
         title: "Pet-Friendly Coliving Spaces: A Haven for You and Your Furry Friend",
         alt: "Pet-friendly coliving"
     },
     {
         id: 4,
-        to: '/coliving-vs-pgs-and-rented-flats',
-        image: "static/img/blog/blog_img5.webp",
+        to: '/blog/coliving-vs-pgs-and-rented-flats',
+        image: "/static/img/blog/blog_img5.webp",
         date: "Feb 11, 2025",
         title: "Women-Friendly Coliving Spaces: A Safe Haven for Independent Living",
         alt: "Women-friendly coliving"
     },
     {
         id: 5,
-        to: '/women-friendly-coliving-spaces',
-        image: "static/img/blog/blog_img6.webp",
+        to: '/blog/women-friendly-coliving-spaces',
+        image: "/static/img/blog/blog_img6.webp",
         date: "Feb 22, 2025",
         title: "Coliving vs PGs & Rented Flats: The Smarter Choice for Young Professionals",
         alt: "Coliving comparison"
     },
     {
         id: 6,
-        to: '/rent-right-or-regret-later',
-        image: "static/img/blog/blog_img7.webp",
+        to: '/blog/rent-right-or-regret-later',
+        image: "/static/img/blog/blog_img7.webp",
         date: "Feb 22, 2025",
         title: "Rent Right or Regret Later: Why a Rental Agreement is a Must-Have!",
         alt: "Rental agreement importance"
     },
     {
         id: 7,
-        to: '/new-city-new-digs',
-        image: "static/img/blog/blog_img8.webp",
+        to: '/blog/new-city-new-digs',
+        image: "/static/img/blog/blog_img8.webp",
         date: "Feb 22, 2025",
         title: "New City, New Digs? Your Rental Agreement Can Unlock EMIs!",
         alt: "Rental agreement EMIs"
     },
     {
         id: 8,
-        to: '/roomies-real-life-growth',
-        image: "static/img/blog/blog_img9.webp",
+        to: '/blog/roomies-real-life-growth',
+        image: "/static/img/blog/blog_img9.webp",
         date: "Mar 11, 2025",
         title: "Roomies, Real Life & Growth: How Shared Living Shapes Student Life",
         alt: "Student shared living benefits"

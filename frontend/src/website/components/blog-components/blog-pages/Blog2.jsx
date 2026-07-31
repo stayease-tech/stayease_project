@@ -7,7 +7,7 @@ const BLOG_DATA = {
     author: "Uma Ghosh",
     date: "Feb 11, 2025",
     readTime: "3 min read",
-    mainImage: "static/img/blog/blog_img3.webp",
+    mainImage: "/static/img/blog/blog_img3.webp",
     mainImageAlt: "Co-living space warning signs - Red flags to check before moving"
 }
 
