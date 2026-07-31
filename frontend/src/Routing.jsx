@@ -40,14 +40,30 @@ const WebRefundPolicy = lazy(
   () => import('./website/components/pages/RefundPolicyPage')
 );
 const WebNotFound = lazy(() => import('./website/components/pages/NotFound'));
-const Blog1 = lazy(() => import('./website/components/blog-components/blog-pages/Blog1'));
-const Blog2 = lazy(() => import('./website/components/blog-components/blog-pages/Blog2'));
-const Blog3 = lazy(() => import('./website/components/blog-components/blog-pages/Blog3'));
-const Blog4 = lazy(() => import('./website/components/blog-components/blog-pages/Blog4'));
-const Blog5 = lazy(() => import('./website/components/blog-components/blog-pages/Blog5'));
-const Blog6 = lazy(() => import('./website/components/blog-components/blog-pages/Blog6'));
-const Blog7 = lazy(() => import('./website/components/blog-components/blog-pages/Blog7'));
-const Blog8 = lazy(() => import('./website/components/blog-components/blog-pages/Blog8'));
+const Blog1 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog1')
+);
+const Blog2 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog2')
+);
+const Blog3 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog3')
+);
+const Blog4 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog4')
+);
+const Blog5 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog5')
+);
+const Blog6 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog6')
+);
+const Blog7 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog7')
+);
+const Blog8 = lazy(
+  () => import('./website/components/blog-components/blog-pages/Blog8')
+);
 const WebPropertyDetails = lazy(
   () => import('./website/components/property-components/PropertyDetails')
 );

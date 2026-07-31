@@ -46,7 +46,7 @@ const EnquiryBoard = memo(
             value={formData.name}
             onChange={handleChange}
             required
-            className="border rounded w-full py-2 px-3 text-[#000000]"
+            className="w-full bg-white text-gray-900 text-sm font-light border-b-2 border-gray-300 rounded focus:outline-none focus:border-[#eba312] transition-colors resize-none p-1"
           />
         </div>
 
@@ -61,7 +61,7 @@ const EnquiryBoard = memo(
             value={formData.phone}
             onChange={handleChange}
             required
-            className="border rounded w-full py-2 px-3 text-[#000000]"
+            className="w-full bg-white text-gray-900 text-sm font-light border-b-2 border-gray-300 rounded focus:outline-none focus:border-[#eba312] transition-colors resize-none p-1"
           />
         </div>
 
@@ -76,7 +76,7 @@ const EnquiryBoard = memo(
             value={formData.email}
             onChange={handleChange}
             required
-            className="border rounded w-full py-2 px-3 text-[#000000]"
+            className="w-full bg-white text-gray-900 text-sm font-light border-b-2 border-gray-300 rounded focus:outline-none focus:border-[#eba312] transition-colors resize-none p-1"
           />
         </div>
 
